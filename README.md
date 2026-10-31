@@ -16,7 +16,7 @@ Claude-пен жұмыс барысында жиналған КЖ / КМ / ЛИ�
 **Жаңа компьютерде бір рет** — PowerShell ашып, мынаны қойыңыз:
 
 ```powershell
-irm https://raw.githubusercontent.com/bekasylauez-spec/bekassyl-knowledge/main/tools/setup.ps1 | iex
+iex (irm https://raw.githubusercontent.com/bekasylauez-spec/bekassyl-knowledge/main/tools/setup.ps1).TrimStart([char]0xFEFF)
 ```
 
 Git пен Python-ды орнатады, базаны `Documents\bekassyl-knowledge` папкасына алады, Obsidian-ға (`Documents\Bekassyl`) және Claude memory-ге (`D:\РАБОЧКА` жобасы) қояды.
@@ -29,3 +29,19 @@ powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\bekassyl-kn
 ```
 
 Басқа компьютерлердегі жаңалықты алады, осы компьютердің жаңа ережелері мен чаттарын GitHub-қа жібереді.
+
+## Екі компьютер бір РАБОЧКА-да (кабель / жергілікті желі)
+
+Файлдар негізгі компьютерде (`DESKTOP-0BGBHI9`, `D:\РАБОЧКА`) тұрады, екіншісі оны желі арқылы өз `D:\РАБОЧКА`-сы ретінде ашады.
+Екеуінде де PowerShell-ді **әкімші ретінде** ашыңыз (Пуск-ты оң басып → «Терминал (администратор)»):
+
+1. **Негізгі компьютерде:**
+   ```powershell
+   iex (irm https://raw.githubusercontent.com/bekasylauez-spec/bekassyl-knowledge/main/tools/share-main.ps1).TrimStart([char]0xFEFF)
+   ```
+2. **Екінші компьютерде** (негізгі компьютердің Windows құпиясөзін сұрайды):
+   ```powershell
+   iex (irm https://raw.githubusercontent.com/bekasylauez-spec/bekassyl-knowledge/main/tools/connect.ps1).TrimStart([char]0xFEFF)
+   ```
+
+Бір DWG-ны екі компьютерде қатар ашпаңыз — AutoCAD екіншісіне «только чтение» деп ашады.
