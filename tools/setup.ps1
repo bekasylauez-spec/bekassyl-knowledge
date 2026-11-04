@@ -46,6 +46,9 @@ if ($lan) {
     Write-Host "Obsidian -> $Vault, Claude memory -> $Mem"
 }
 
+# Басқа жолдан ашылған сессиялар (BEKA-2: R:\ -> projects\R--) да осы memory-ді көрсін + ортақ ережелер ~/.claude/CLAUDE.md
+& "$Repo\tools\claude-shared.ps1" -Work $Work -Mem $Mem
+
 # Obsidian осы базаны ашсын
 powershell -NoProfile -ExecutionPolicy Bypass -File "$Repo\tools\obsidian-vault.ps1" -Vault $Vault
 

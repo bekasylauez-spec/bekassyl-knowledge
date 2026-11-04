@@ -82,6 +82,10 @@ New-Item -ItemType SymbolicLink -Path $Mem -Target $Shared | Out-Null
 $n = (Get-ChildItem $Mem -File | Measure-Object).Count
 Write-Host "ГОТОВО: $Mem -> $Shared ($n файлов). Перезапусти Claude на этом компе." -ForegroundColor Green
 Get-Item $Mem -Force | Format-List FullName, LinkType, Target
+# R:\ т.б. жолдан ашылған сессиялар да осы memory-ді көрсін (projects\R--\memory -> junction) + ортақ CLAUDE.md
+$cs = "$env:USERPROFILE\Documents\bekassyl-knowledge\tools\claude-shared.ps1"
+if (-not (Test-Path $cs)) { $cs = "$Unc\.claude\claude-shared.ps1" }
+if (Test-Path $cs) { & $cs -Mem $Mem } else { Write-Host 'claude-shared.ps1 табылмады - link-git.cmd іске қос' -ForegroundColor Yellow }
 Get-ChildItem "$env:USERPROFILE\.claude\projects" -Force | Format-Table Name, LinkType -AutoSize
 } catch {
     Write-Host "ОШИБКА: $($_.Exception.Message)" -ForegroundColor Red
