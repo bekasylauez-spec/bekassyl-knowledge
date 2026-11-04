@@ -1,0 +1,5 @@
+﻿Add-Type -AssemblyName Microsoft.VisualBasic
+function IsLocked($p){ try{ $s=[IO.File]::Open($p,'Open','ReadWrite','None'); $s.Close(); $false }catch{ $true } }
+function BinGB(){ $t=0; Get-ChildItem 'C:\$Recycle.Bin' -Force -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $t+=$_.Length }; [math]::Round($t/1GB,2) }
+function RecycleFile($p){ if(IsLocked $p){ return 0 }; try{ $l=(Get-Item -LiteralPath $p -Force).Length; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($p,'OnlyErrorDialogs','SendToRecycleBin'); $l }catch{ 0 } }
+function RecycleDir($d){ $fs=Get-ChildItem -LiteralPath $d -Recurse -Force -File -ErrorAction SilentlyContinue; $sz=($fs|Measure-Object Length -Sum).Sum; $lk=@($fs|Where-Object{ IsLocked $_.FullName }); if($lk.Count -eq 0){ try{ [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($d,'OnlyErrorDialogs','SendToRecycleBin'); return $sz }catch{ return 0 } } else { $t=0; foreach($f in $fs){ if($lk.FullName -notcontains $f.FullName){ $t+=RecycleFile $f.FullName } }; return $t } }
