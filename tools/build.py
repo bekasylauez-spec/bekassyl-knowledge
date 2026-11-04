@@ -131,21 +131,36 @@ def main():
     if VAULT.exists():
         print("obsidian:", copy_tree(VAULT, REPO / "obsidian"), "файл жаңарды")
     mem, index = 0, REPO / "memory" / "MEMORY.md"
-    lines = index.read_text(encoding="utf-8").splitlines() if index.exists() else []
-    for d in PROJECTS.glob("*/memory"):
+    # Notes merged/retired on purpose: listed in memory/.deleted (one file name per line), removed from the repo
+    tomb = REPO / "memory" / ".deleted"
+    deleted = {ln.strip() for ln in tomb.read_text(encoding="utf-8").splitlines() if ln.strip()} if tomb.exists() else set()
+    for n in deleted:
+        (REPO / "memory" / n).unlink(missing_ok=True)
+    key = lambda ln: (m.group(1) if (m := re.search(r"\]\(([^)]+\.md)\)", ln)) else None)
+    repo_lines = index.read_text(encoding="utf-8").splitlines() if index.exists() else []
+    main_dir = PROJECTS / "D---------" / "memory"          # the shared memory of D:\РАБОЧКА: its index is the master
+    dirs = [main_dir] + [d for d in PROJECTS.glob("*/memory") if d != main_dir and d.exists()]
+    lines, have = [], set()
+    for i, d in enumerate(dirs):
+        if not d.exists():
+            continue
         mem += copy_tree(d, REPO / "memory")
+        for n in deleted:
+            (REPO / "memory" / n).unlink(missing_ok=True)
         src = d / "MEMORY.md"
-        if src.exists():  # each project has its own index: merge lines, one per memory file
-            lines += src.read_text(encoding="utf-8").splitlines()
-    merged, seen = {}, []
-    for ln in lines:
-        m = re.search(r"\]\(([^)]+\.md)\)", ln)
-        k = m.group(1) if m else ln
-        if k not in merged:
-            seen.append(k)
-        if ln.strip():
-            merged[k] = ln  # the later (project) line wins over the repo copy
-    index.write_text("\n".join(merged[k] for k in seen if k in merged) + "\n", encoding="utf-8")
+        if src.exists():
+            for ln in src.read_text(encoding="utf-8").splitlines():
+                k = key(ln)
+                if k in deleted or (k and k in have) or (i > 0 and not k):
+                    continue  # headings only from the master index
+                lines.append(ln)
+                if k:
+                    have.add(k)
+    # notes that only another computer has (in the repo, not here) keep their index line at the end
+    extra = [ln for ln in repo_lines if (k := key(ln)) and k not in have and k not in deleted and (REPO / "memory" / k).exists()]
+    if extra:
+        lines += [""] + extra
+    index.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8")
     print("memory:", mem, "файл жаңарды")
     out = REPO / "chats"
     out.mkdir(exist_ok=True)
@@ -173,9 +188,11 @@ def restore(before, after, last_sync, vault, mem):
                          capture_output=True, text=True, encoding="utf-8", check=True).stdout.split("\n")
     since = datetime.datetime.fromisoformat(last_sync).timestamp() if last_sync else None
     put_n, kept = 0, []
+    tomb = REPO / "memory" / ".deleted"
+    deleted = {ln.strip() for ln in tomb.read_text(encoding="utf-8").splitlines() if ln.strip()} if tomb.exists() else set()
     for rel in filter(None, out):
-        if rel == "memory/MEMORY.md":
-            continue  # index lines are merged below
+        if rel in ("memory/MEMORY.md", "memory/.deleted") or rel.split("/", 1)[1] in deleted:
+            continue  # index lines are merged below; retired notes never come back
         src = REPO / rel
         top, rest = rel.split("/", 1)
         dst = (vault if top == "obsidian" else mem) / rest
