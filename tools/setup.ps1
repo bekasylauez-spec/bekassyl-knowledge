@@ -15,9 +15,18 @@ function Need($cmd, $id) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) { throw "$cmd табылмады - орнатып, қайта іске қос" }
 }
 Need git Git.Git
-Need python Python.Python.3.13
 
 if (Test-Path "$Repo\.git") { git -C $Repo pull --rebase --autostash } else { git clone $Url $Repo }
+
+# Нағыз Python (WindowsApps-тағы Store «stub» емес)
+$Py = & "$Repo\tools\findpy.ps1"
+if (-not $Py) {
+    Write-Host "Орнатылуда: Python 3.13"
+    winget install --id Python.Python.3.13 -e --scope user --accept-source-agreements --accept-package-agreements
+    $Py = & "$Repo\tools\findpy.ps1"
+}
+if (-not $Py) { throw "Python табылмады - python.org-тан орнатып, қайта іске қос" }
+Write-Host "Python: $Py"
 
 # Жұмыс папкасы, Obsidian базасы, Claude memory (кілт: D:\РАБОЧКА -> D---------)
 $hasDrive = Test-Path (Split-Path $Work -Qualifier)
@@ -42,7 +51,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$Repo\tools\obsidian-vault.
 
 # Claude жұмыс істеп болған сайын GitHub-қа автосинхрон
 $env:PYTHONIOENCODING = "utf-8"
-python "$Repo\tools\install_autosync.py"
+& $Py "$Repo\tools\install_autosync.py"
+if ($LASTEXITCODE -ne 0) { throw "install_autosync.py сәтсіз" }
 
 # Бірінші синхрон: GitHub-қа кіру сұралса - bekasylauez-spec аккаунтымен кір
 powershell -NoProfile -ExecutionPolicy Bypass -File "$Repo\tools\update.ps1" -Work $Work

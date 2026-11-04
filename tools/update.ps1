@@ -28,17 +28,21 @@ try {
 
     # 2. Басқа компьютерден келген өзгерісті осында қою - тек мұнда соңғы синхроннан кейін өзгермеген файлдарға
     $env:PYTHONIOENCODING = "utf-8"
+    $Py = & "$Repo\tools\findpy.ps1"
+    if (-not $Py) { throw "Python табылмады (tools\setup.ps1 қайта іске қос)" }
+    function RunPy { $ErrorActionPreference = 'Continue'; $o = & $Py @args 2>&1 | ForEach-Object { "$_" }; [pscustomobject]@{ Code = $LASTEXITCODE; Out = $o } }
     if ($before -ne $after) {
         New-Item -ItemType Directory -Force $Vault, $Mem | Out-Null
         $ls = if ($lastSync) { $lastSync.ToString('s') } else { '-' }
-        $r = python "$Repo\tools\build.py" restore $before $after $ls $Vault $Mem 2>&1
-        if ($LASTEXITCODE -ne 0) { throw "restore: $($r -join ' | ')" }
-        Say "GitHub-тан алынды: $($r -join '; ')"
+        $r = RunPy "$Repo\tools\build.py" restore $before $after $ls $Vault $Mem
+        if ($r.Code -ne 0) { throw "restore: $($r.Out -join ' | ')" }
+        Say "GitHub-тан алынды: $($r.Out -join '; ')"
     }
 
     # 3. Осы компьютердегіні репоға жинау
-    $out = python "$Repo\tools\build.py" 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "build.py: $($out -join ' | ')" }
+    $b = RunPy "$Repo\tools\build.py"
+    if ($b.Code -ne 0) { throw "build.py: $($b.Out -join ' | ')" }
+    $out = $b.Out
 
     # 4. Жіберу
     git -C $Repo add -A

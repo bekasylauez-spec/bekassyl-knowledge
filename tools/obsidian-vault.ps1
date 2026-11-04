@@ -23,6 +23,13 @@ if (-not $exe) {
     $cmd = (Get-ItemProperty 'Registry::HKEY_CLASSES_ROOT\obsidian\shell\open\command' -ErrorAction SilentlyContinue).'(default)'
     if ($cmd -match '"([^"]+Obsidian\.exe)"') { $exe = $Matches[1] }
 }
+if (-not $exe -and -not $NoLaunch -and (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host 'Obsidian не установлен - устанавливаю через winget...'
+    $ErrorActionPreference = 'Continue'
+    winget install --id Obsidian.Obsidian -e --scope user --accept-source-agreements --accept-package-agreements
+    $ErrorActionPreference = 'Stop'
+    $exe = @("$env:LOCALAPPDATA\Programs\Obsidian\Obsidian.exe", "$env:LOCALAPPDATA\Obsidian\Obsidian.exe", "$env:ProgramFiles\Obsidian\Obsidian.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
 if ($exe) { Write-Host "Obsidian: $exe" } else { Write-Host 'Obsidian не установлен. Скачай с https://obsidian.md и установи, потом запусти этот файл снова.' -ForegroundColor Yellow }
 
 # 3. Закрыть Obsidian (при выходе он перезаписывает свои настройки)
