@@ -1,0 +1,10 @@
+(defun c:LAYS (/ d e f)
+  (setq f (open (strcat "C:/Users/beka/AppData/Local/Temp/claude/D---------------/72af3b3f-2397-48af-af38-773774531e1c/scratchpad/ar/" (getvar "DWGNAME") "_lays.txt") "w"))
+  (setq d (dictsearch (namedobjdict) "ACAD_LAYOUT"))
+  (foreach p d
+    (if (= (car p) 350)
+      (progn (setq e (entget (cdr p)))
+        (princ (cdr (assoc 1 e)) f) (princ "\t" f) (princ (cdr (assoc 71 e)) f) (princ "\t" f)
+        (princ (cdr (assoc 10 e)) f) (princ (cdr (assoc 11 e)) f) (princ "\n" f))))
+  (princ "EXT " f) (princ (getvar "EXTMIN") f) (princ (getvar "EXTMAX") f) (princ "\n" f)
+  (close f) (princ))

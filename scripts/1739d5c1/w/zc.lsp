@@ -1,0 +1,6 @@
+(defun c:ZC (/ f ss i e ty c)
+  (setq f (open "C:/Users/beka/AppData/Local/Temp/claude/D---------------/1739d5c1-e711-4734-a198-42e10d4e5047/scratchpad/w/zc.txt" "w") ss (ssget "_X" '((410 . "Model"))) i 0 c nil)
+  (repeat (sslength ss) (setq e (entget (ssname ss i)) i (1+ i) ty (cdr (assoc 0 e)))
+    (if (assoc ty c) (setq c (subst (cons t (1+ (cdr (assoc ty c)))) (assoc ty c) c)) (setq c (cons (cons ty 1) c))))
+  (foreach p c (write-line (strcat (car p) " " (itoa (cdr p))) f))
+  (close f) (princ))

@@ -1,0 +1,8 @@
+(defun c:DD ( / f ss i e)
+  (setq f (open (getenv "DMPOUT") "w"))
+  (setq ss (ssget "_X" '((0 . "DIMENSION"))) i 0)
+  (if ss (repeat (sslength ss)
+    (setq e (entget (ssname ss i)) i (1+ i))
+    (if (> (abs (sin (cdr (assoc 50 e)))) 0.5)
+      (write-line (vl-princ-to-string (vl-remove-if '(lambda (p) (member (car p) '(-1 330 5 100 102 360 2))) e)) f))))
+  (close f) (princ))

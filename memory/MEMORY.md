@@ -68,3 +68,28 @@
 - [AutoCAD eAtMaxReaders](acad-eatmaxreaders.md) — rz.cs: McObject dispose (MGet), dyn allowed values шақырма; әр партиядан соң сақта; бұзылса данамды қайта аш
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (BEKA-1 junction, BEKA-2 symlink через link-memory.cmd); өзгеріс келесі чатта көрінеді
 - [Дос: АЙДОСЪАН](friend-aidosan.md) — пайдаланушының досының аты
+- [Revit КЖ/КМ оформление](revit-kzh-oformlenie.md) — Гостевой дом DWG→Revit sheets via Dynamo; outputs in D:\Бекасыл КЖ КМ\Revit_оформление
+- [Do the work myself](feedback-full-autonomy.md) — user automates; I run Revit/AutoCAD end-to-end, no manual hand-offs
+- [Revit MCP bridge](revit-mcp-bridge.md) — drive Revit 2025 via port 8080 send_code_to_revit C#, Idling trick, UI clicks, DWG text→geometry
+- [Text height rule (all projects)](feedback-text-height.md) — mark/leader text = dimension text = 2.5 mm, every future project
+- [КЖ standard folder](kzh-standard-folder.md) — keep approved rules in D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md, update on every approval
+- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf updater keeps mark leaders on shelf end; Revit nearest-of-4 attach rule
+- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + one dim style, armirovanie sections 1:25, straight leaders, round node callouts, native section marks
+- [Originals are the DWGs](originals-are-dwg.md) — compare with network DWG / png\sheets, never Лист N-N.png; exact-copy pipeline for 3.9
+- [CAD tooling notes](user-env-cad.md) — accoreconsole/LISP pitfalls, Revit 2025 + Dynamo 3.0.3, embedded Python 3.9
+- [Template catalog + template schedules](template-catalog.md) — read шаблон_каталог before any node/spec; specs = template's own СА/ВМ/ВРС/ВД schedules
+- [RAS course notes](ras-course.md) — 14-lesson Revit КЖ course studied; read RAS_курс\КУРС_ҚОРЫТЫНДЫ.md before new projects/elements
+- [3602 КМ порталы](project-3602-km-portals.md) — NRG Maftun Makon portals/portiks/cornice КМ: Revit file, scripts, state 29.10.2026
+- [КМ tube families](km-tube-families.md) — own ГОСТ 30245 framing/column families + КМ_* shared params, reuse in every КМ job
+- [Own template БК_КМ.rte](project-bk-template.md) — prefix БК_, no third-party traces; marks = tube types; API can't edit labels (copy them); cleanup chain t02…t15
+- [КМ error checklist + checker agent](feedback-km-error-checklist.md) — audit КМ model (q20 / km-model-checker) before showing; reply in Kazakh; say «Бәрі бітті» at the end
+- [Оформление together](feedback-oformlenie-together.md) — don't rush КМ оформление alone; go sheet by sheet with the user
+- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
+- [Revit 2025 plugins + family creation](revit2025-plugins-families.md) — .NET 8, КЖ/КМ add-ins survey, Autodesk family workflow notes in _Стандарт_КЖ
+- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
+- [Алатау цех Блок 1 КМ](project-alatau-ceh-km.md) — full Revit КМ model from the user's own DWG; data file, DWG dump tools, open questions
+- [Match the DWG exactly](feedback-match-dwg-exactly.md) — shapes, sizes, lengths of every part from the user's drawing, read node by node; no generic details
+- [House 3D = web brochure](house-3d-web-format.md) — «үй 3Д» means three.js artifact with renders, not Revit; Edge headless render pipeline
+- [Завод В109 КМ restyle](project-zavod-b109-km.md) — Tekla DWG → user's AutoCAD style in place, live СПДС dims; sheet 03 done, pipeline in Завод_В109_КМ\_авто
+- [Obsidian vault Bekassyl](reference-obsidian-bekassyl.md) — \192.168.0.107\рабочка\Bekassyl: read rules + project note before any work
+- [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes

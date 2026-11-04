@@ -1,0 +1,5 @@
+(defun c:PLW ( / p1 p2 out)
+  (setq p1 (list (atof (getenv "PWX0")) (atof (getenv "PWY0"))) p2 (list (atof (getenv "PWX1")) (atof (getenv "PWY1"))) out (getenv "PLTOUT"))
+  (setvar "BACKGROUNDPLOT" 0)
+  (command "_.-PLOT" "_Y" "Model" "DWG To PDF.pc3" (getenv "PWPAPER") "_M" "_L" "_N" "_W" p1 p2 "_F" "_C" "_Y" "monochrome.ctb" "_Y" "_A" out "_N" "_Y")
+  (princ))

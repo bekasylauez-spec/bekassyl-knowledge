@@ -1,0 +1,7 @@
+(setq *A0* "ISO ��� ����� A0 (841.00 x 1189.00 ��)")
+(defun plotwin (p1 p2 out paper)
+  (command "_.-PLOT" "_Y" "Model" "DWG To PDF.pc3" paper "_M" "_L" "_N" "_W" p1 p2 "_F" "_C" "_Y" "monochrome.ctb" "_Y" "" out "_N" "_Y"))
+(defun c:PEXT ()
+  (setvar "BACKGROUNDPLOT" 0) (setvar "FILEDIA" 0)
+  (plotwin (getvar "EXTMIN") (getvar "EXTMAX") (strcat "C:/Users/beka/AppData/Local/Temp/claude/D---------------/72af3b3f-2397-48af-af38-773774531e1c/scratchpad/ar/" (vl-string-subst "" ".dwg" (getvar "DWGNAME")) "_ext.pdf") *A0*)
+  (princ))

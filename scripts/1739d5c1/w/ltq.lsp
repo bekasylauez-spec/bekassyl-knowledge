@@ -1,0 +1,5 @@
+(defun c:LTQ (/ f d n)
+  (setq f (open "C:/Users/beka/AppData/Local/Temp/claude/D---------------/1739d5c1-e711-4734-a198-42e10d4e5047/scratchpad/w/ltq.txt" "w"))
+  (write-line (vl-princ-to-string (tblsearch "LTYPE" "���� 2.303 5")) f)
+  (foreach n (layoutlist) (setvar "CTAB" n) (write-line (strcat n " PSLTSCALE=" (itoa (getvar "PSLTSCALE"))) f))
+  (close f) (princ))
