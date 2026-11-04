@@ -1,0 +1,870 @@
+using System;
+using System.IO;
+using System.Text;
+using System.Collections;
+using System.Collections.Generic;
+using System.Web.Script.Serialization;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using Multicad;
+using Multicad.DatabaseServices;
+using Multicad.Symbols;
+using Multicad.Dimensions;
+using MG = Multicad.Geometry;
+
+namespace RN
+{
+    // Drawing ops (with СПДС/Multicad) from %TEMP%\lk_ops.json; log %TEMP%\lk_log.txt; tag->handle map %TEMP%\rn_map.json
+    public class Cmds
+    {
+        static StringBuilder log = new StringBuilder();
+        static string tmp = Environment.GetEnvironmentVariable("TEMP");
+        static System.Globalization.CultureInfo IC = System.Globalization.CultureInfo.InvariantCulture;
+        static double D(object o) { return Convert.ToDouble(o, IC); }
+        static string S(Dictionary<string, object> m, string k, string def) { object v; return m.TryGetValue(k, out v) && v != null ? v.ToString() : def; }
+        static bool Has(Dictionary<string, object> m, string k) { object v; return m.TryGetValue(k, out v) && v != null; }
+        static IList L(object o) { return (IList)o; }
+        static Point2d P2(object o) { var a = L(o); return new Point2d(D(a[0]), D(a[1])); }
+        static Point3d P(object o) { var a = L(o); return new Point3d(D(a[0]), D(a[1]), 0); }
+        static MG.Point3d MP(object o) { var a = L(o); return new MG.Point3d(D(a[0]), D(a[1]), 0); }
+        static Dictionary<string, string> map = new Dictionary<string, string>();
+        static string mapFile = Path.Combine(tmp, "rn_map.json");
+
+        static ObjectId H(Database db, string h)
+        {
+            if (map.ContainsKey(h)) h = map[h];
+            ObjectId id;
+            if (db.TryGetObjectId(new Handle(Convert.ToInt64(h, 16)), out id)) return id;
+            throw new System.Exception("no handle " + h);
+        }
+        static void Tag(Dictionary<string, object> m, Entity e)
+        {
+            string t = S(m, "tag", null);
+            if (t != null) map[t] = e.Handle.ToString();
+        }
+
+        static void Props(Entity e, Dictionary<string, object> m, Database db, Transaction tr)
+        {
+            string lay = S(m, "layer", null);
+            if (lay != null)
+            {
+                var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+                if (!lt.Has(lay)) { lt.UpgradeOpen(); var r = new LayerTableRecord(); r.Name = lay; lt.Add(r); tr.AddNewlyCreatedDBObject(r, true); }
+                e.Layer = lay;
+            }
+            if (Has(m, "color")) e.ColorIndex = Convert.ToInt32(m["color"]);
+            if (Has(m, "lw")) e.LineWeight = (LineWeight)Convert.ToInt32(m["lw"]);
+            if (Has(m, "ltype"))
+            {
+                string ln = S(m, "ltype", "ByLayer");
+                var ltt = (LinetypeTable)tr.GetObject(db.LinetypeTableId, OpenMode.ForRead);
+                if (ltt.Has(ln) || ln == "ByLayer") e.Linetype = ln; else log.AppendLine("no linetype " + ln);
+            }
+            if (Has(m, "ltscale")) e.LinetypeScale = D(m["ltscale"]);
+        }
+
+        public static void Apply()
+        {
+            log.Clear();
+            try { var js0 = new JavaScriptSerializer(); var mm = (Dictionary<string, object>)js0.DeserializeObject(File.ReadAllText(mapFile, Encoding.UTF8)); foreach (var kv in mm) map[kv.Key] = kv.Value.ToString(); } catch { }
+            var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+            var db = doc.Database;
+            var js = new JavaScriptSerializer(); js.MaxJsonLength = int.MaxValue;
+            var ops = (IList)js.DeserializeObject(File.ReadAllText(Path.Combine(tmp, "lk_ops.json"), Encoding.UTF8));
+            int nerr = 0;
+            foreach (var o in ops)
+            {
+                var m = (Dictionary<string, object>)o;
+                if (S(m, "t", "") == "savedoc")
+                {
+                    try { db.SaveAs(doc.Name, true, DwgVersion.Current, db.SecurityParameters); log.AppendLine("saved " + doc.Name); }
+                    catch (System.Exception ex) { nerr++; log.AppendLine("ERR savedoc: " + ex.Message); }
+                    continue;
+                }
+                try
+                {
+                    using (var tr = db.TransactionManager.StartTransaction())
+                    {
+                        Op(db, tr, m);
+                        tr.Commit();
+                    }
+                }
+                catch (System.Exception ex) { nerr++; log.AppendLine("ERR " + S(m, "t", "?") + " " + S(m, "tag", "") + ": " + ex.Message); }
+            }
+            log.AppendLine("done, errors " + nerr);
+            File.WriteAllText(mapFile, new JavaScriptSerializer().Serialize(map), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tmp, "lk_log.txt"), log.ToString(), Encoding.UTF8);
+        }
+
+        static string id2cls(Entity e) { return e.ObjectId.ObjectClass.DxfName; }
+        static BlockTableRecord MS(Database db, Transaction tr)
+        {
+            return (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite);
+        }
+
+        static void Op(Database db, Transaction tr, Dictionary<string, object> m)
+        {
+            string t = S(m, "t", "");
+            if (t == "pl")
+            {
+                var pl = new Polyline();
+                var pts = L(m["p"]);
+                IList bl = Has(m, "b") ? L(m["b"]) : null;
+                for (int i = 0; i < pts.Count; i++) pl.AddVertexAt(i, P2(pts[i]), bl != null ? D(bl[i]) : 0, 0, 0);
+                pl.Closed = Has(m, "closed") && (bool)m["closed"];
+                pl.SetDatabaseDefaults(db);
+                if (Has(m, "w")) pl.ConstantWidth = D(m["w"]);
+                Props(pl, m, db, tr);
+                MS(db, tr).AppendEntity(pl); tr.AddNewlyCreatedDBObject(pl, true); Tag(m, pl);
+            }
+            else if (t == "circle")
+            {
+                var c = new Circle(P(m["c"]), Vector3d.ZAxis, D(m["r"]));
+                c.SetDatabaseDefaults(db); Props(c, m, db, tr);
+                MS(db, tr).AppendEntity(c); tr.AddNewlyCreatedDBObject(c, true); Tag(m, c);
+            }
+            else if (t == "hatch")
+            {
+                var h = new Hatch();
+                h.SetDatabaseDefaults(db);
+                Props(h, m, db, tr);
+                MS(db, tr).AppendEntity(h); tr.AddNewlyCreatedDBObject(h, true);
+                string pat = S(m, "pat", "ANSI31");
+                h.SetHatchPattern(pat == "SOLID" ? HatchPatternType.PreDefined : HatchPatternType.PreDefined, pat);
+                if (pat != "SOLID") { h.PatternScale = Has(m, "sc") ? D(m["sc"]) : 1; if (Has(m, "ang")) h.PatternAngle = D(m["ang"]); h.SetHatchPattern(HatchPatternType.PreDefined, pat); }
+                foreach (var lp in L(m["loops"]))
+                {
+                    var pc = new Point2dCollection(); var bc = new DoubleCollection();
+                    var pts = L(lp);
+                    for (int i = 0; i < pts.Count; i++) { pc.Add(P2(pts[i])); bc.Add(0); }
+                    pc.Add(P2(pts[0])); bc.Add(0);
+                    h.AppendLoop(HatchLoopTypes.Polyline, pc, bc);
+                }
+                h.EvaluateHatch(true); Tag(m, h);
+            }
+            else if (t == "mtext")
+            {
+                var mt = new MText();
+                mt.SetDatabaseDefaults(db);
+                mt.Location = P(m["at"]);
+                mt.TextHeight = D(m["h"]);
+                if (Has(m, "w")) mt.Width = D(m["w"]);
+                mt.Attachment = (AttachmentPoint)Convert.ToInt32(S(m, "att", "1"));
+                var st = (TextStyleTable)tr.GetObject(db.TextStyleTableId, OpenMode.ForRead);
+                string sn = S(m, "style", "");
+                if (sn != "" && st.Has(sn)) mt.TextStyleId = st[sn];
+                if (Has(m, "rot")) mt.Rotation = D(m["rot"]);
+                mt.Contents = S(m, "s", "");
+                Props(mt, m, db, tr);
+                MS(db, tr).AppendEntity(mt); tr.AddNewlyCreatedDBObject(mt, true); Tag(m, mt);
+            }
+            else if (t == "clone")
+            {
+                // deep clone within drawing, then scale about base and move base->to; optional text / pts
+                var src = H(db, S(m, "h", ""));
+                var ids = new ObjectIdCollection(); ids.Add(src);
+                var im = new IdMapping();
+                db.DeepCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, false);
+                foreach (IdPair p in im)
+                {
+                    if (!p.IsCloned || !p.IsPrimary || p.Key != src) continue;
+                    var e = (Entity)tr.GetObject(p.Value, OpenMode.ForWrite);
+                    var bs = Has(m, "base") ? P(m["base"]) : Point3d.Origin;
+                    var to = Has(m, "to") ? P(m["to"]) : bs;
+                    if (Has(m, "s")) e.TransformBy(Matrix3d.Scaling(D(m["s"]), bs));
+                    e.TransformBy(Matrix3d.Displacement(to - bs));
+                    if (Has(m, "text")) { if (e is MText) ((MText)e).Contents = S(m, "text", ""); else if (e is DBText) ((DBText)e).TextString = S(m, "text", ""); }
+                    Props(e, m, db, tr);
+                    Tag(m, e);
+                    log.AppendLine("clone " + S(m, "h", "") + ">" + e.Handle + " " + S(m, "tag", ""));
+                }
+            }
+            else if (t == "dim")
+            {
+                // clone template RotatedDimension, set points
+                var src = (RotatedDimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForRead);
+                var d = (RotatedDimension)src.Clone();
+                MS(db, tr).AppendEntity(d); tr.AddNewlyCreatedDBObject(d, true);
+                d.XLine1Point = P(m["p1"]); d.XLine2Point = P(m["p2"]); d.DimLinePoint = P(m["dl"]);
+                d.Rotation = Has(m, "rot") ? D(m["rot"]) : 0;
+                if (Has(m, "dscale")) d.Dimscale = D(m["dscale"]);
+                if (Has(m, "lfac")) d.Dimlfac = D(m["lfac"]);
+                if (Has(m, "txt")) d.DimensionText = S(m, "txt", "");
+                d.UsingDefaultTextPosition = true;
+                if (Has(m, "tx")) { d.UsingDefaultTextPosition = false; d.TextPosition = P(m["tx"]); }
+                Props(d, m, db, tr);
+                Tag(m, d);
+            }
+            else if (t == "adim")
+            {
+                var src = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForRead);
+                var d = new AlignedDimension(P(m["p1"]), P(m["p2"]), P(m["dl"]), "", src.DimensionStyle);
+                d.SetDatabaseDefaults(db);
+                d.Layer = src.Layer;
+                d.Dimscale = Has(m, "dscale") ? D(m["dscale"]) : src.Dimscale;
+                if (Has(m, "lfac")) d.Dimlfac = D(m["lfac"]);
+                MS(db, tr).AppendEntity(d); tr.AddNewlyCreatedDBObject(d, true);
+                Tag(m, d);
+            }
+            else if (t == "note")
+            {
+                var np = new McNotePosition();
+                np.FirstLine = S(m, "l1", ""); np.SecondLine = S(m, "l2", "");
+                np.Origin = MP(m["origin"]);
+                np.DbEntity.Scale = D(m["scale"]);
+                np.DbEntity.Layer = S(m, "layer", "Размеры");
+                string ar = S(m, "arrow", "oblique");
+                np.Arrow = ar == "arrow" ? MG.Arrows.Arrow : ar == "oblique" ? MG.Arrows.Oblique : ar == "open" ? MG.Arrows.Open : MG.Arrows.None;
+                if (Has(m, "ts")) { np.TextSize = D(m["ts"]); np.SmallTextSize = D(m["ts"]); }
+                if (Has(m, "style")) np.TextStyle = S(m, "style", "ГОСТ 2.304");
+                try { var pa = np.GetType().GetProperty("Align"); pa.SetValue(np, Enum.Parse(pa.PropertyType, "Center"), null); } catch { }
+                McObjectManager.Add2Document(np.DbEntity);
+                if (Has(m, "target")) np.Leader.AddSegment(MP(m["target"]), np.Origin);
+                if (Has(m, "targets")) foreach (object q in L(m["targets"])) np.Leader.AddSegment(MP(q), np.Origin);
+                np.DbEntity.Update();
+                log.AppendLine("note " + S(m, "tag", "") + " " + np.FirstLine);
+            }
+            else if (t == "sdim")
+            {
+                var dm = new McLinearDimension();
+                dm.SetPosition(0, MP(m["p1"])); dm.SetPosition(1, MP(m["p2"]));
+                if (Has(m, "dir")) { var dv = L(m["dir"]); dm.Direction = new MG.Vector3d(D(dv[0]), D(dv[1]), 0); }
+                dm.LinePosition = MP(m["dl"]);
+                dm.DbEntity.Scale = D(m["scale"]);
+                dm.DbEntity.Layer = S(m, "layer", "Размеры");
+                McObjectManager.Add2Document(dm.DbEntity);
+                dm.DbEntity.Update();
+            }
+            else if (t == "mcprobe")
+            {
+                var w = L(m["win"]);
+                var ms = MS(db, tr);
+                int n = 0;
+                foreach (ObjectId id in ms)
+                {
+                    if (!id.ObjectClass.Name.Contains("Imp") && !id.ObjectClass.DxfName.StartsWith("MCS") && !id.ObjectClass.DxfName.StartsWith("SPDS")) continue;
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MinPoint.X < D(w[0]) || x.MaxPoint.X > D(w[2]) || x.MinPoint.Y < D(w[1]) || x.MaxPoint.Y > D(w[3])) continue;
+                    var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr));
+                    try
+                    {
+                        string info = mo == null ? "null" : mo.GetType().Name;
+                        var np = mo as McNotePosition;
+                        if (np != null) info += " [" + np.FirstLine + "|" + np.SecondLine + "] scale " + np.DbEntity.Scale + " org " + np.Origin;
+                        log.AppendLine(e.Handle + " " + id.ObjectClass.DxfName + " " + info + " ext " + x.MinPoint.X.ToString("0", IC) + "," + x.MinPoint.Y.ToString("0", IC) + " " + x.MaxPoint.X.ToString("0", IC) + "," + x.MaxPoint.Y.ToString("0", IC));
+                    }
+                    finally { var dd = mo as IDisposable; if (dd != null) dd.Dispose(); }
+                    if (++n > 400) break;
+                }
+            }
+            else if (t == "reflect")
+            {
+                var asm = typeof(McNotePosition).Assembly;
+                foreach (var tn in L(m["types"]))
+                {
+                    var ty = asm.GetType(tn.ToString());
+                    if (ty == null) { log.AppendLine("no type " + tn); continue; }
+                    log.AppendLine("== " + ty.FullName + " : " + ty.BaseType);
+                    foreach (var pi in ty.GetProperties()) log.AppendLine("  P " + pi.PropertyType.Name + " " + pi.Name + (pi.CanWrite ? " rw" : ""));
+                    foreach (var mi in ty.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly)) if (!mi.IsSpecialName) log.AppendLine("  M " + mi.Name + "(" + mi.GetParameters().Length + ")");
+                }
+            }
+            else if (t == "knotinfo")
+            {
+                var id = H(db, S(m, "h", ""));
+                var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr));
+                foreach (var pi in mo.GetType().GetProperties())
+                {
+                    try { log.AppendLine("  " + pi.Name + " = " + pi.GetValue(mo, null)); } catch { }
+                }
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "mcscale")
+            {
+                var id = H(db, S(m, "h", ""));
+                var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity;
+                log.AppendLine("mcscale " + S(m, "h", "") + " was " + dbe.Scale);
+                dbe.Scale = D(m["v"]);
+                dbe.Update();
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "move")
+            {
+                var dv = L(m["d"]);
+                foreach (var h in L(m["h"])) ((Entity)tr.GetObject(H(db, h.ToString()), OpenMode.ForWrite)).TransformBy(Matrix3d.Displacement(new Vector3d(D(dv[0]), D(dv[1]), 0)));
+            }
+            else if (t == "settext")
+            {
+                var e = tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                if (e is MText) ((MText)e).Contents = S(m, "s", ""); else if (e is DBText) ((DBText)e).TextString = S(m, "s", "");
+                if (Has(m, "w") && e is MText) ((MText)e).Width = D(m["w"]);
+            }
+            else if (t == "eraseregion")
+            {
+                var w = L(m["win"]);
+                var keep = new HashSet<string>(); if (Has(m, "keep")) foreach (var k in L(m["keep"])) { string kk = k.ToString(); if (map.ContainsKey(kk)) kk = map[kk]; keep.Add(kk.ToUpper()); }
+                var ms = MS(db, tr); int n = 0; var ids = new List<ObjectId>();
+                foreach (ObjectId id in ms)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    if (keep.Contains(e.Handle.ToString())) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    bool inside = x.MinPoint.X >= D(w[0]) && x.MaxPoint.X <= D(w[2]) && x.MinPoint.Y >= D(w[1]) && x.MaxPoint.Y <= D(w[3]);
+                    bool hit = x.MaxPoint.X >= D(w[0]) && x.MinPoint.X <= D(w[2]) && x.MaxPoint.Y >= D(w[1]) && x.MinPoint.Y <= D(w[3]);
+                    if (S(m, "mode", "inside") == "intersect" ? hit : inside) ids.Add(id);
+                }
+                foreach (var id in ids) { tr.GetObject(id, OpenMode.ForWrite).Erase(); n++; }
+                log.AppendLine("eraseregion " + n);
+            }
+            else if (t == "import")
+            {
+                var bs = P(m["base"]); var to = P(m["to"]);
+                var xf = Matrix3d.Displacement(to - bs);
+                string pre = S(m, "pre", "I:");
+                using (var side = new Database(false, true))
+                {
+                    side.ReadDwgFile(S(m, "file", ""), FileOpenMode.OpenForReadAndAllShare, true, "");
+                    side.CloseInput(true);
+                    var ids = new ObjectIdCollection(); var olds = new List<string>();
+                    foreach (var h in L(m["h"])) { ObjectId id; if (side.TryGetObjectId(new Handle(Convert.ToInt64(h.ToString(), 16)), out id)) { ids.Add(id); olds.Add(h.ToString().ToUpper()); } else log.AppendLine("import: no " + h); }
+                    var im = new IdMapping();
+                    side.WblockCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, DuplicateRecordCloning.Ignore, false);
+                    int n = 0;
+                    for (int i = 0; i < ids.Count; i++)
+                    {
+                        if (!im.Contains(ids[i])) continue;
+                        var e = tr.GetObject(im[ids[i]].Value, OpenMode.ForWrite) as Entity; if (e == null) continue;
+                        e.TransformBy(xf);
+                        map[pre + olds[i]] = e.Handle.ToString(); n++;
+                    }
+                    log.AppendLine("import " + n + " of " + ids.Count);
+                }
+            }
+            else if (t == "frames")
+            {
+                var ms = MS(db, tr);
+                foreach (ObjectId id in ms)
+                {
+                    if (id.ObjectClass.DxfName != "SPDSFORMAT") continue;
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    log.AppendLine("FRAME " + e.Handle + " " + x.MinPoint.X.ToString("0.#", IC) + " " + x.MinPoint.Y.ToString("0.#", IC) + " " + x.MaxPoint.X.ToString("0.#", IC) + " " + x.MaxPoint.Y.ToString("0.#", IC));
+                }
+            }
+            else if (t == "sp_get")
+            {
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForRead);
+                    var pc = new Point3dCollection(); e.GetStretchPoints(pc);
+                    var sb = new StringBuilder("SP " + hh + " " + e.GetType().Name + " " + id2cls(e) + ":");
+                    for (int i = 0; i < pc.Count; i++) sb.Append(" [" + i + "]" + pc[i].X.ToString("0.#", IC) + "," + pc[i].Y.ToString("0.#", IC));
+                    log.AppendLine(sb.ToString());
+                    if (Has(m, "props"))
+                    {
+                        var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(e.ObjectId.OldIdPtr));
+                        if (mo != null)
+                        {
+                            foreach (var pi in mo.GetType().GetProperties())
+                            {
+                                if (pi.GetIndexParameters().Length > 0) continue;
+                                string n = pi.Name; if (n == "GeometryCache" || n.Contains("Contour") || n == "BeforeCutGeometry") continue;
+                                try
+                                {
+                                    var val = pi.GetValue(mo, null);
+                                    log.AppendLine("   " + n + " = " + val + (pi.CanWrite ? "  (rw)" : ""));
+                                    if (Has(m, "deep") && val != null && (n == "Axis" || n == "DbEntity"))
+                                        foreach (var p2 in val.GetType().GetProperties())
+                                        {
+                                            if (p2.GetIndexParameters().Length > 0) continue;
+                                            try { log.AppendLine("      ." + p2.Name + " = " + p2.GetValue(val, null) + (p2.CanWrite ? "  (rw)" : "")); } catch { }
+                                        }
+                                }
+                                catch { }
+                            }
+                            var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+                        }
+                    }
+                }
+            }
+            else if (t == "sp_set")
+            {
+                var e = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var pc = new Point3dCollection(); e.GetStretchPoints(pc);
+                foreach (var q in L(m["pts"]))
+                {
+                    var a = L(q); int i = Convert.ToInt32(a[0]);
+                    var target = new Point3d(D(a[1]), D(a[2]), 0);
+                    var cur = new Point3dCollection(); e.GetStretchPoints(cur);
+                    var ic = new IntegerCollection(); ic.Add(i);
+                    e.MoveStretchPointsAt(ic, target - cur[i]);
+                }
+            }
+            else if (t == "xform")
+            {
+                // move base->to, rotate by ang (rad) about to, uniform scale s about to
+                var e = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var bs = P(m["base"]); var to = P(m["to"]);
+                e.TransformBy(Matrix3d.Displacement(to - bs));
+                if (Has(m, "ang")) e.TransformBy(Matrix3d.Rotation(D(m["ang"]), Vector3d.ZAxis, to));
+                if (Has(m, "mirror")) e.TransformBy(Matrix3d.Mirroring(new Line3d(to, to + Vector3d.YAxis)));
+                if (Has(m, "s")) e.TransformBy(Matrix3d.Scaling(D(m["s"]), to));
+            }
+            else if (t == "mcset")
+            {
+                var e = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(e.ObjectId.OldIdPtr));
+                foreach (var kv in (Dictionary<string, object>)m["set"])
+                {
+                    object target = mo; string prop = kv.Key;
+                    if (prop == "Scale") { var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity; dbe.Scale = D(kv.Value); continue; }
+                    var pi = mo.GetType().GetProperty(prop);
+                    if (pi == null) { log.AppendLine("no prop " + prop); continue; }
+                    object v = kv.Value;
+                    if (pi.PropertyType == typeof(double)) v = D(v);
+                    else if (pi.PropertyType == typeof(int)) v = Convert.ToInt32(v);
+                    else if (pi.PropertyType == typeof(bool)) v = Convert.ToBoolean(v);
+                    else if (pi.PropertyType == typeof(MG.Point3d)) v = MP(v);
+                    else if (pi.PropertyType.IsEnum) v = Enum.Parse(pi.PropertyType, v.ToString());
+                    else v = v.ToString();
+                    pi.SetValue(mo, v, null);
+                }
+                var dbe2 = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity; dbe2.Update();
+                var d3 = mo as IDisposable; if (d3 != null) d3.Dispose();
+            }
+            else if (t == "levelval")
+            {
+                // byte-replace value text inside a cloned SPDS level mark (same length), re-create, erase old
+                var id = H(db, S(m, "h", ""));
+                var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity;
+                byte[] b = dbe.SerializeToBytes();
+                int cnt = 0; var outb = new List<byte>(b);
+                foreach (var enc in new Encoding[] { Encoding.GetEncoding(28591), Encoding.Unicode })
+                {
+                    var a = enc.GetBytes(S(m, "old", "")); var r = enc.GetBytes(S(m, "value", ""));
+                    var cur = outb.ToArray(); outb = new List<byte>();
+                    for (int i = 0; i < cur.Length; i++)
+                    {
+                        bool eq = i <= cur.Length - a.Length;
+                        if (eq) for (int k = 0; k < a.Length; k++) if (cur[i + k] != a[k]) { eq = false; break; }
+                        if (eq) { outb.AddRange(r); i += a.Length - 1; cnt++; } else outb.Add(cur[i]);
+                    }
+                }
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+                if (cnt == 0) { log.AppendLine("levelval: pattern not found"); return; }
+                var ne = McDbEntity.DeserializeNewFromBytes(outb.ToArray());
+                McObjectManager.Add2Document(ne); ne.Update();
+                tr.GetObject(id, OpenMode.ForWrite).Erase();
+                var nid = new ObjectId(ne.ID.ToOldIdPtr());
+                string tg = S(m, "tag", null);
+                if (tg != null) { var ee = tr.GetObject(nid, OpenMode.ForRead) as Entity; if (ee != null) map[tg] = ee.Handle.ToString(); }
+                log.AppendLine("levelval " + cnt);
+            }
+            else if (t == "ltload")
+            {
+                var ltt = (LinetypeTable)tr.GetObject(db.LinetypeTableId, OpenMode.ForRead);
+                foreach (var n in L(m["names"])) if (!ltt.Has(n.ToString())) { db.LoadLineTypeFile(n.ToString(), "acadiso.lin"); log.AppendLine("loaded " + n); }
+            }
+            else if (t == "stretchwin")
+            {
+                // AutoCAD STRETCH: entities touching 'sel' window; stretch points inside 'win' move by d
+                var w = L(m["win"]); var sw = Has(m, "sel") ? L(m["sel"]) : w;
+                var dv = L(m["d"]); var vec = new Vector3d(D(dv[0]), D(dv[1]), 0);
+                Func<Point3d, IList, bool> inb = (p, b) => p.X >= D(b[0]) && p.X <= D(b[2]) && p.Y >= D(b[1]) && p.Y <= D(b[3]);
+                var ms = MS(db, tr); int nm = 0, ns = 0;
+                var ids = new List<ObjectId>(); foreach (ObjectId id in ms) ids.Add(id);
+                foreach (var id in ids)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MaxPoint.X < D(sw[0]) || x.MinPoint.X > D(sw[2]) || x.MaxPoint.Y < D(sw[1]) || x.MinPoint.Y > D(sw[3])) continue;
+                    if (e is Hatch) { if (inb(x.MinPoint, w) && inb(x.MaxPoint, w)) { e.UpgradeOpen(); e.TransformBy(Matrix3d.Displacement(vec)); nm++; } continue; }
+                    var pc = new Point3dCollection();
+                    try { e.GetStretchPoints(pc); } catch { continue; }
+                    if (pc.Count == 0) continue;
+                    var ic = new IntegerCollection();
+                    for (int i = 0; i < pc.Count; i++) if (inb(pc[i], w)) ic.Add(i);
+                    if (ic.Count == 0) continue;
+                    e.UpgradeOpen();
+                    if (ic.Count == pc.Count || e is DBText || e is MText || e is BlockReference) { e.TransformBy(Matrix3d.Displacement(vec)); nm++; }
+                    else { try { e.MoveStretchPointsAt(ic, vec); ns++; } catch (System.Exception ex) { log.AppendLine("stretch fail " + e.Handle + " " + ex.Message); } }
+                }
+                log.AppendLine("stretchwin moved " + nm + " stretched " + ns);
+            }
+            else if (t == "widen")
+            {
+                // move stretch points away from an axis line (a, dir) by delta on each side
+                var a = P(m["a"]); var dv = L(m["dir"]); var d = new Vector3d(D(dv[0]), D(dv[1]), 0).GetNormal();
+                var nrm = new Vector3d(-d.Y, d.X, 0); double dl = D(m["delta"]);
+                var boxes = Has(m, "only") ? L(m["only"]) : null;
+                int n = 0;
+                foreach (var hh in L(m["h"]))
+                {
+                    Entity e; try { e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite); } catch { log.AppendLine("widen: no " + hh); continue; }
+                    var pc = new Point3dCollection(); try { e.GetStretchPoints(pc); } catch { continue; }
+                    var pos = new IntegerCollection(); var neg = new IntegerCollection();
+                    for (int i = 0; i < pc.Count; i++)
+                    {
+                        if (boxes != null)
+                        {
+                            bool inside = false;
+                            foreach (var bo in boxes) { var b = L(bo); if (pc[i].X >= D(b[0]) && pc[i].X <= D(b[2]) && pc[i].Y >= D(b[1]) && pc[i].Y <= D(b[3])) inside = true; }
+                            if (!inside) continue;
+                        }
+                        double sd = (pc[i] - a).DotProduct(nrm);
+                        if (sd > 0.5) pos.Add(i); else if (sd < -0.5) neg.Add(i);
+                    }
+                    try
+                    {
+                        if (pos.Count > 0) e.MoveStretchPointsAt(pos, nrm * dl);
+                        if (neg.Count > 0) e.MoveStretchPointsAt(neg, nrm * -dl);
+                        n++;
+                    }
+                    catch (System.Exception ex) { log.AppendLine("widen fail " + hh + " " + ex.Message); }
+                }
+                log.AppendLine("widen " + n);
+            }
+            else if (t == "movewin")
+            {
+                // move every entity whose extents centre lies inside win by d (whole sheets)
+                var w = L(m["win"]); var dv = L(m["d"]); var mx = Matrix3d.Displacement(new Vector3d(D(dv[0]), D(dv[1]), 0));
+                var ms = MS(db, tr); var ids = new List<ObjectId>(); foreach (ObjectId id in ms) ids.Add(id);
+                int n = 0, nf = 0;
+                var skip = new HashSet<string>(); if (Has(m, "skip")) foreach (var k in L(m["skip"])) skip.Add(k.ToString().ToUpper());
+                foreach (var id in ids)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    double cx = (x.MinPoint.X + x.MaxPoint.X) / 2, cy = (x.MinPoint.Y + x.MaxPoint.Y) / 2;
+                    if (cx < D(w[0]) || cx > D(w[2]) || cy < D(w[1]) || cy > D(w[3])) continue;
+                    if (skip.Contains(e.Handle.ToString().ToUpper())) continue;
+                    try { e.UpgradeOpen(); e.TransformBy(mx); n++; } catch (System.Exception ex) { nf++; log.AppendLine("movewin fail " + e.Handle + " " + ex.Message); }
+                }
+                log.AppendLine("movewin " + n + " fail " + nf);
+            }
+            else if (t == "dimtx")
+            {
+                var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]);
+            }
+            else if (t == "scalegrp")
+            {
+                var mx = Matrix3d.Scaling(D(m["s"]), P(m["base"]));
+                int n = 0;
+                foreach (var hh in L(m["h"])) { try { ((Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite)).TransformBy(mx); n++; } catch (System.Exception ex) { log.AppendLine("scalegrp fail " + hh + " " + ex.Message); } }
+                log.AppendLine("scalegrp " + n);
+            }
+            else if (t == "dimset")
+            {
+                foreach (var hh in L(m["h"]))
+                {
+                    var d = tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite) as Dimension; if (d == null) continue;
+                    if (Has(m, "lfac")) d.Dimlfac = D(m["lfac"]);
+                    if (Has(m, "dscale")) d.Dimscale = D(m["dscale"]);
+                }
+            }
+            else if (t == "movegrp")
+            {
+                var dv = L(m["d"]); var mx = Matrix3d.Displacement(new Vector3d(D(dv[0]), D(dv[1]), 0));
+                foreach (var hh in L(m["h"])) { try { ((Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite)).TransformBy(mx); } catch { log.AppendLine("movegrp: no " + hh); } }
+            }
+            else if (t == "arcrad")
+            {
+                var e = (Arc)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite); e.Radius = e.Radius + D(m["dr"]);
+            }
+            else if (t == "addleader")
+            {
+                var id = H(db, S(m, "h", ""));
+                var np = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr)) as McNotePosition;
+                np.Leader.AddSegment(MP(m["target"]), np.Origin);
+                np.DbEntity.Update();
+            }
+            else if (t == "dimpts")
+            {
+                var e = tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var ad = e as AlignedDimension; var rd = e as RotatedDimension;
+                if (ad != null) { ad.XLine1Point = P(m["p1"]); ad.XLine2Point = P(m["p2"]); if (Has(m, "dl")) ad.DimLinePoint = P(m["dl"]); }
+                if (rd != null) { rd.XLine1Point = P(m["p1"]); rd.XLine2Point = P(m["p2"]); if (Has(m, "dl")) rd.DimLinePoint = P(m["dl"]); }
+            }
+            else if (t == "erasenear")
+            {
+                var c = P(m["c"]); double r = D(m["r"]); int n = 0;
+                var types = new HashSet<string>(); foreach (var q in L(m["types"])) types.Add(q.ToString());
+                var ms = MS(db, tr); var ids = new List<ObjectId>();
+                foreach (ObjectId id in ms)
+                {
+                    if (!types.Contains(id.ObjectClass.Name)) continue;
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    if (Has(m, "layer") && e.Layer != S(m, "layer", "")) continue;
+                    if (Has(m, "lw") && (int)e.LineWeight != Convert.ToInt32(m["lw"])) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MinPoint.X >= c.X - r && x.MaxPoint.X <= c.X + r && x.MinPoint.Y >= c.Y - r && x.MaxPoint.Y <= c.Y + r) ids.Add(id);
+                }
+                foreach (var id in ids) { tr.GetObject(id, OpenMode.ForWrite).Erase(); n++; }
+                log.AppendLine("erasenear " + n);
+            }
+            else if (t == "notepull")
+            {
+                // shorten note leaders: origin -> target + (origin - target) * f, or explicit offset 'off' from the target
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForRead);
+                    var pc = new Point3dCollection(); e.GetStretchPoints(pc); if (pc.Count < 2) continue;
+                    var np = McObjectManager.GetObject(McObjectId.FromOldIdPtr(e.ObjectId.OldIdPtr)) as McNotePosition; if (np == null) continue;
+                    double f = Has(m, "f") ? D(m["f"]) : 0.5;
+                    double nx = pc[1].X + (pc[0].X - pc[1].X) * f, ny = pc[1].Y + (pc[0].Y - pc[1].Y) * f;
+                    np.Origin = MP(new ArrayList { nx, ny });
+                    np.DbEntity.Update();
+                    log.AppendLine("notepull " + hh + " " + np.FirstLine);
+                }
+            }
+            else if (t == "noteset")
+            {
+                var w = L(m["win"]); int n = 0;
+                var ms = MS(db, tr);
+                foreach (ObjectId id in ms)
+                {
+                    if (id.ObjectClass.DxfName != "SPDSNOTEPOSITION") continue;
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MinPoint.X < D(w[0]) || x.MaxPoint.X > D(w[2]) || x.MinPoint.Y < D(w[1]) || x.MaxPoint.Y > D(w[3])) continue;
+                    var np = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr)) as McNotePosition;
+                    if (np == null) continue;
+                    if (np.FirstLine == S(m, "from", "")) { np.FirstLine = S(m, "to", ""); if (Has(m, "l2")) np.SecondLine = S(m, "l2", ""); np.DbEntity.Update(); n++; }
+                    var dd = (object)np as IDisposable; if (dd != null) dd.Dispose();
+                }
+                log.AppendLine("noteset " + S(m, "from", "") + " " + n);
+            }
+            else if (t == "dxfout")
+            {
+                db.DxfOut(S(m, "file", ""), 16, DwgVersion.Current);
+            }
+            else if (t == "arcang")
+            {
+                var a = (Arc)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                if (Has(m, "sa")) a.StartAngle = D(m["sa"]) * Math.PI / 180.0;
+                if (Has(m, "ea")) a.EndAngle = D(m["ea"]) * Math.PI / 180.0;
+            }
+            else if (t == "cmd")
+            {
+                // queue a command line string in the active document (runs after Apply returns)
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute(S(m, "s", "").Replace("\\n", "\n"), true, false, false);
+            }
+            else if (t == "sp_lts")
+            {
+                // СПДС object: linetype scale / lineweight through the Multicad entity (its own Scale multiplies the linetype)
+                var e = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForRead);
+                var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(e.ObjectId.OldIdPtr));
+                var de = (McDbEntity)mo.GetType().GetProperty("DbEntity").GetValue(mo, null);
+                if (Has(m, "lts")) de.LineTypeScale = D(m["lts"]);
+                if (Has(m, "lw")) de.LineWeight = Convert.ToInt32(m["lw"]);
+                de.Update();
+                log.AppendLine("sp_lts " + S(m, "h", "") + " lts=" + de.LineTypeScale + " lw=" + de.LineWeight + " scale=" + de.Scale);
+                var dd = (object)mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "eprops")
+            {
+                // existing entity (incl. СПДС objects): lineweight (0.01 mm) and linetype scale, then let the object redraw
+                var e = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                if (Has(m, "lw")) e.LineWeight = (LineWeight)Convert.ToInt32(m["lw"]);
+                if (Has(m, "ltype")) e.Linetype = S(m, "ltype", "ByLayer");
+                if (Has(m, "lts")) e.LinetypeScale = D(m["lts"]);
+                e.RecordGraphicsModified(true);
+                log.AppendLine("eprops " + e.Handle + " " + id2cls(e) + " lw=" + (int)e.LineWeight + " lts=" + e.LinetypeScale);
+            }
+            else if (t == "regen")
+            {
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute("_.REGENALL\n", true, false, false);
+            }
+            else if (t == "wblock")
+            {
+                using (var nd = db.Wblock()) nd.SaveAs(S(m, "file", ""), DwgVersion.Current);
+            }
+            else if (t == "tcell")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                foreach (var o in L(m["c"])) { var a = L(o); tb.Cells[Convert.ToInt32(a[0]), Convert.ToInt32(a[1])].TextString = a[2].ToString(); }
+            }
+            else if (t == "dellayout")
+            {
+                var lm = Autodesk.AutoCAD.DatabaseServices.LayoutManager.Current;
+                foreach (var n in L(m["names"])) { try { lm.DeleteLayout(n.ToString()); log.AppendLine("dellayout " + n); } catch (System.Exception ex) { log.AppendLine("dellayout " + n + ": " + ex.Message); } }
+            }
+            else if (t == "mklayout")
+            {
+                string name = S(m, "name", ""); string step = "create";
+                try
+                {
+                    var lm = Autodesk.AutoCAD.DatabaseServices.LayoutManager.Current;
+                    ObjectId lid = lm.GetLayoutId(name);
+                    if (lid.IsNull) lid = lm.CreateLayout(name);
+                    step = "open";
+                    var lay = (Autodesk.AutoCAD.DatabaseServices.Layout)tr.GetObject(lid, OpenMode.ForWrite);
+                    var psv = PlotSettingsValidator.Current;
+                    step = "ps";
+                    var ps = new PlotSettings(lay.ModelType); ps.CopyFrom(lay);
+                    step = "device";
+                    psv.SetPlotConfigurationName(ps, "DWG To PDF.pc3", null);
+                    psv.RefreshLists(ps);
+                    step = "media";
+                    string med = S(m, "media", ""); bool found = false;
+                    foreach (string cm in psv.GetCanonicalMediaNameList(ps)) if (cm == med) found = true;
+                    if (!found) { var sb = new StringBuilder(); foreach (string cm in psv.GetCanonicalMediaNameList(ps)) if (cm.Contains("A3") || cm.Contains("A2")) sb.Append(cm + "; "); log.AppendLine("media list: " + sb); }
+                    psv.SetCanonicalMediaName(ps, med);
+                    step = "units"; psv.SetPlotPaperUnits(ps, PlotPaperUnit.Millimeters);
+                    step = "rot"; psv.SetPlotRotation(ps, PlotRotation.Degrees000);
+                    step = "type"; psv.SetPlotType(ps, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
+                    step = "scale"; psv.SetUseStandardScale(ps, true); psv.SetStdScaleType(ps, StdScaleType.StdScale1To1);
+                    step = "center"; try { psv.SetPlotCentered(ps, false); } catch { }
+                    step = "ctb"; try { psv.SetCurrentStyleSheet(ps, "monochrome.ctb"); } catch { }
+                    step = "copy"; lay.CopyFrom(ps);
+                    step = "vp";
+                    var btr = (BlockTableRecord)tr.GetObject(lay.BlockTableRecordId, OpenMode.ForWrite);
+                    double W = D(m["W"]), Hh = D(m["H"]);
+                    var vp = new Autodesk.AutoCAD.DatabaseServices.Viewport(); vp.SetDatabaseDefaults(db);
+                    vp.CenterPoint = new Point3d(W / 2, Hh / 2, 0); vp.Width = W; vp.Height = Hh;
+                    btr.AppendEntity(vp); tr.AddNewlyCreatedDBObject(vp, true);
+                    try { vp.Layer = "Defpoints"; } catch { }
+                    step = "view";
+                    vp.ViewDirection = Vector3d.ZAxis; vp.ViewTarget = Point3d.Origin; vp.ViewCenter = P2(m["vc"]);
+                    step = "cscale"; vp.CustomScale = 1.0 / D(m["sc"]);
+                    try { vp.On = true; } catch (System.Exception ex) { log.AppendLine("vp.On " + name + ": " + ex.Message); }
+                    vp.Locked = true;
+                    log.AppendLine("layout " + name + " vp " + vp.Handle + " media " + lay.CanonicalMediaName);
+                }
+                catch (System.Exception ex) { log.AppendLine("mklayout " + name + " step " + step + ": " + ex.Message); throw; }
+            }
+            else if (t == "vpon")
+            {
+                var lm = Autodesk.AutoCAD.DatabaseServices.LayoutManager.Current;
+                foreach (var n in L(m["names"]))
+                {
+                    string name = n.ToString();
+                    try
+                    {
+                        lm.CurrentLayout = name;
+                        var lay = (Autodesk.AutoCAD.DatabaseServices.Layout)tr.GetObject(lm.GetLayoutId(name), OpenMode.ForRead);
+                        var btr = (BlockTableRecord)tr.GetObject(lay.BlockTableRecordId, OpenMode.ForRead);
+                        int k = 0; var sb = new StringBuilder();
+                        foreach (ObjectId id in btr)
+                        {
+                            var vp = tr.GetObject(id, OpenMode.ForRead) as Autodesk.AutoCAD.DatabaseServices.Viewport;
+                            if (vp == null) continue;
+                            k++;
+                            if (vp.Number == 1) continue;
+                            vp.UpgradeOpen();
+                            if (Math.Abs(vp.Width - D(m["W" + name])) > 0.5) { sb.Append(" extra " + vp.Handle + " erased"); vp.Erase(); continue; }
+                            vp.On = true; vp.Locked = true;
+                            sb.Append(" on " + vp.Handle + " sc " + (1.0 / vp.CustomScale).ToString("0.##", IC));
+                        }
+                        if (Has(m, "vc" + name) && k <= 1)
+                        {
+                            var bw = (BlockTableRecord)tr.GetObject(lay.BlockTableRecordId, OpenMode.ForWrite);
+                            double W = D(m["W" + name]), Hh = D(m["H" + name]);
+                            var nv = new Autodesk.AutoCAD.DatabaseServices.Viewport(); nv.SetDatabaseDefaults(db);
+                            nv.CenterPoint = new Point3d(W / 2, Hh / 2, 0); nv.Width = W; nv.Height = Hh;
+                            bw.AppendEntity(nv); tr.AddNewlyCreatedDBObject(nv, true);
+                            try { nv.Layer = "Defpoints"; } catch { }
+                            nv.ViewDirection = Vector3d.ZAxis; nv.ViewTarget = Point3d.Origin; nv.ViewCenter = P2(m["vc" + name]);
+                            nv.CustomScale = 1.0 / D(m["sc" + name]);
+                            nv.On = true; nv.Locked = true;
+                            sb.Append(" new " + nv.Handle + " num " + nv.Number);
+                        }
+                        log.AppendLine("vpon " + name + " n=" + k + sb);
+                    }
+                    catch (System.Exception ex) { log.AppendLine("vpon " + name + ": " + ex.Message); }
+                }
+                lm.CurrentLayout = "Model";
+            }
+            else if (t == "objprops")
+            {
+                var id = H(db, S(m, "h", ""));
+                var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity;
+                foreach (var pn in new[] { "ObjectProperties", "CustomProperties", "SystemProperties" })
+                {
+                    var props = dbe.GetType().GetProperty(pn).GetValue(dbe, null);
+                    log.AppendLine("== " + pn + " " + props.GetType().FullName);
+                    var en = props as IEnumerable;
+                    if (en != null) foreach (var it in en)
+                    {
+                        var sb = new StringBuilder("  ");
+                        foreach (var pi in it.GetType().GetProperties()) { try { sb.Append(pi.Name + "=" + pi.GetValue(it, null) + "; "); } catch { } }
+                        log.AppendLine(sb.ToString());
+                    }
+                    else foreach (var pi in props.GetType().GetProperties()) { try { log.AppendLine("  P " + pi.Name + " = " + pi.GetValue(props, null)); } catch { } }
+                    foreach (var mi in props.GetType().GetMethods()) if (mi.DeclaringType == props.GetType()) log.AppendLine("  M " + mi.Name + "(" + mi.GetParameters().Length + ")");
+                }
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "objpropset")
+            {
+                foreach (var hh in L(m["h"]))
+                {
+                    var id = H(db, hh.ToString());
+                    var mo = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr));
+                    var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity;
+                    var props = dbe.ObjectProperties;
+                    string pn = S(m, "name", "");
+                    var before = props[pn];
+                    if (Has(m, "num")) props[pn] = D(m["value"]); else props[pn] = S(m, "value", "");
+                    dbe.Update();
+                    log.AppendLine("objpropset " + hh + " " + pn + ": " + before + " -> " + dbe.ObjectProperties[pn]);
+                    var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+                }
+            }
+            else if (t == "savedoc")
+            {
+                var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
+                db.SaveAs(doc.Name, true, DwgVersion.Current, db.SecurityParameters);
+                log.AppendLine("saved " + doc.Name);
+            }
+            else if (t == "notesize")
+            {
+                var w = L(m["win"]); int n = 0;
+                var names = new HashSet<string>(); foreach (var q in L(m["names"])) names.Add(q.ToString());
+                var ms = MS(db, tr); var ids = new List<ObjectId>();
+                foreach (ObjectId id in ms) if (id.ObjectClass.DxfName == "SPDSNOTEPOSITION") ids.Add(id);
+                foreach (var id in ids)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MinPoint.X < D(w[0]) || x.MaxPoint.X > D(w[2]) || x.MinPoint.Y < D(w[1]) || x.MaxPoint.Y > D(w[3])) continue;
+                    using (var np = McObjectManager.GetObject(McObjectId.FromOldIdPtr(id.OldIdPtr)) as McNotePosition)
+                    {
+                        if (np == null || !names.Contains(np.FirstLine)) continue;
+                        np.TextSize = D(m["size"]); np.SmallTextSize = D(m["size"]); np.DbEntity.Update(); n++;
+                    }
+                }
+                log.AppendLine("notesize " + n);
+            }
+            else if (t == "mtpos")
+            {
+                var mt = (MText)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                if (Has(m, "att")) mt.Attachment = (AttachmentPoint)Convert.ToInt32(m["att"]);
+                if (Has(m, "at")) mt.Location = P(m["at"]);
+                if (Has(m, "w")) mt.Width = D(m["w"]);
+                if (Has(m, "th")) mt.TextHeight = D(m["th"]);
+                if (Has(m, "s")) mt.Contents = S(m, "s", "");
+                log.AppendLine("mtpos " + mt.Handle);
+            }
+            else if (t == "lt")
+            {
+                var e = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                e.Linetype = S(m, "v", "ByLayer");
+                if (Has(m, "ltscale")) e.LinetypeScale = D(m["ltscale"]);
+            }
+            else if (t == "erase")
+            {
+                foreach (var h in L(m["h"])) { try { tr.GetObject(H(db, h.ToString()), OpenMode.ForWrite).Erase(); } catch (System.Exception ex) { log.AppendLine("erase " + h + ": " + ex.Message); } }
+            }
+            else if (t == "maprst")
+            {
+                map.Clear();
+            }
+        }
+    }
+}

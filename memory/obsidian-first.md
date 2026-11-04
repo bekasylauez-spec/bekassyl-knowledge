@@ -1,0 +1,55 @@
+---
+name: obsidian-first
+description: МІНДЕТТІ — кез келген жұмысты бастамас бұрын Obsidian (D:\РАБОЧКА\Bekassyl) ережелері мен аналогтарын оқу; барлық чаттарда
+metadata:
+  node_type: memory
+  type: feedback
+  originSessionId: 22eb71ac-88c3-4c99-9c61-2c7547468f19
+  modified: 2026-10-31T14:54:32.813Z
+---
+
+On 2026-10-31 (Резервуар КЖ) I designed the Фм-1 reinforcement without opening the vault. The user asked «обсидианға неге қарамадың» and then said: «Ереже кез келген жұмыста обсидианнан қарауға міндеттісің алдағы чаттарда да».
+
+**Why:** the vault already held the rules I broke:
+- `02_Фундамент/Фундаментная плита.md`: base Ø by thickness (300–400 → Ø14), dop bars between base bars at one level, a zone needs ≥4 cells, As_avg of two cells, ≥70% → raise base Ø, Ф-1 with 300 legs, П-скоба H−80 with legs Ø12 700 / Ø14 800 / Ø16 1000.
+- The Онкоцентр analog `15_Проекты/Онкологический центр Блок 1 Секция 1/03 Фундамент и выпуски.md` plus its source PDFs, with this sheet order:
+  - 3.1 опалубка;
+  - 3.2 основная арматура;
+  - 3.3–3.6 доп. by face × axis family, each zone drawn as its first and last bar with «200xN»;
+  - 3.7 поперечная;
+  - 3.8 спецификация.
+
+**How to apply:** before ANY task (КЖ, КМ, LIRA, РПЗ, Revit, anything), grep the vault (`D:\РАБОЧКА\Bekassyl`) for the element/topic and the project. Read:
+- `01_Общие правила`;
+- the topic folder (02_Фундамент … 09_Таблицы, 16_КМ чертежи);
+- `14_Мои правила`;
+- `15_Проекты/<object>`;
+- the analog listed there, including its PDFs/images.
+
+Do this before designing or drawing. State briefly which notes you used. Vault rules override my defaults, and the latest user decision wins.
+
+Same day, user: «листтердің санында аналогтан қара не сызар болсаң аналогты оқы сосын жаса кез келген жұмыста». So sheet numbering, composition and graphics come from the analog: read the analog's sheets (PDF) BEFORE drawing anything. Онкоцентр numbering is section.sheet:
+- 1.x общие;
+- 2.x схема каркаса;
+- 3.x фундамент (3.1 опалубка, 3.2 основная, 3.3–3.6 доп., 3.7 поперечная, 3.8 спецификация, 3.9–3.10 выпуски);
+- 4.x колонны, 5.x стены, 6.x ригели, 7.x плиты, 8.x парапеты/лестница.
+
+On 2026-10-31 the user also said «мен саған айтқанның барлығы ереже» (everything I tell you is a rule), and repeated «отметкалардың барлығында размер болуы керек ереже». So every correction and preference the user gives is a GENERAL rule for all future work, not a one-off fix. Record each one immediately in the vault (`01_Общие правила/Оформление КЖ в AutoCAD — СПДС (утверждённые правила).md`, or the topic note) and in memory. Then apply it to everything already drawn in the current job.
+
+One more rule from the same day: **one scale per sheet**. Every annotation on a sheet (texts, notes, level marks, dims, titles) uses the sheet scale (100 → 100, 75 → 75). Never put an enlarged detail on a sheet of another scale; give it its own sheet at its scale, and don't write «М 1:xx» in the titles.
+
+Repeated mistakes on 31.10 came from never opening `01_Общие правила/Чек-лист проверки КЖ — Схема каркаса.md` (41 numbered checks: №21 scale, №28/30 dim rows 1000/1000, №31 extension lines touch, №32 no overlaps, №35 small dim text…). Before showing ANY sheet, go through the project checklist section «0. ПЕРЕД ПОКАЗОМ» (`15_Проекты/<obj>/Чек-лист проверки КЖ.md`) and run oc.py (overlaps = 0).
+
+On 31.10 the user also asked me to re-read the analog PDFs "every line, every dimension, every point", sheet by sheet, and write it all to the vault. The full measured breakdown is in `11_Аналоги и фото/Онкоцентр КЖ — графика и размеры (полный разбор).md` (fragments in the `Онкоцентр КЖ — фрагменты/` folder) and in the rewritten `02_Фундамент/Оформление листов Фм по аналогу (Онкоцентр 3.x).md`.
+
+Key measured facts:
+- axis bubble Ø7 mm;
+- text 2.5 mm, titles 3.0–3.5 mm;
+- rebar 0.4 mm; scheme outlines 0.5 mm; slab contour on the formwork sheet 0.7 mm;
+- short-dim text on a shelf;
+- every column bound to the axes with its own chain;
+- armirovanie sections are not hatched.
+
+For a new analog, do the same depth of reading: render each sheet, view zoomed tiles, and measure from the PDF vectors.
+
+Related: [[obsidian-log-work]], [[kzh-scheme-karkasa]], [[reservoir-kzh]]

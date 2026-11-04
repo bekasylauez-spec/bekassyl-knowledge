@@ -5,10 +5,10 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 31c24da5-b358-45a3-b1ee-c1d716ba778d
-  modified: 2026-10-18T15:58:28.061Z
+  modified: 2026-10-31T10:54:20.150Z
 ---
 
-On 2026-10-18 the user said: «Жасаған кездегі стил жасалу жолдарын обсидианға салып отыр» and «Кез келген жұмыс чатта». While working, write the confirmed style rules and the method into `C:\Users\Admin\Documents\Bekassyl`. Every chat also gets a note in `12_Чаты`.
+On 2026-10-18 the user said: «Жасаған кездегі стил жасалу жолдарын обсидианға салып отыр» and «Кез келген жұмыс чатта». While working, write the confirmed style rules and the method into the vault `D:\РАБОЧКА\Bekassyl` (moved there 2026-10-31; old path `C:\Users\Admin\Documents\Bekassyl` is now a junction to it, see [[main-pc-central]]). Every chat also gets a note in `12_Чаты`.
 
 **Why:** the user builds a second brain of their drafting rules and wants it filled as the work happens, not only when asked.
 

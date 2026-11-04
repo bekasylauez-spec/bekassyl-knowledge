@@ -1,4 +1,4 @@
-"""Collect knowledge from this computer into the repo: Obsidian vault, Claude memory, chat texts.
+"""Collect knowledge from this computer into the repo: Obsidian vault, Claude memory, chat texts, Claude's scripts.
 
 Run: python tools/build.py
 Merges with what is already in the repo (other computers' chats stay), masks phones/emails.
@@ -9,9 +9,15 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 HOME = pathlib.Path.home()
-VAULT = HOME / "Documents" / "Bekassyl"
+# Shared vault in the work folder (BEKA-1/BEKA-2), else the old place in Documents
+VAULT = next((p for p in (pathlib.Path(r"D:\РАБОЧКА\Bekassyl"), HOME / "Documents" / "Bekassyl") if p.exists()),
+             HOME / "Documents" / "Bekassyl")
 PROJECTS = HOME / ".claude" / "projects"
+SCRATCH = HOME / "AppData" / "Local" / "Temp" / "claude"   # <hash>/<session>/scratchpad: AutoCAD/LIRA scripts Claude wrote
+SCRIPT_EXT = {".cs", ".py", ".ps1", ".lsp", ".bas", ".vb"}
+SECRET = re.compile(r"(?i)(password\s*[=:]|passwd|api[_-]?key\s*[=:]|token\s*[=:]\s*['\"]\w{12,}|ghp_\w{20,}|sk-ant-|api_hash|session_string|BEGIN [A-Z ]*PRIVATE KEY)")
 SKIP_VAULT = {"workspace.json", "workspace-mobile.json", "telegram_state.json"}
+TEXT_EXT = {".md", ".json", ".txt", ".csv", ".cs", ".py", ".ps1", ".lsp", ".bas", ".vb", ".canvas"}
 
 PHONE = re.compile(r"(?<![\w/])(\+?7|8)[ \-(]*7\d{2}[ \-)]*\d{3}[ \-]*\d{2}[ \-]*\d{2}(?!\d)")
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]+")
@@ -22,18 +28,48 @@ def mask(s):
     return EMAIL.sub("[email жасырылды]", PHONE.sub("[тел. жасырылды]", s))
 
 
+def put(f, t):
+    """Write f to t (masked if text) only when the content differs. Returns True if written."""
+    if f.suffix.lower() in TEXT_EXT:
+        new = mask(f.read_text(encoding="utf-8", errors="replace"))
+        if t.exists() and t.read_text(encoding="utf-8", errors="replace") == new:
+            return False
+        t.parent.mkdir(parents=True, exist_ok=True)
+        t.write_text(new, encoding="utf-8")
+        return True
+    data = f.read_bytes()
+    if t.exists() and t.read_bytes() == data:
+        return False
+    t.parent.mkdir(parents=True, exist_ok=True)
+    t.write_bytes(data)
+    return True
+
+
 def copy_tree(src, dst):
-    """Copy newer files only; nothing is deleted in the repo."""
+    """Copy files whose content changed; this computer's copy wins. Nothing is deleted in the repo."""
     n = 0
     for f in src.rglob("*"):
         if not f.is_file() or f.name in SKIP_VAULT or "_sync" in f.parts or ".trash" in f.parts:
             continue
-        t = dst / f.relative_to(src)
-        if t.exists() and t.stat().st_mtime >= f.stat().st_mtime:
+        n += put(f, dst / f.relative_to(src))
+    return n
+
+
+def copy_scripts(out):
+    """Claude's own scripts from temp scratchpads (they vanish when Temp is cleaned)."""
+    n, skipped = 0, []
+    for f in SCRATCH.glob("*/*/scratchpad/**/*"):
+        if not f.is_file() or f.suffix.lower() not in SCRIPT_EXT or f.stat().st_size > 500_000:
             continue
-        t.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(f, t)
-        n += 1
+        rel = f.relative_to(SCRATCH)
+        session = rel.parts[1][:8]
+        text = f.read_text(encoding="utf-8", errors="replace")
+        if SECRET.search(text):
+            skipped.append(f.name)
+            continue
+        n += put(f, out / session / pathlib.Path(*rel.parts[3:]))
+    if skipped:
+        print("scripts skipped (secret-like):", ", ".join(skipped))
     return n
 
 
@@ -116,6 +152,8 @@ def main():
     for f in PROJECTS.glob("*/*.jsonl"):
         convert_chat(f, out)
     print("chats:", chat_index(out), "чат")
+    if SCRATCH.exists():
+        print("scripts:", copy_scripts(REPO / "scripts"), "файл жаңарды")
     for p in list((REPO / "obsidian").rglob("*")) + list((REPO / "memory").rglob("*")):
         if p.is_file() and p.suffix.lower() in (".md", ".json", ".txt", ".csv"):
             s = p.read_text(encoding="utf-8", errors="replace")
@@ -123,5 +161,50 @@ def main():
                 p.write_text(mask(s), encoding="utf-8")
 
 
+def restore(before, after, last_sync, vault, mem):
+    """After git pull: bring files another computer changed into this computer's vault/memory.
+
+    A file is put here only if it is missing here, or it was not changed here since the last sync.
+    A local file whose masked text already equals the repo copy is left alone (keeps real phones/emails).
+    """
+    import subprocess, datetime
+    out = subprocess.run(["git", "-C", str(REPO), "-c", "core.quotepath=off", "diff", "--name-only",
+                          "--diff-filter=AM", before, after, "--", "obsidian", "memory"],
+                         capture_output=True, text=True, encoding="utf-8", check=True).stdout.split("\n")
+    since = datetime.datetime.fromisoformat(last_sync).timestamp() if last_sync else None
+    put_n, kept = 0, []
+    for rel in filter(None, out):
+        if rel == "memory/MEMORY.md":
+            continue  # index lines are merged below
+        src = REPO / rel
+        top, rest = rel.split("/", 1)
+        dst = (vault if top == "obsidian" else mem) / rest
+        if dst.exists():
+            same = (mask(dst.read_text(encoding="utf-8", errors="replace")) == src.read_text(encoding="utf-8", errors="replace")
+                    if src.suffix.lower() in TEXT_EXT else dst.read_bytes() == src.read_bytes())
+            if same:
+                continue
+            if since is None or dst.stat().st_mtime >= since:
+                kept.append(rel)
+                continue
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        put_n += 1
+    idx, ridx = mem / "MEMORY.md", REPO / "memory" / "MEMORY.md"
+    if idx.exists() and ridx.exists():
+        local = idx.read_text(encoding="utf-8")
+        known = set(re.findall(r"\]\(([^)]+\.md)\)", local))
+        add = [ln for ln in ridx.read_text(encoding="utf-8").splitlines()
+               if (m := re.search(r"\]\(([^)]+\.md)\)", ln)) and m.group(1) not in known and (mem / m.group(1)).exists()]
+        if add:
+            idx.write_text(local.rstrip("\n") + "\n" + "\n".join(add) + "\n", encoding="utf-8")
+    print(f"restore: {put_n} файл қойылды" + (f"; екі жақта да өзгерген (осындағысы қалды): {', '.join(kept)}" if kept else ""))
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "restore":
+        # build.py restore <before> <after> <last_sync|-> <vault> <mem>
+        a = sys.argv[2:]
+        restore(a[0], a[1], None if a[2] == "-" else a[2], pathlib.Path(a[3]), pathlib.Path(a[4]))
+    else:
+        main()

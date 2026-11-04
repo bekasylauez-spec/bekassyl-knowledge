@@ -1,21 +1,61 @@
-﻿# Синхрондау: GitHub-тағы жаңалықты алады, осы компьютердегі жаңа білімді (Obsidian, memory, чаттар) жібереді.
+﻿# Синхрондау: GitHub-тағы жаңалықты алады, осы компьютердегі жаңа білімді (Obsidian, memory, чаттар, скрипттер) жібереді.
 # Іске қосу:  powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\Documents\bekassyl-knowledge\tools\update.ps1"
-param([string]$Work = "D:\РАБОЧКА")
+# -Quiet: фонда (Claude hook) - құпиясөз терезесін ашпайды, қате болса тек логқа жазады.
+param([string]$Work = "D:\РАБОЧКА", [switch]$Quiet)
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 $Repo  = "$env:USERPROFILE\Documents\bekassyl-knowledge"
-$Vault = "$env:USERPROFILE\Documents\Bekassyl"
+$Vault = if (Test-Path "$Work\Bekassyl") { "$Work\Bekassyl" } else { "$env:USERPROFILE\Documents\Bekassyl" }
 $Mem   = "$env:USERPROFILE\.claude\projects\$($Work -replace '[^A-Za-z0-9]', '-')\memory"
+$State = "$env:LOCALAPPDATA\bekassyl-sync"
+$Log   = "$State\sync.log"
+New-Item -ItemType Directory -Force $State | Out-Null
+function Say($m) { $l = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $env:COMPUTERNAME $m"; Add-Content $Log $l -Encoding UTF8; if (-not $Quiet) { Write-Host $m } }
+if ($Quiet) { $env:GIT_TERMINAL_PROMPT = "0"; $env:GCM_INTERACTIVE = "never" }
 
-git -C $Repo pull --rebase --autostash
-New-Item -ItemType Directory -Force $Vault, $Mem | Out-Null
-robocopy "$Repo\obsidian" $Vault /E /XO /NFL /NDL /NJH /NJS | Out-Null
-robocopy "$Repo\memory"   $Mem   /E /XO /NFL /NDL /NJH /NJS | Out-Null
+# Бір уақытта екі синхрон болмасын
+$lock = "$State\sync.lock"
+if ((Test-Path $lock) -and ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalMinutes -lt 15) { Say "өткізілді: басқа синхрон жүріп жатыр"; return }
+Set-Content $lock $PID
+try {
+    $lastSync = if (Test-Path "$State\last-ok.txt") { [datetime](Get-Content "$State\last-ok.txt" -Raw).Trim() } else { $null }
 
-python "$Repo\tools\build.py"
-git -C $Repo add -A
-git -C $Repo diff --cached --quiet
-if ($LASTEXITCODE -ne 0) {
-    git -C $Repo commit -q -m "Жаңарту: $env:COMPUTERNAME $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-    git -C $Repo push
-    Write-Host "GitHub жаңартылды"
-} else { Write-Host "Жаңалық жоқ" }
+    # 1. GitHub-тан алу
+    $before = (git -C $Repo rev-parse HEAD).Trim()
+    git -C $Repo pull --rebase --autostash -q
+    if ($LASTEXITCODE -ne 0) { throw "git pull сәтсіз" }
+    $after = (git -C $Repo rev-parse HEAD).Trim()
+
+    # 2. Басқа компьютерден келген өзгерісті осында қою - тек мұнда соңғы синхроннан кейін өзгермеген файлдарға
+    $env:PYTHONIOENCODING = "utf-8"
+    if ($before -ne $after) {
+        New-Item -ItemType Directory -Force $Vault, $Mem | Out-Null
+        $ls = if ($lastSync) { $lastSync.ToString('s') } else { '-' }
+        $r = python "$Repo\tools\build.py" restore $before $after $ls $Vault $Mem 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "restore: $($r -join ' | ')" }
+        Say "GitHub-тан алынды: $($r -join '; ')"
+    }
+
+    # 3. Осы компьютердегіні репоға жинау
+    $out = python "$Repo\tools\build.py" 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "build.py: $($out -join ' | ')" }
+
+    # 4. Жіберу
+    git -C $Repo add -A
+    git -C $Repo diff --cached --quiet
+    if ($LASTEXITCODE -ne 0) {
+        $n = (git -C $Repo diff --cached --name-only | Measure-Object).Count
+        git -C $Repo commit -q -m "Жаңарту: $env:COMPUTERNAME $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+        git -C $Repo push -q
+        if ($LASTEXITCODE -ne 0) { throw "git push сәтсіз (GitHub-қа кіру керек болуы мүмкін)" }
+        Say "GitHub жаңартылды: $n файл ($($out -join '; '))"
+    } else { Say "жаңалық жоқ" }
+    Set-Content "$State\last-ok.txt" (Get-Date -Format 's')
+} catch {
+    Say "ҚАТЕ: $($_.Exception.Message)"
+    if (-not $Quiet) { throw }
+} finally {
+    Remove-Item $lock -ErrorAction SilentlyContinue
+    $all = Get-Content $Log -Encoding UTF8 -ErrorAction SilentlyContinue
+    if ($all.Count -gt 500) { $all | Select-Object -Last 300 | Set-Content $Log -Encoding UTF8 }
+}

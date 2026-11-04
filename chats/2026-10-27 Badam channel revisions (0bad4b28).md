@@ -108,3 +108,37 @@ D:\РАБОЧКА\От Мадениет\Канал бадам осы жерде 
 Көлемдер жазылған 2-абзацқа тиіскен жоқпын. Подготовканың ені 9,0 м болып қала береді, ал пландар мен фасадтарға қосылған жолақтар сол көлемнің ішінде.
 
 Бадам DWG-сы әлі сақталмаған: подготовка тек AutoCAD-тағы ашық файлда тұр. Сақтау үшін AutoCAD-та Ctrl+S басыңыз.
+
+## Пайдаланушы
+
+<command-name>/model</command-name>
+            <command-message>model</command-message>
+            <command-args>claude-fable-5-1</command-args>
+
+## Пайдаланушы
+
+<local-command-stdout>Set model to `claude-fable-5-1`</local-command-stdout>
+
+## Пайдаланушы
+
+Мына жерде грунтовкамен эмальды тексерші қанша шығады екен?
+
+## Claude
+
+You've hit your weekly limit · resets Nov 3, 7pm (Asia/Qyzylorda)
+
+## Пайдаланушы
+
+Иә, түзет
+
+## Claude
+
+You've hit your weekly limit · resets Nov 3, 7pm (Asia/Qyzylorda)
+
+## Пайдаланушы
+
+Try again
+
+## Claude
+
+You've hit your weekly limit · resets 7pm (Asia/Qyzylorda)
