@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 146fd8e6-8f0c-4e5e-9625-7c635097f701
-  modified: 2026-11-04T17:38:22.357Z
+  modified: 2026-11-04T17:48:43.719Z
 ---
 
 2026-11-04 the user wanted both PCs to use each other's data live: a change made on one should show on the other at once.
@@ -16,6 +16,7 @@ Setup:
 - BEKA-2: the user runs `D:\РАБОЧКА\.claude\link-memory.cmd` (asks for admin) → `link-memory.ps1`. It fixes `D:\РАБОЧКА` symlink if it still points to the old name DESKTOP-0BGBHI9, moves BEKA-2-only notes into the shared folder, merges MEMORY.md lines, keeps differing BEKA-2 copies in `_с_BEKA-2_<stamp>`, renames the old folder to `memory.bak-<stamp>`, then makes a **symlink** to the share. Junctions can't target network paths, so the symlink needs admin.
 - **Done 2026-11-04 22:38 (verified from log `D:\РАБОЧКА\.claude\link-memory-BEKA-2.log`):** BEKA-2 user is `beka`, `C:\Users\beka\.claude\projects\D---------\memory` = SymbolicLink → `\\BEKA-1\РАБОЧКА\.claude\memory` (57 files seen). BEKA-2 had no own memory there, so nothing was merged. Its `D:\РАБОЧКА` → `\\192.168.0.107\РАБОЧКА`. BEKA-2 also has a project folder `D---------------` (another work folder, not linked; contents unknown).
 - I can't read BEKA-2's disk from here. To check it, the user re-runs `link-memory.cmd`; the script writes its log back to `D:\РАБОЧКА\.claude\link-memory-<PC>.log`.
+- Obsidian on BEKA-2: `D:\РАБОЧКА\.claude\link-obsidian.cmd` (no admin) sets `%APPDATA%\obsidian\obsidian.json` (no BOM!) so only `D:\РАБОЧКА\Bekassyl` opens, moves BEKA-2-only notes in, keeps differing newer ones in `99_Changelog\_с_BEKA-2_<stamp>`. `link-git.cmd` runs the same step through setup.ps1.
 - The Obsidian vault `D:\РАБОЧКА\Bekassyl` was already shared the same way, see [[main-pc-central]].
 
 **Why:** two Claude installs used separate memory, so rules learned on one PC were missing on the other.

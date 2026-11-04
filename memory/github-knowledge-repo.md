@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: f81d222c-a60d-46ab-a379-ee032f398e22
-  modified: 2026-10-31T11:09:16.596Z
+  modified: 2026-11-04T17:48:41.425Z
 ---
 
 2026-10-31 the user asked to put all chat knowledge on GitHub; chose **public** repo `https://github.com/abylayotep/bekassyl-knowledge`.
@@ -25,4 +25,12 @@ Local clone: `C:\Users\Admin\Documents\bekassyl-knowledge` (folders `obsidian/` 
 
 **Bug fixed locally 2026-10-31 (not pushed yet):** connect.ps1 had `"\$h\РАБОЧКА"` (single backslash) in place of `"\\$h\..."`, so it could never find the share or create the D:\РАБОЧКА symlink. Second PC = 192.168.0.133 (seen in SMB connections on port 445). The user got a manual one-liner for the symlink; push the fix with the next update.ps1.
 
-Related: [[obsidian-log-work]]
+**Auto-sync (2026-11-04, user asked: «все важные инфо после завершения в гите», a new PC must work like BEKA-1/2):**
+- `~/.claude/settings.json` hooks (written by `tools/install_autosync.py`, exec form `powershell.exe` + args, async): **Stop** → `tools/autosync.ps1` (at most every 10 min), **SessionEnd** → `autosync.ps1 -Force`. autosync starts `update.ps1 -Quiet` hidden/detached. Log: `%LOCALAPPDATA%\bekassyl-sync\sync.log`; `last-ok.txt`, lock `sync.lock`.
+- `update.ps1`: pull → `build.py restore` (files another PC changed are put here only if missing here or unchanged since last sync; same-after-masking files untouched, so real phones stay) → `build.py` → commit/push. Vault = `D:\РАБОЧКА\Bekassyl` if it exists.
+- `build.py` now compares content (local wins) and also collects **scripts**: `%TEMP%\claude\*\*\scratchpad\**\*.{cs,py,ps1,lsp,bas,vb}` ≤500 KB → `scripts/<session8>/`, skips files with secret-like text. First run: 471 scripts, 135 chats.
+- `setup.ps1` (new PC): Git+Python via winget, clone, restore only missing files (skipped on the LAN PCs where D:\РАБОЧКА / memory are links), `obsidian-vault.ps1`, install hooks, first sync (GitHub sign-in as bekasylauez-spec).
+- BEKA-2 launcher: `D:\РАБОЧКА\.claude\link-git.cmd` → log back to `D:\РАБОЧКА\.claude\link-git-<PC>.log`. Copies in repo: `tools/lan-*.ps1`.
+- Before pushing new kinds of content, scan for secrets (public repo). The graph.json numbers [тел. жасырылды]/87369301206 are false phone hits.
+
+Related: [[obsidian-log-work]], [[shared-memory-two-pcs]]

@@ -35,7 +35,7 @@
 - [Отметкаларды элемент бойынша тексеру](check-levels-by-element.md) — колонна/қабырға үсті = ригель табаны (Блок 2 −0,750); «схемада бар» деген жеткіліксіз, биіктік өлшемін де салыстыр
 - [КМ расход ЛКМ](km-paint-consumption.md) — ГФ-021/ПФ-115 ведомость под спецификацией, площадь Σ т×м²/т; Елмонте Блок 14 Пл.2
 - [Кесте рамкадан шықпасын](table-fit-in-frame.md) — insRows-тан кейін кесте табаны ≥ рамка y0+500 тексер, move op; «лист N» сілтемелері марка↔парақ кестесінен, рет бойынша емес
-- [GitHub білім репосы](github-knowledge-repo.md) — bekasylauez-spec/bekassyl-knowledge (public), тікелей push; tools/setup.ps1 жаңа компқа, update.ps1 синхрон: Obsidian+memory+чаттар, жаңарту тәртібі
+- [GitHub білім репосы](github-knowledge-repo.md) — bekasylauez-spec/bekassyl-knowledge (public), тікелей push; tools/setup.ps1 жаңа компқа, update.ps1 синхрон: Obsidian+memory+чаттар, жаңарту тәртібі; АВТОСИНХРОН: Stop/SessionEnd hook → autosync.ps1 → update.ps1 (лог %LOCALAPPDATA%/bekassyl-sync), скрипттер де жиналады
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
