@@ -15,7 +15,11 @@ if ($Quiet) { $env:GIT_TERMINAL_PROMPT = "0"; $env:GCM_INTERACTIVE = "never" }
 
 # Бір уақытта екі синхрон болмасын
 $lock = "$State\sync.lock"
-if ((Test-Path $lock) -and ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalMinutes -lt 15) { Say "өткізілді: басқа синхрон жүріп жатыр"; return }
+if (Test-Path $lock) {
+    $lp = [int]("0" + (Get-Content $lock -Raw -ErrorAction SilentlyContinue).Trim())
+    $alive = $lp -and (Get-Process -Id $lp -ErrorAction SilentlyContinue)
+    if ($alive -and ((Get-Date) - (Get-Item $lock).LastWriteTime).TotalMinutes -lt 15) { Say "өткізілді: басқа синхрон жүріп жатыр (PID $lp)"; return }
+}
 Set-Content $lock $PID
 try {
     $lastSync = if (Test-Path "$State\last-ok.txt") { [datetime](Get-Content "$State\last-ok.txt" -Raw).Trim() } else { $null }
@@ -62,4 +66,6 @@ try {
     Remove-Item $lock -ErrorAction SilentlyContinue
     $all = Get-Content $Log -Encoding UTF8 -ErrorAction SilentlyContinue
     if ($all.Count -gt 500) { $all | Select-Object -Last 300 | Set-Content $Log -Encoding UTF8 }
+    # LAN: copy this PC's log next to the shared work folder so BEKA-1 can read it
+    if (Test-Path "$Work\.claude") { try { Copy-Item $Log "$Work\.claude\sync-$env:COMPUTERNAME.log" -Force } catch {} }
 }

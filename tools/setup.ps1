@@ -51,9 +51,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$Repo\tools\obsidian-vault.
 
 # Claude жұмыс істеп болған сайын GitHub-қа автосинхрон
 $env:PYTHONIOENCODING = "utf-8"
-& $Py "$Repo\tools\install_autosync.py"
+& $Py "$Repo\tools\install_autosync.py" 2>&1 | ForEach-Object { Write-Host "$_" }
 if ($LASTEXITCODE -ne 0) { throw "install_autosync.py сәтсіз" }
 
 # Бірінші синхрон: GitHub-қа кіру сұралса - bekasylauez-spec аккаунтымен кір
-powershell -NoProfile -ExecutionPolicy Bypass -File "$Repo\tools\update.ps1" -Work $Work
+$ErrorActionPreference = "Continue"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$Repo\tools\update.ps1" -Work $Work 2>&1 | ForEach-Object { Write-Host "$_" }
+$code = $LASTEXITCODE
+$ErrorActionPreference = "Stop"
+Get-Content "$env:LOCALAPPDATA\bekassyl-sync\sync.log" -Encoding UTF8 -Tail 3 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "sync.log: $_" }
+if ($code -ne 0) { Write-Host "Синхрон сәтсіз (код $code) - жоғарыдағы қатені қара" -ForegroundColor Red }
 Write-Host "ДАЙЫН. Claude-ты қайта іске қос." -ForegroundColor Green

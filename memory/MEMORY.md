@@ -67,3 +67,4 @@
 - [Ашық файлды өзім жабамын](close-user-file-myself.md) — DWG пайдаланушыда ашық болса: сақтап жабу (COM), өз данамда ашу; сұрамау
 - [AutoCAD eAtMaxReaders](acad-eatmaxreaders.md) — rz.cs: McObject dispose (MGet), dyn allowed values шақырма; әр партиядан соң сақта; бұзылса данамды қайта аш
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (BEKA-1 junction, BEKA-2 symlink через link-memory.cmd); өзгеріс келесі чатта көрінеді
+- [Дос: АЙДОСЪАН](friend-aidosan.md) — пайдаланушының досының аты
