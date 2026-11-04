@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: f81d222c-a60d-46ab-a379-ee032f398e22
-  modified: 2026-11-04T17:48:41.425Z
+  modified: 2026-11-04T18:25:53.604Z
 ---
 
 2026-10-31 the user asked to put all chat knowledge on GitHub; chose **public** repo `https://github.com/abylayotep/bekassyl-knowledge`.
@@ -31,6 +31,8 @@ Local clone: `C:\Users\Admin\Documents\bekassyl-knowledge` (folders `obsidian/` 
 - `build.py` now compares content (local wins) and also collects **scripts**: `%TEMP%\claude\*\*\scratchpad\**\*.{cs,py,ps1,lsp,bas,vb}` ≤500 KB → `scripts/<session8>/`, skips files with secret-like text. First run: 471 scripts, 135 chats.
 - `setup.ps1` (new PC): Git+Python via winget, clone, restore only missing files (skipped on the LAN PCs where D:\РАБОЧКА / memory are links), `obsidian-vault.ps1`, install hooks, first sync (GitHub sign-in as bekasylauez-spec).
 - BEKA-2 launcher: `D:\РАБОЧКА\.claude\link-git.cmd` → log back to `D:\РАБОЧКА\.claude\link-git-<PC>.log`. Copies in repo: `tools/lan-*.ps1`.
+- **BEKA-2 done 2026-11-04 23:24** (commit 1dee571, user `beka`; Python 3.13 + Obsidian 1.15 installed via winget --scope user; hooks in `C:\Users\beka\.claude\settings.json`). Its 26 own memory notes (other work folder, Revit/СПДС/КМ rules) were merged into the shared memory by BEKA-1's restore.
+- Lessons: `python` may be the WindowsApps Store stub → use `tools/findpy.ps1`. Hook-spawned children die when a Claude session closes → `autosync.ps1` starts update via WMI `Win32_Process.Create`. Stale lock = dead PID → ignored. Pull conflict → `rebase --abort` + `reset --hard origin/main` (repo is only a generated copy). Start-Transcript does not record native exe output → pipe through Write-Host. Each PC's sync log is copied to `D:\РАБОЧКА\.claude\sync-<PC>.log`.
 - Before pushing new kinds of content, scan for secrets (public repo). The graph.json numbers [тел. жасырылды]/87369301206 are false phone hits.
 
 Related: [[obsidian-log-work]], [[shared-memory-two-pcs]]

@@ -93,3 +93,4 @@
 - [Завод В109 КМ restyle](project-zavod-b109-km.md) — Tekla DWG → user's AutoCAD style in place, live СПДС dims; sheet 03 done, pipeline in Завод_В109_КМ\_авто
 - [Obsidian vault Bekassyl](reference-obsidian-bekassyl.md) — \192.168.0.107\рабочка\Bekassyl: read rules + project note before any work
 - [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes
+- [Ашық DWG-ны өзім ауыстырам (BEKA-2)](feedback-acad-swap-myself.md) — пайдаланушының ашық DWG-сын өзім жауып→ауыстырып→ашамын, сұрамаймын; [[close-user-file-myself]] ережесімен бірдей
