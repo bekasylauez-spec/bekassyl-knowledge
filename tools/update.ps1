@@ -25,9 +25,19 @@ try {
     $lastSync = if (Test-Path "$State\last-ok.txt") { [datetime](Get-Content "$State\last-ok.txt" -Raw).Trim() } else { $null }
 
     # 1. GitHub-тан алу
+    # Репо - тек жиналған көшірме (бастапқы файлдар дискте), сондықтан конфликт болса GitHub нұсқасына қайтарып, қайта жинаймыз
+    $ErrorActionPreference = "Continue"
+    if ((Test-Path "$Repo\.git\rebase-merge") -or (Test-Path "$Repo\.git\rebase-apply")) { git -C $Repo rebase --abort 2>&1 | Out-Null }
     $before = (git -C $Repo rev-parse HEAD).Trim()
-    git -C $Repo pull --rebase --autostash -q
-    if ($LASTEXITCODE -ne 0) { throw "git pull сәтсіз" }
+    git -C $Repo pull --rebase --autostash -q 2>&1 | ForEach-Object { "$_" } | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        git -C $Repo rebase --abort 2>&1 | Out-Null
+        git -C $Repo fetch -q origin 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $ErrorActionPreference = "Stop"; throw "git fetch сәтсіз (интернет?)" }
+        git -C $Repo reset -q --hard origin/main 2>&1 | Out-Null
+        Say "конфликт: репо GitHub нұсқасына қайтарылды, осы компьютердегі қайта жиналады"
+    }
+    $ErrorActionPreference = "Stop"
     $after = (git -C $Repo rev-parse HEAD).Trim()
 
     # 2. Басқа компьютерден келген өзгерісті осында қою - тек мұнда соңғы синхроннан кейін өзгермеген файлдарға
@@ -54,8 +64,11 @@ try {
     if ($LASTEXITCODE -ne 0) {
         $n = (git -C $Repo diff --cached --name-only | Measure-Object).Count
         git -C $Repo commit -q -m "Жаңарту: $env:COMPUTERNAME $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
-        git -C $Repo push -q
-        if ($LASTEXITCODE -ne 0) { throw "git push сәтсіз (GitHub-қа кіру керек болуы мүмкін)" }
+        $ErrorActionPreference = "Continue"
+        $po = git -C $Repo push -q 2>&1 | ForEach-Object { "$_" }
+        $pc = $LASTEXITCODE
+        $ErrorActionPreference = "Stop"
+        if ($pc -ne 0) { throw "git push сәтсіз (GitHub-қа кіру керек болуы мүмкін): $($po -join ' | ')" }
         Say "GitHub жаңартылды: $n файл ($($out -join '; '))"
     } else { Say "жаңалық жоқ" }
     Set-Content "$State\last-ok.txt" (Get-Date -Format 's')
