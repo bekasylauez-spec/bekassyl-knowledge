@@ -52,4 +52,12 @@ Key measured facts:
 
 For a new analog, do the same depth of reading: render each sheet, view zoomed tiles, and measure from the PDF vectors.
 
+**Path on both PCs:** `D:\РАБОЧКА\Bekassyl` (on BEKA-2 `D:\РАБОЧКА` is a link to `\\BEKA-1\РАБОЧКА`), see [[shared-memory-two-pcs]]. BEKA-2 also repeated this rule on 04.11.2026 («обсидианнан қара»).
+
+**Key notes:**
+- `16_КМ чертежи\02_Оформление\Стиль альбома КМ — по лестнице ЛК (Қарасу).md` — КМ album style: SPDS objects (SPDSNOTEPOSITION marks, SPDSNOTEKNOT nodes, SPDSSECTION, SPDSLEVELMARK, SPDSWELD, SPDSBREAK), «СПДС» dim style, ISOCPEUR, axes ACAD_ISO03W100.
+- `01_Общие правила\Оформление КЖ в AutoCAD — СПДС (утверждённые правила).md`, `14_Мои правила\Работа и оформление.md`.
+- Project notes in `15_Проекты\<object>\`; В109 = `Завод УВПиОС В109 (Шерхан)\КМ В109 — сборка в один DWG и сверка с ТХ.md` (another agent's live-AutoCAD history: cranes, ТХ, expert remarks).
+- Also GitHub `bekasylauez-spec/bekassyl-knowledge` (public fork) and `idea-statica-notes`.
+
 Related: [[obsidian-log-work]], [[kzh-scheme-karkasa]], [[reservoir-kzh]]

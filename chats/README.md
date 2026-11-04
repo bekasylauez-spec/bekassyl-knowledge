@@ -139,6 +139,7 @@
 | 2026-11-03 | [Водоподготовка ВП-В109 документация](<2026-11-03 Водоподготовка ВП-В109 документация (93bc90b4).md>) |
 | 2026-11-03 | [Шерхан Telegram — күнделікті тексеру (15:00)](<2026-11-03 Шерхан Telegram — күнделікті тексеру (15 00) (11552dc6).md>) |
 | 2026-11-03 | [Шерхан Telegram — күнделікті тексеру (15:00)](<2026-11-03 Шерхан Telegram — күнделікті тексеру (15 00) (a6296a31).md>) |
+| 2026-11-04 | [Claude memory папкасын синхрондау](<2026-11-04 Claude memory папкасын синхрондау (3c60d2fa).md>) |
 | 2026-11-04 | [PowerShell git-link script output](<2026-11-04 PowerShell git-link script output (1d86bf8f).md>) |
 | 2026-11-04 | [PowerShell git-link script output](<2026-11-04 PowerShell git-link script output (2551860e).md>) |
 | 2026-11-04 | [PowerShell git-link script output](<2026-11-04 PowerShell git-link script output (2e8e5460).md>) |

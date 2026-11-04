@@ -1,6 +1,6 @@
 ---
 name: project-zavod-b109-km
-description: "Завод В109 Водоподготовка КМ (Infratech, Tekla export) redrawn on the frame of the user's Цех Алатау КМ album — rules, pipeline, state"
+description: "Завод УВПиОС В109 (Шерхан) КМ: 03.11 Tekla бір DWG + ТХ крандар (BEKA-1), 04.11 Цех Алатау альбомы рамкасында жаңадан сызу (BEKA-2) — ережелер, pipeline, күйі"
 metadata:
   node_type: memory
   type: project
@@ -8,7 +8,25 @@ metadata:
   modified: 2026-11-04T14:53:20.959Z
 ---
 
-**Request.** Source DWG: `\\192.168.0.107\рабочка\От Шерхан\Завод\Том 14 Водоподготовка ВП-В109\КМ Чертеж\227-23-П-УВПиОС-ВП-В109 КМ (все листы, модель) v2.dwg`. The user keeps editing it in their own AutoCAD (last save 04.11 14:19), so take a fresh copy before each run.
+**Ерте кезең (03–04.11.2026, BEKA-1: КМ бір DWG-ға, ТХ, крандар, замечания).**
+
+2026-11-03: «От Шерхан\Завод\Том 14 Водоподготовка ВП-В109\КМ Чертеж\227-23-П-УВПиОС-ВП-В109 КМ (все листы).dwg» — 11 Tekla парағы + титул бір файлда (модель Y −100000·N, лист 01…11). Жоқтар ғана қосылды: 1-парақ жалпы мәтіндері (модельде видовой экрансыз еді), 4/7-парақта видовой экран кескен мәтіндер, логотип (Company_logo.png сол папкада).
+
+03.11 кешке: КМ ТХ бойынша түзетілді (ортаңғы H–E аралыққа ПБ+КН, 8/4/2-парақтар) және бәрі моделге шығарылды: «КМ Чертеж/227-23-П-УВПиОС-ВП-В109 КМ (все листы, модель).dwg». Сосын «ТХ бойынша өзгерт»: рельс осьтен 500, ПБ үсті +11.893 (рельс басы +12.000), спец. подкрановые 78,5 т. АШЫҚ: 24 м аралықта ферма асты +12.37, кран үсті +12.85 → соқтығыс; ТХ таза биіктік ≥+14.00 орындалмайды (ЛИРА-мен көтеру керек). Крандар ТХ-дан 3-3 қимасына көшірілді → «… (все листы, модель) v2.dwg» (негізгісі пайдаланушыда ашық еді). Пайдаланушы шешімі: ТХ-ға хабарлау — сұрау хаты «КМ Чертеж\В109 - запрос в ТХ по мостовым кранам.txt» (RU+CN), ТХ жауабын күтеміз.
+
+Бастапқы айырма: ТХ (папка ТХ, 30.10–03.11) үш кран 2 т (L120001 двухбалочный, L140002/L140003 однобалочные), пролёт 23000/11000/23000 (рельс осьтен 500), рельс Р24, давление колеса 23,9 кН, чистая высота ≥+14.00. КМ лист 8: ПБ тек 24 м аралықтарда, рельс 750, консоль +11.000.
+
+2026-11-03: замечания экспертизы по В109 собраны в «В109 — замечания и что делать.xlsx» (папка тома 14): 141 строка, наши КЖ/КМ — 24; сводный лист исходника «Замечания», остальные листы — дубли.
+
+**Why:** пайдаланушы «жаңадан сызба, копировать ет, тек жоқ сызықты сыз» деді және сұрақтарды соңында жинап беруді сұрады.
+**How to apply:** бұл жобаны жалғастырғанда Obsidian «15_Проекты/Завод УВПиОС В109 (Шерхан)» және [[cad-console-net-workflow]] әдісін қара; Tekla DWG біріктіруде жалпы видовой экранды да клондау керек (әйтпесе экрандар бос).
+
+04.11: пайдаланушы — кран жолының отметкасы +11,000 (ПБ үсті), мен +11,893 қойғанмын (ТХ +12.00-ді рельс басы деп түсіндім) → қайтарылды. Ереже: КМ-дегі бар отметкаларды ТХ-ға өз түсінігіммен өзгертпе, алдымен сұра. Двутавр белгісі «I» әрпі емес, сызылған таңба (IBEAM op).
+
+**Кейінгі кезең (04.11.2026, BEKA-2: Цех альбомы негізінде қайта сызу).**
+
+
+**Request.** Source DWG: `D:\РАБОЧКА\От Шерхан\Завод\Том 14 Водоподготовка ВП-В109\КМ Чертеж\227-23-П-УВПиОС-ВП-В109 КМ (все листы, модель) v2.dwg`. The user keeps editing it in their own AutoCAD (last save 04.11 14:19), so take a fresh copy before each run.
 
 **What the user asked (04.11.2026).**
 - «новыйдан сызамыз, жұмыс тәртібі цех»: the Цех Алатау КМ album is the frame ([[project-alatau-ceh-km]]). Each Завод drawing goes onto a Цех-style sheet, in the Цех order and numbering.
@@ -143,7 +161,7 @@ The plan for Цех sheet 3 «Схема расположения колонн �
   - AXIS takes a ltscale as its 6th field;
   - pdfcrop now crops each page to its sheet from sheets.txt.
   - ceh_build stops if BkSpds.dll does not compile. A comment swallowed code once and the old dll ran silently.
-- The album swap in the user's AutoCAD is done by `acad_swap.ps1` ([[feedback-acad-swap-myself]]).
+- The album swap in the user's AutoCAD is done by `acad_swap.ps1` ([[close-user-file-myself]]).
 - 04.11 ~19:10, user, verbatim:
   > «Листті кішірейттім. Ведомость элементтің масштабын ретте. Штамппен бірдей ұзындықта болуы керек. Сосын барлығын жалғастыр. Полный чертежды бітір сосын тексерем ок. узелдерді де реттеп жаса қосымша керек болса жаса. Аналогтан алып выноска бюарлығын спдстен алып жаса»
   - In the album the user made sheet 6 A2 594x420 and deleted the empty Цех frames 7–25.
@@ -181,6 +199,6 @@ The plan for Цех sheet 3 «Схема расположения колонн �
 - 04.11 ~21:00, user: dims = real AutoCAD dims in СПДС style, no Tekla leftovers; отметки = full SPDS; all lines thin; truss + frame ведомости from the analog.
   - SPDS level mark = class a9b900a6… (mcsDbObjectLevelMark), no typed API. BkLevel.cs Level.Make: WblockClone of Цех mark handle 581562 (ceh.dwg), set props via PropertyDescriptor (Associative false, Text), Scale, TransformBy to the tip (tip = vertical of the exploded mark), grips 0 = base-line end, 1 = shelf end (OnMoveGripPoints). Op LEVEL tipX tipY baseX shelfY | text.
   - Transfer.Levels finds Tekla marks (value over shelf + vertical + triangle + base line). Restyle pass 1: compressed views → any length with ticks, overall dims re-joined over gaps without ticks, value as DIM text override (BkSheet DIM f[5]).
-  - Truss analog: \\192.168.0.107\рабочка\От Дастан\КМ Аналогтар\East Motors_КМ_10 01 24.dwg («Ведомость элементов СФ2», x≈844000 y≈-33000). ed_elem.ps1 draws that form; ФФ1 table on sheet 12, new sheet 17 «Ведомость элементов каркаса» (sections/steels partly inferred from spec masses: К 60Ш3 С255, К1 60Ш2 С345, К2 60Ш3 С345 — ask user).
+  - Truss analog: D:\РАБОЧКА\От Дастан\КМ Аналогтар\East Motors_КМ_10 01 24.dwg («Ведомость элементов СФ2», x≈844000 y≈-33000). ed_elem.ps1 draws that form; ФФ1 table on sheet 12, new sheet 17 «Ведомость элементов каркаса» (sections/steels partly inferred from spec masses: К 60Ш3 С255, К1 60Ш2 С345, К2 60Ш3 С345 — ask user).
 
-Related: [[reference-spds-api]], [[reference-obsidian-bekassyl]].
+Related: [[reference-spds-api]], [[obsidian-first]].

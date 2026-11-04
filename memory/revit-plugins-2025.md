@@ -1,6 +1,6 @@
 ---
 name: revit-plugins-2025
-description: "Revit 2025 plugins installed 2026-10-31 (pyRevit 7, RevitLookup, ModPlus 2025 fix), guide location, DiRoots pending user form"
+description: "Revit 2025 plugins on both PCs (BEKA-1: pyRevit 7, RevitLookup, ModPlus fix; BEKA-2: ModPlus, KZhTagShelf, mcp-servers) + Autodesk family-creation workflow"
 metadata:
   node_type: memory
   type: project
@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-31T11:01:09.771Z
 ---
 
-On 2026-10-31 the user asked me to find Revit 2025 plugins online, install them all, and learn how to use each.
+**BEKA-1** — on 2026-10-31 the user asked me to find Revit 2025 plugins online, install them all, and learn how to use each.
 
 Installed, each signature checked (Valid):
 - pyRevit 7.0.0.26278 (per-user). Code in `%APPDATA%\pyRevit-Master`.
@@ -30,3 +30,13 @@ Still open:
 **Why:** the user also said «неге бұлтта жасап отырсың». Tell them plainly that the work runs locally on D:\РАБОЧКА.
 
 **How to apply:** the ModPlus reinforcement plugins (walls, slabs, columns, beams) and Вес пластин are the most relevant for КЖ/КМ. RevitLookup helps when writing the RBLive add-ins ([[revit-build-via-addin]]).
+
+**BEKA-2 (same day, separate survey):**
+On 31.10.2026 the user asked me to look for Revit 2025 plugins and to learn family creation from Autodesk Help. The notes are in `D:\Бекасыл КЖ КМ\_Стандарт_КЖ\Revit2025_плагиндер_және_семейство_жасау.md`.
+
+- **Plugins already installed** (2025): ModPlus (has free rebar utilities), KZhTagShelf, mcp-servers-for-revit.
+- **Candidates for КЖ/КМ:** Bim-Starter (2 000 ₽/yr, includes КМ plate mass), BIM2B Template Tools, pyRevit 7.0, RevitLookup, DiRoots (freemium), RapidRebar (free).
+- **Revit 2025 runs on .NET 8**, so 2024 DLLs will not load.
+- **Family workflow from Autodesk:** plan → template → subcategories → framework (pin origin, set ref planes, add dimensions and lock them, label, flex) → types → geometry one layer at a time, locked to planes → flex → visibility → test in a project → type catalog.
+
+Builds on [[km-tube-families]], which records our own API lessons on families.

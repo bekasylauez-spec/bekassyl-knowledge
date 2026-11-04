@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-31T17:25:31.087Z
 ---
 
-**Request.** On 31.10.2026 the user asked to build in Revit the full model from `\\192.168.0.107\рабочка\От Шерхан\ЦЕХ Алатау\КМ Чертеж\КМ Чертеж Блок 1 Без СПДС 14-03-2026.dwg`. Their words: «полный, лист, болт, барлығын жаса, майда шүйде узелдер барлығы» — everything, including plates, bolts and all small nodes. The title block lists «Разраб. Ауез Б», the user.
+**Request.** On 31.10.2026 the user asked to build in Revit the full model from `D:\РАБОЧКА\От Шерхан\ЦЕХ Алатау\КМ Чертеж\КМ Чертеж Блок 1 Без СПДС 14-03-2026.dwg`. Their words: «полный, лист, болт, барлығын жаса, майда шүйде узелдер барлығы» — everything, including plates, bolts and all small nodes. The title block lists «Разраб. Ауез Б», the user.
 
 **Project folder.** `D:\Бекасыл КЖ КМ\Алатау_ЦЕХ_КМ`:
 - `исходник\` holds the DWG and the PDF;

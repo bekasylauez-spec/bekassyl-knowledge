@@ -107,4 +107,4 @@ Full album, 13 sheets, numbered like the DWG (2026-10-30 afternoon). The user sa
     - sheets laid out in rows with the bubbles redrawn.
   - Still open: dims on а-а/б-б, the «Закладная пластина Зд-1…» note; sheets 1–3 not compared yet.
 
-Related: [[karasu-lk1-canopy]]
+Related: [[karasu-lk1-canopy]], [[revit-mcp-bridge]] (BEKA-2's way)

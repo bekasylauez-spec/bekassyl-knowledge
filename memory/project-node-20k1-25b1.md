@@ -46,4 +46,4 @@ metadata:
 - Not done: оформление sheet; «Длина» counts 23 mm extra (≈0.6 kg).
 - Superseded scripts: uz_01 (horizontal), uz_05 (on the column top).
 
-Related: [[km-tube-families]], [[revit2025-plugins-families]].
+Related: [[km-tube-families]], [[revit-plugins-2025]].
