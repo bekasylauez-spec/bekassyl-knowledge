@@ -46,7 +46,7 @@ def make_zones(a, b, el, er, dL, dR, dm, sm):
     zs.insert(1 if el else 0, ('M', inner[0], inner[-1], dm, sm, inner, segs))
     return zs
 REQ = []
-for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, ENDS)):
+for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, CFG.get('LENDS', ENDS))):     # LENDS: free ends as seen in the LIRA cells (mirrored pieces)
     row = []
     for g0, g1 in G:
         cs = [c for c in CELLS if max(LEV[g0], CFG.get('ZMIN', -99)) - 1e-3 <= c['z0'] < LEV[g1] - 1e-3 and c[KX[1]] > la + 1 and c[KX[0]] < lb - 1]
@@ -183,6 +183,7 @@ def run(go=False):
                 if AN and i in NSIDE:
                     csd = 'R' if NSIDE[i] == 'L' else 'L'
                     if i in CFG.get('CHAIN_SAME', []): csd = NSIDE[i]      # only free side holds the notes: same side, other storey (analog)
+                    if CFG.get('CHAIN_FORCE'): csd = CFG['CHAIN_FORCE'][i]
                     xa = AX1 + (max(z[2] for z in D[i][0]) if csd == 'R' else min(z[1] for z in D[i][0])) + DX
                     xd = AX1 + (PIECES[i][1] + CFG.get('CHAIN_OFF_R', [350] * NP)[i] if csd == 'R' else PIECES[i][0] - 350)
                 yy = [yt, yt + lp, yt + lp + gp, yt + 2 * lp + gp]

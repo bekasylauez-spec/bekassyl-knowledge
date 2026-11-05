@@ -45,13 +45,13 @@ for r in R:
         ops.append(dict(t='erase', h=[r['h']]))
         ops.append(dict(t='pl', p=[W(r['x0'], y), W(r['x1'], y)], layer='диам%d' % d, lw=40))
 for nn in N:
-    if nn['pts'][0][1] < L[0] - 100 or len(nn['pts']) != 3: continue
+    if nn['pts'][0][1] < L[0] - 100 or len(nn['pts']) != 3 or not (CFG['AXES'][0] - 3000 < nn['pts'][0][0] < CFG['AXES'][-1] + 3000): continue
     s = storey(nn['pts'][0][1])
     if s is None: continue
     d, st = HD[s]; y0, y1, n = grid(s)
-    if nn['l1'].startswith('Ск'): l1, l2 = 'Ск%d' % ck_of(d), '(%%%%C%d)' % d
+    if nn['l1'].startswith('Ск'): l1, l2 = 'Ск%d' % ck_of(d), '(%%%%%%%%C%d)' % d
     else: l1, l2 = str(pos_of(('S', d))), 'ш.%d' % st
-    ops.append(dict(t='mcset', h=nn['h'], set={'FirstLine': l1.replace('%%%%', '%%'), 'SecondLine': ('(%%C%d)' % d) if l2.startswith('(') else l2}))
+    ops.append(dict(t='mcset', h=nn['h'], set={'FirstLine': l1.replace('%%%%', '%%'), 'SecondLine': ('(%%%%C%d)' % d) if l2.startswith('(') else l2}))
     ops.append(dict(t='spmove', h=nn['h'], items=[[0, SX + nn['pts'][0][0], SY + (y0 + y1) / 2], [1, SX + nn['pts'][1][0], SY + y0], [2, SX + nn['pts'][2][0], SY + y1]]))
 # straight bars and caps per storey
 for s in range(7):
