@@ -4,6 +4,8 @@
 # python gen_dop.py <key> <sheet k> ; key bot_x|top_x|bot_y|top_y ; k = 3..6
 import gx, json, os, sys, math
 import gen62 as G
+import lev
+C = lev.CUR
 S = gx.S
 SW = 59400.0
 OX2, OY = G.OX, G.OY                     # sheet 6.2 plan origin
@@ -31,10 +33,10 @@ def build(key, k, R, pos):
     X, Y = OX2 + dx, OY
     def P(a, b): return [X + a, Y + b, 0]
     x0 = 231579 + dx
-    ops = [{'t': 'eraseregion', 'win': [x0 + 1, 455940, x0 + SW - 1, 497938]}]
+    ops = [{'t': 'eraseregion', 'win': [x0 - 1, 455930, x0 + SW + 1, 497950]}]
     # frame, stamp, notes, title, sheet number
     for h in FRAME: ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [dx, 0]})
-    name = 'Дополнительное армирование плиты перекрытия Пм-1 %s на отм -0.100' % TITLES[key]
+    name = 'Дополнительное армирование плиты перекрытия %s %s на отм %s' % (C['name'], TITLES[key], C['mark'])
     ops.append({'t': 'clone', 'h': '2B47A5', 'base': [0, 0], 'to': [dx - 2500, -650], 'text': '{\\L\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479D', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '6.%d' % k})
@@ -129,9 +131,9 @@ def build(key, k, R, pos):
 
 
 if __name__ == '__main__':
-    R = json.load(open(os.path.join(S, 'arm', 'pm1_design.json')))
+    R = json.load(open(os.path.join(S, 'arm', C['tag'] + '_design.json')))
     pos = positions(R)
-    json.dump({'%d_%d' % t: v for t, v in pos.items()}, open(os.path.join(S, 'arm', 'pm1_pos.json'), 'w'))
+    json.dump({'%d_%d' % t: v for t, v in pos.items()}, open(os.path.join(S, 'arm', C['tag'] + '_pos.json'), 'w'))
     key, k = sys.argv[1], int(sys.argv[2])
     out = gx.run(build(key, k, R, pos), 'dop_' + key)
     print(key, len(R[key]), [l for l in out.splitlines() if 'ERR' in l or 'done' in l or 'eraseregion' in l][:12])

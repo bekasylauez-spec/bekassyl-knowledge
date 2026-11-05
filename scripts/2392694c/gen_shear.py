@@ -5,6 +5,8 @@ import gx, json, os, sys, math, csv, pickle
 import gen62 as G
 import gen_dop as GD
 import slab_design as SD
+import lev
+C = lev.CUR
 S = gx.S
 SW = 59400.0
 BARA = [(8, .503), (10, .785), (12, 1.131), (14, 1.539), (16, 2.011), (18, 2.545), (20, 3.142)]
@@ -70,9 +72,9 @@ def build(k, Zn, posmap):
     X, Y = G.OX + dx, G.OY
     def P(a, b): return [X + a, Y + b, 0]
     x0 = 231579 + dx
-    ops = [{'t': 'eraseregion', 'win': [x0 + 1, 455940, x0 + SW - 1, 497938]}]
+    ops = [{'t': 'eraseregion', 'win': [x0 - 1, 455930, x0 + SW + 1, 497950]}]
     for h in GD.FRAME: ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [dx, 0]})
-    name = 'Поперечное армирование плиты перекрытия Пм-1 на отм -0.100'
+    name = 'Поперечное армирование плиты перекрытия %s на отм %s' % (C['name'], C['mark'])
     ops.append({'t': 'clone', 'h': '2B47A5', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\L\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479D', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '6.%d' % k})
@@ -128,12 +130,12 @@ def build(k, Zn, posmap):
 
 
 if __name__ == '__main__':
-    Zn = zones(SD.PM1['Z'], SD.PM1['rect'])
-    pos = json.load(open(os.path.join(S, 'arm', 'pm1_pos.json')))
+    Zn = zones(C['z'], C['rect'])
+    pos = json.load(open(os.path.join(S, 'arm', C['tag'] + '_pos.json')))
     nxt = max(pos.values()) + 1
     posmap = {}
     for dd in sorted({z['d'] for z in Zn}): posmap[dd] = nxt; nxt += 1
-    json.dump(dict(zones=Zn, pos={str(k): v for k, v in posmap.items()}), open(os.path.join(S, 'arm', 'pm1_shear.json'), 'w'), indent=1)
+    json.dump(dict(zones=Zn, pos={str(k): v for k, v in posmap.items()}), open(os.path.join(S, 'arm', C['tag'] + '_shear.json'), 'w'), indent=1)
     for z in Zn: print(z)
-    out = gx.run(build(7, Zn, posmap), 'shear')
+    out = gx.run(build(C['k0'] + 6, Zn, posmap), 'shear')
     print(len(Zn), posmap, [l for l in out.splitlines() if 'ERR' in l or 'done' in l][:10])

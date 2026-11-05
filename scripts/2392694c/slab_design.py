@@ -196,7 +196,7 @@ def design(S, maxd=20):
                                   flag=next((q[5] for q in P[i:j + 1] if q[5]), None)))
         # drop tiny peaks (< 4 bars and < 1500 long) — Obsidian: zone needs >= 4 cells
         zones = [z for z in zones if z['n'] >= 3 or z['s1'] - z['s0'] >= 1500]
-        res[key] = resolve(round300(S, axis, clip_runs(S, axis, resolve(merge_adjacent(clip_runs(S, axis, zones))))))
+        res[key] = split_long(resolve(round300(S, axis, clip_runs(S, axis, resolve(merge_adjacent(clip_runs(S, axis, zones)))))))
     return res
 
 
@@ -287,6 +287,24 @@ def round300(S, axis, zones):
     return zones
 
 
+LAPD = {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}
+
+
+def split_long(zones, stock=11700):
+    """dop bars longer than the stock length -> two bars lapped 61d in the middle (same lines, overlap = lap only)"""
+    out = []
+    for z in zones:
+        L = z['s1'] - z['s0']
+        if L <= stock: out.append(z); continue
+        lap = LAPD.get(z['d'], 61 * z['d'])
+        h = math.ceil(((L + lap) / 2) / 300) * 300
+        a = dict(z); b = dict(z)
+        a['s1'] = z['s0'] + h; b['s0'] = z['s1'] - h
+        a['lap'] = b['lap'] = True
+        out += [a, b]
+    return out
+
+
 def report(R):
     tot = 0
     for key, zs in R.items():
@@ -302,8 +320,10 @@ PM1 = dict(Z=-0.1, rect=(-125, -3275, 20175, 31175),
            rx=[(-125, 325), (6575, 7025), (13025, 13475), (19725, 20175)],
            ry=[(-1225, -775), (23125, 23575), (28625, 29075)])
 
+import lev
+CUR = dict(Z=lev.CUR['z'], rect=lev.CUR['rect'], openings=lev.CUR['openings'], rx=lev.CUR['rx'], ry=lev.CUR['ry'])
 if __name__ == '__main__':
-    S = Slab(PM1['Z'], PM1['rect'], PM1['openings'], PM1['rx'], PM1['ry'])
+    S = Slab(CUR['Z'], CUR['rect'], CUR['openings'], CUR['rx'], CUR['ry'])
     R = design(S)
     report(R)
-    json.dump(R, open(os.path.join(HERE, 'arm', 'pm1_design.json'), 'w'), indent=1)
+    json.dump(R, open(os.path.join(HERE, 'arm', lev.CUR['tag'] + '_design.json'), 'w'), indent=1)

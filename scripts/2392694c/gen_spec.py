@@ -4,10 +4,12 @@
 import gx, json, os, math, collections
 import gen62 as G
 import slab_design as SD
+import lev
+C = lev.CUR
 S = gx.S
 SW = 59400.0
 K = 6.8
-X0 = 231579 + SW * 6                     # slot of sheet 6.8
+X0 = 231579 + SW * (C['k0'] + 5)                     # slot of sheet 6.8
 T8 = 4200000.0
 GOST = {10: '(214-210-0501-0005)', 12: '(214-210-0502-0001)', 14: '(214-210-0502-0002)', 16: '(214-210-0502-0003)',
         18: '(214-210-0502-0004)'}
@@ -16,7 +18,7 @@ STOCK = 11700
 
 
 def quantities():
-    P = SD.PM1
+    P = dict(Z=C['z'], rect=C['rect'], openings=C['openings'], rx=C['rx'], ry=C['ry'])
     Sl = SD.Slab(P['Z'], P['rect'], P['openings'], P['rx'], P['ry'])
     # pos 1: base bars @200 by the 6.2 chains, both directions, both layers, clipped at openings, + laps
     tot = 0.0
@@ -29,14 +31,14 @@ def quantities():
                     tot += L + max(0, math.ceil(L / STOCK) - 1) * LAP[12]
                 p += 200
     pos1_m = round(2 * tot / 1000, 1)
-    R = json.load(open(os.path.join(S, 'arm', 'pm1_design.json')))
-    pos = {tuple(map(int, k.split('_'))): v for k, v in json.load(open(os.path.join(S, 'arm', 'pm1_pos.json'))).items()}
+    R = json.load(open(os.path.join(S, 'arm', C['tag'] + '_design.json')))
+    pos = {tuple(map(int, k.split('_'))): v for k, v in json.load(open(os.path.join(S, 'arm', C['tag'] + '_pos.json'))).items()}
     dop = collections.Counter()
     for zs in R.values():
         for z in zs: dop[(z['d'], int(round(z['s1'] - z['s0'])))] += z['n']
     rows = [(1, 12, 'пог.м.', pos1_m)]
     for (d, L), v in sorted(pos.items(), key=lambda kv: kv[1]): rows.append((v, d, L, dop[(d, L)]))
-    sh = json.load(open(os.path.join(S, 'arm', 'pm1_shear.json')))
+    sh = json.load(open(os.path.join(S, 'arm', C['tag'] + '_shear.json')))
     cnt = collections.Counter()
     for z in sh['zones']: cnt[z['d']] += z['n']
     for d, v in sorted(sh['pos'].items(), key=lambda kv: kv[1]): rows.append((v, int(d), 230, cnt[int(d)]))
@@ -59,14 +61,14 @@ def build():
         r = l.split('\t')
         if len(r) > 3 and r[0] in 'LN' and r[2] not in ('108B',): L.append(r[2])
     dx = X0 - T8
-    ops = [{'t': 'eraseregion', 'win': [X0 + 1, 455940, X0 + SW - 1, 497938]}]
+    ops = [{'t': 'eraseregion', 'win': [X0 - 1, 455930, X0 + SW + 1, 497950]}]
     for h in L: ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [dx, 0], 'tag': 'SP_' + h})
-    name = 'Спецификация плиты перекрытия Пм-1 на отм. -0.100'
+    name = 'Спецификация плиты перекрытия %s на отм. %s' % (C['name'], C['mark'])
     ops.append({'t': 'settext', 'h': 'SP_2BDB0C', 's': '{\\C0;' + name + '}'})
-    ops.append({'t': 'settext', 'h': 'SP_2BDB0E', 's': '6.8'})
+    ops.append({'t': 'settext', 'h': 'SP_2BDB0E', 's': '6.%d' % (C['k0'] + 7)})
     # part 2 = copy of the main table and of its header, to the right
-    ops.append({'t': 'clone', 'h': 'SP_2BDB7E', 'tag': 'SPB', 'base': [0, 0], 'to': [19000, 0]})
-    ops.append({'t': 'clone', 'h': 'SP_2BDE8B', 'tag': 'SPBH', 'base': [0, 0], 'to': [19000, 0]})
+    ops.append({'t': 'clone', 'h': 'SP_2BDB7E', 'tag': 'SPB' + C['tag'], 'base': [0, 0], 'to': [19000, 0]})
+    ops.append({'t': 'clone', 'h': 'SP_2BDE8B', 'tag': 'SPBH' + C['tag'], 'base': [0, 0], 'to': [19000, 0]})
     # ведомость деталей and ведомость расхода стали under part 2
     det = [h for h in L if h in ('2BDB13',) or ('2BDB55' <= h <= '2BDB7D')]
     ops.append({'t': 'movegrp', 'h': ['SP_' + h for h in det], 'd': [-5465, 2562]})
@@ -74,7 +76,7 @@ def build():
     N1 = 46                                   # data rows of part 1 (rows 1..46), rest in part 2
     p1, p2 = rows[:N1], rows[N1:]
     # part 1: rows 0 header, 1..33 analog rows; need N1 data rows + nothing below
-    A, B = 'SP_2BDB7E', 'SPB'
+    A, B = 'SP_2BDB7E', 'SPB' + C['tag']
     ops.append({'t': 'trows', 'h': A, 'mode': 'ins', 'at': 3, 'from': 2, 'n': N1 + 1 - 29})   # rows 1..N1 + keep tail
     # after insert: data rows 1..(28+N1+1-29)=N1, tail rows N1+1.. (blank, blank, Материалы, бетон, note) -> delete tail in part 1
     ops.append({'t': 'trows', 'h': A, 'mode': 'del', 'at': N1 + 1, 'n': 5})
@@ -92,6 +94,7 @@ def build():
         if p == 1: form += [[r, 11, '(D%d*D%d*3.1415926/4*0.00785*1)' % (R1, R1), '%lu2%pr2']]
         else: form += [[r, 11, '(D%d*D%d*3.1415926/4*0.00785*J%d/1000)' % (R1, R1, R1), '%lu2%pr2']]
         form += [[r, 12, '(L%d*K%d)' % (R1, R1), '%lu2%pr2']]
+    cells1.append([0, 2, 'Плита ' + C['name']])
     for i, row in enumerate(p1): fill(cells1, form1, 1 + i, row)
     for i, row in enumerate(p2): fill(cells2, form2, i, row)
     cells2 += [[n2 + 3, 12, '']]
@@ -110,7 +113,7 @@ def build():
     vf += [[6, 1, '(0)', '%lu2%pr2'], [6, 2, '(0)', '%lu2%pr2'], [6, 3, '(Sum(B7:C7))', '%lu2%pr2'],
            [6, 11, '(Sum(E7:K7))', '%lu2%pr2'], [6, 12, '(Sum(L7:L7)+Sum(D7:D7))', '%lu2%pr2']]
     ops.append({'t': 'tformula', 'h': 'SP_2BDEA3', 'cells': vf})
-    ops.append({'t': 'tset', 'h': 'SP_2BDEA3', 'cells': [[6, 0, 'Пм-1']]})
+    ops.append({'t': 'tset', 'h': 'SP_2BDEA3', 'cells': [[6, 0, C['name']]]})
     ops += [{'t': 'evalf'}, {'t': 'save'}]
     return ops, rows, area
 

@@ -83,7 +83,7 @@ namespace RG
                 // discard the document (no save) and open it again from disk — resets leaked read-opens
                 var dm = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;
                 string path = doc.Name;
-                try { Autodesk.AutoCAD.ApplicationServices.DocumentExtension.CloseAndDiscard(doc); Autodesk.AutoCAD.ApplicationServices.DocumentCollectionExtension.Open(dm, path, false); log.AppendLine("reopened " + path); }
+                try { Autodesk.AutoCAD.ApplicationServices.DocumentExtension.CloseAndDiscard(doc); var o0 = (Dictionary<string, object>)ops[0]; if (Has(o0, "from")) File.Copy(S(o0, "from", ""), path, true); Autodesk.AutoCAD.ApplicationServices.DocumentCollectionExtension.Open(dm, path, false); log.AppendLine("reopened " + path); }
                 catch (System.Exception ex) { nerr++; log.AppendLine("ERR reopen: " + ex.Message); }
                 log.AppendLine("done, errors " + nerr);
                 File.WriteAllText(Path.Combine(tmp, "rg_log.txt"), log.ToString(), Encoding.UTF8);
