@@ -84,7 +84,7 @@ for s in range(NS):
         xp = fb - 900 if ckr else fb - 50                    # pos note: leader near the right end, text to its left
         if fb - fa > 6000: xp = (fa + fb) / 2 + 600
         tl = [x for x, b0, b1 in THIN if b0 < ym < b1]
-        for dx_ in [0] + [s_ * 50 * k_ for k_ in range(1, 30) for s_ in (-1, 1)]:      # text [xp-1000, xp] clear of the thin lines
+        for dx_ in [0] + [s_ * 10 * k_ for k_ in range(1, 150) for s_ in (-1, 1)]:      # text [xp-1000, xp] clear of the thin lines
             x_ = xp + dx_
             if fa + 190 < x_ - 950 and x_ < fb - 20 and not any(x_ - 990 < t < x_ + 40 for t in tl): xp = x_; break
         note('pos', str(p), 'ш.%d' % st, xp, ym - 550 if (y1 - y0) > 1500 else ym, y0, y1)
@@ -105,7 +105,9 @@ for s in range(NS):
             ch = [(L[s], y0, '')] + [(a_, b_, ('%dх%d' % (v_, k_)) if k_ > 1 else '') for a_, b_, v_, k_ in segs] + [(y1, L[s + 1] - SLAB, '')]
             for a, b, txt in ch:
                 kw = dict(t='dim', h='WT_DV', p1=W(xf, a), p2=W(xf, b), dl=W(xf + dx, (a + b) / 2), rot=math.pi / 2, txt=txt)
-                if b - a < 450: kw['tx'] = W(xf + dx + 200, a + 350) if a == L[s] else (W(xf + dx - 150, b - 650) if b > L[s + 1] - SLAB - 5 else W(xf + dx + 200, (a + b) / 2))
+                if b - a < 450:
+                    tight = len(segs) > 1                         # a leftover space in the middle: the step texts are long, «50» close to the slabs
+                    kw['tx'] = W(xf + dx + 200, a + (250 if tight else 350)) if a == L[s] else (W(xf + dx - 150, b - (250 if tight else 650)) if b > L[s + 1] - SLAB - 5 else W(xf + dx + 200, (a + b) / 2))
                 ops.append(kw)
 ops.append(dict(t='erase', h=['H8' + k for k in TP]))
 ops.append(dict(t='save'))

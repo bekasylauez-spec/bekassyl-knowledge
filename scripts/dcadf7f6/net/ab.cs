@@ -1012,6 +1012,65 @@ else if (t == "sysvar")
                 var a = L(m["r"]); var rg = CellRange.Create(tb, Convert.ToInt32(a[0]), Convert.ToInt32(a[1]), Convert.ToInt32(a[2]), Convert.ToInt32(a[3]));
                 if (S(m, "mode", "merge") == "merge") tb.MergeCells(rg); else tb.UnmergeCells(rg);
             }
+            else if (t == "trowfmt")
+            {
+                // copy text height / alignment / text style of every cell from row src to rows dst
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                int src = Convert.ToInt32(m["src"]);
+                foreach (var q in L(m["dst"]))
+                {
+                    int r = Convert.ToInt32(q);
+                    for (int c = 0; c < tb.Columns.Count; c++)
+                    {
+                        try { tb.Cells[r, c].TextHeight = tb.Cells[src, c].TextHeight; } catch { }
+                        try { tb.Cells[r, c].Alignment = tb.Cells[src, c].Alignment; } catch { }
+                        try { tb.Cells[r, c].TextStyleId = tb.Cells[src, c].TextStyleId; } catch { }
+                    }
+                    try { tb.Rows[r].Height = tb.Rows[src].Height; } catch { }
+                }
+            }
+            else if (t == "dimval")
+            {
+                // dims inside win whose shown value (Measurement*Dimlfac) ~= a -> text override b ; pairs [[a,"b"],...]
+                var w = L(m["win"]); var prs = L(m["pairs"]); int n = 0;
+                var ms = MS(db, tr); var ids = new List<ObjectId>(); foreach (ObjectId id in ms) if (id.ObjectClass.DxfName == "DIMENSION") ids.Add(id);
+                foreach (var id in ids)
+                {
+                    var dm = tr.GetObject(id, OpenMode.ForRead) as Dimension; if (dm == null) continue;
+                    Extents3d x; try { x = dm.GeometricExtents; } catch { continue; }
+                    if (x.MinPoint.X < D(w[0]) || x.MaxPoint.X > D(w[2]) || x.MinPoint.Y < D(w[1]) || x.MaxPoint.Y > D(w[3])) continue;
+                    double v = dm.Measurement * dm.Dimlfac;
+                    foreach (var q in prs) { var a = L(q); if (Math.Abs(v - D(a[0])) < 0.6) { dm.UpgradeOpen(); dm.DimensionText = a[1].ToString(); n++; break; } }
+                }
+                log.AppendLine("dimval " + n);
+            }
+            else if (t == "copywin")
+            {
+                // deep-clone every entity whose extents (or first stretch point) lie inside win, move by d; map pre+oldHandle -> new
+                var w = L(m["win"]); var dv = L(m["d"]); var mx = Matrix3d.Displacement(new Vector3d(D(dv[0]), D(dv[1]), 0));
+                string pre = S(m, "pre", "C:");
+                var ms = MS(db, tr); var ids = new ObjectIdCollection(); var olds = new List<ObjectId>();
+                foreach (ObjectId id in ms)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Point3d a, b; bool ok = true;
+                    try { var x = e.GeometricExtents; a = x.MinPoint; b = x.MaxPoint; }
+                    catch { var pn = new Point3dCollection(); try { e.GetStretchPoints(pn); } catch { } if (pn.Count == 0) { ok = false; a = b = Point3d.Origin; } else { a = b = pn[0]; } }
+                    if (!ok) continue;
+                    if (a.X >= D(w[0]) && b.X <= D(w[2]) && a.Y >= D(w[1]) && b.Y <= D(w[3])) { ids.Add(id); olds.Add(id); }
+                }
+                var im = new IdMapping();
+                db.DeepCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, false);
+                int n = 0;
+                foreach (var oid in olds)
+                {
+                    if (!im.Contains(oid)) continue; var p = im[oid]; if (!p.IsCloned) continue;
+                    var e = tr.GetObject(p.Value, OpenMode.ForWrite) as Entity; if (e == null) continue;
+                    e.TransformBy(mx);
+                    map[pre + ((Entity)tr.GetObject(oid, OpenMode.ForRead)).Handle.ToString().ToUpper()] = e.Handle.ToString(); n++;
+                }
+                log.AppendLine("copywin " + n + " of " + ids.Count);
+            }
             else if (t == "list")
             {
                 // every entity whose extents touch win: dxfname, handle, layer, extents, stretch points
@@ -1622,6 +1681,7 @@ else if (t == "sysvar")
                 }
                 while (pl.NumberOfVertices > pts.Count) pl.RemoveVertexAt(pl.NumberOfVertices - 1);
                 if (Has(m, "closed")) pl.Closed = (bool)m["closed"];
+                Props(pl, m, db, tr);
             }
             else if (t == "cmd")
             {
