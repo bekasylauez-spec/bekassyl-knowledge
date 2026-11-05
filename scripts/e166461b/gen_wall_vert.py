@@ -47,7 +47,10 @@ for s in range(7):
     yb = L[s]; yt = L[s + 1]
     for i in range(4):
         zs = zones(i, s)
+        base0 = {z[0]: (z[1], z[2]) for z in zones(i, 0)}
+        DX = 20 * (s % 2)                    # upper storey drawn 20 mm to the right: the lap reads on the drawing
         for k, (kind, x0, x1, d, st) in enumerate(zs):
+            if kind in base0: x0, x1 = base0[kind]   # bar positions stay as they start at the bottom
             nxt = [z for z in (zones(i, s + 1) if s < 6 else []) if z[0] == kind]
             if s == 6: top = yt - 30
             else:
@@ -59,17 +62,33 @@ for s in range(7):
             BARS.append(dict(pos=p, d=d, L=Lb, n=2 * nb))
             lay = 'диам%d' % d
             for x in (x0, x1):
-                add(t='pl', p=[W(AX1 + x, yb), W(AX1 + x, top)], layer=lay, lw=40)
+                add(t='pl', p=[W(AX1 + x + DX, yb), W(AX1 + x + DX, top)], layer=lay, lw=40)
             # callout on the right of the piece, staggered by zone
             off = {'L': 950, 'M': 0, 'R': -950} if len(zs) == 3 else {'L': 480, 'M': -480, 'R': 480} if len(zs) == 2 else {'L': 0, 'M': 0, 'R': 0}
             ymid = (yb + yt - SLAB) / 2 + off[kind]
             ox = AX1 + PIECES[i][1] + 700
-            add(t='note', l1='%d(%%%%C%d)' % (p, d), l2='ш.%d' % st, origin=W(ox, ymid), targets=[W(AX1 + x0, ymid), W(AX1 + x1, ymid)], **NOTE)
+            add(t='note', l1='%d(%%%%C%d)' % (p, d), l2='ш.%d' % st, origin=W(ox, ymid), targets=[W(AX1 + x0 + DX, ymid), W(AX1 + x1 + DX, ymid)], **NOTE)
         # lap dim for the piece (largest lap at the top of the storey)
         if s < 6:
             lapmax = max(LAP(z[3]) for z in zs)
             xa = AX1 + PIECES[i][0] - 150
             add(t='dim', h=TLAP, p1=W(AX1 + PIECES[i][0], yt), p2=W(AX1 + PIECES[i][0], yt + lapmax), dl=W(xa, yt + lapmax / 2), rot=math.pi / 2, txt='')
+# ---- П caps (Ск) over the vertical bars at the wall top, ш.200, legs = lap of the bar Ø ----
+CAPS = {}
+for i in range(4):
+    zs = zones(i, 6)
+    base0 = {z[0]: (z[1], z[2]) for z in zones(i, 0)}
+    tg = []; nums = []
+    for k, (kind, x0, x1, d, st) in enumerate(zs):
+        if kind in base0: x0, x1 = base0[kind]
+        if d not in CAPS: CAPS[d] = len(CAPS) + 1
+        yt = L[7] - 30
+        add(t='pl', p=[W(AX1 + x0, yt), W(AX1 + x1, yt)], layer='диам%d' % d, lw=40)
+        tg.append(W(AX1 + (x0 + x1) / 2, yt)); nums.append(CAPS[d])
+        BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * LAP(d) + 170, n=int((x1 - x0) // 200) + 1))
+    lab = 'Ск' + ';'.join(str(n) for n in sorted(set(nums)))
+    add(t='note', l1=lab, l2='ш.200', origin=W(AX1 + PIECES[i][1] + 350, L[7] + 420), targets=tg, **NOTE)
+add(t='movegrp', h=['11C5FF'], d=[0, 700])
 # ---- bottom chain of bar positions (basement) ----
 for i in range(4):
     a, b = PIECES[i]
@@ -82,7 +101,7 @@ for i in range(4):
         ty = 13334 if kind != 'M' else 12834
         add(t='dim', h=TDIM, p1=W(AX1 + x0, L[0]), p2=W(AX1 + x1, L[0]), dl=W(AX1 + (x0 + x1) / 2, ty), rot=0, txt=txt, tx=W(tx, ty + 60))
 add(t='save')
-json.dump(dict(POS={'%d_%d' % k: v for k, v in POS.items()}, BARS=BARS), open('w/sm1_vert.json', 'w'))
+json.dump(dict(CAPS={str(k): v for k, v in CAPS.items()}, POS={'%d_%d' % k: v for k, v in POS.items()}, BARS=BARS), open('w/sm1_vert.json', 'w'))
 json.dump(ops, open('ops/w52.json', 'w'), ensure_ascii=False)
 print(len(ops), 'positions', len(POS))
 for (d, Lb), p in sorted(POS.items(), key=lambda kv: kv[1]): print(p, 'Ø%d' % d, 'L', Lb, 'n', sum(b['n'] for b in BARS if b['pos'] == p))
