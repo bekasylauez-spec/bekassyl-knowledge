@@ -71,6 +71,7 @@ D = [[None] * 4 for _ in range(NP)]
 for g in range(4):
     de = max([x for i in range(NP) if REQ[i][g] for x in REQ[i][g][:2] if x] or [12])
     dm, sm = max([REQ[i][g][2:] for i in range(NP) if REQ[i][g]], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
+    if CFG.get('EDGE_GE_MID') and de < dm: de = dm                     # free-end edge zone never thinner than the middle
     for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)):
         if g == 0 and CFG.get('PIECES0') and CFG['PIECES0'][i] is None: D[i][g] = []; continue
         if g == 0 and CFG.get('PIECES0'): (a, b), (el, er) = CFG['PIECES0'][i], CFG['ENDS0'][i]
@@ -274,7 +275,7 @@ def run(go=False):
                 if ZM or xa is None:                      # extension lines from the piece's bars that start at this splice
                     csd_ = CFG.get('CHAIN_SIDE', 'L' * NP)[i]; DX1 = 20 * ((gi + 1) % 2)
                     xa = AX1 + DX1 + (min(z[1] for z in D[i][gi + 1]) if csd_ == 'L' else max(z[2] for z in D[i][gi + 1]))
-                    if csd_ == 'R': xd = AX1 + PIECES[i][1] + 350
+                    if csd_ == 'R': xd = AX1 + PIECES[i][1] + CFG.get('CHAIN_OFF_R', [350] * NP)[i]
                 csd = CFG.get('CHAIN_SIDE', 'L' * NP)[i]
                 if AN and i in NSIDE:
                     csd = 'R' if NSIDE[i] == 'L' else 'L'

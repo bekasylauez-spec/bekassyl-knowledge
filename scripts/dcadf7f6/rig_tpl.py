@@ -116,16 +116,17 @@ def build(X0, Y0, r, num):
             pos, zones, steps = colgeo.storey_hoops(a, c)
             n1, nm, n3 = zones
             mid = steps[n1:n1 + nm]; k200 = sum(1 for s in mid if abs(s - 200) < 1e-6); rr = [s for s in mid if abs(s - 200) > 1e-6]
-            seg = [(a, None), (pos[0], '50'), (pos[n1], '100х%d' % n1), (pos[n1 + nm], ('200х%d' % k200) + ('+%d' % rr[0] if rr else '')), (pos[-1], '100х%d' % n3), (c, '50')]
+            seg = [(pos[0], ''), (pos[n1], '100х%d' % n1), (pos[n1 + nm], ('200х%d' % k200) + ('+%d' % rr[0] if rr else '')), (pos[-1], '100х%d' % n3)]
             bnd = [pos[0], pos[n1], pos[n1 + nm], pos[-1]]
         except Exception:
             n_ = int((c - a - 100) // 100); pos = [a + 50 + 100 * j for j in range(n_ + 1)]
-            seg = [(a, None), (pos[0], '50'), (pos[-1], '100х%d' % n_), (c, '%d' % (c - pos[-1]))]
+            seg = [(pos[0], ''), (pos[-1], '100х%d' % n_)]
             bnd = [pos[0], pos[-1]]
         nh += len(pos)
         for z in bnd:
             if vis(z): lib.pl([A(fx(z), yb + 15), A(fx(z), yt - 15)], layer='диам8')
         chain += seg
+    chain.append((sup[-1][0] + sup[-1][1] / 2, ''))
     pts = [sup[0][0] - sup[0][1] / 2] + [p for p, t in chain]
     for i in range(len(chain)):
         p0 = chain[i - 1][0] if i else sup[0][0] - sup[0][1] / 2
@@ -144,7 +145,7 @@ def build(X0, Y0, r, num):
         elif brk:
             op(t='dim', h=R('1ADA9'), p1=A(fx(ax_x[i]), 14955), p2=A(fx(ax_x[i + 1]), 14955), dl=A(fx(ax_x[i]), 15555), rot=0.0,
                txt='%d' % (ax_x[i + 1] - ax_x[i]), layer='Размеры')
-    op(t='movegrp', h=[R('1B255')], d=[fx(x_end1) + 300 - 15912.0, 0])
+    op(t='movegrp', h=[R('1B255')], d=[fx(x_end1) + 900 - 15912.0, 0])
     if len(ax_x) > 1: op(t='dim', h=R('1ADA1'), p1=A(fx(ax_x[0]), 14955), p2=A(fx(ax_x[-1]), 14955), dl=A(fx(ax_x[0]), 15205), rot=0.0,
        txt=('%d' % (ax_x[-1] - ax_x[0])) if brk else '', layer='Размеры')
     # ---- levels (top of ригель) and beam height dims ----
@@ -159,7 +160,7 @@ def build(X0, Y0, r, num):
     lib.note('Ск1', '(%%C16)', A(fx(x_end0) - 900, yt + 500), A(fx(xs0), yt - cv + 20), 50, arrow='oblique')
     # section mark 1-1 in the first span
     xsec = fx(sup[0][0] + (sup[1][0] - sup[0][0]) * 0.75)
-    lib.section('1', A(xsec, yt + 450), A(xsec, yb - 350), 50)
+    lib.section('1', A(xsec, yt + 950), A(xsec, yb - 800), 50)
     # ---- section 1-1: the template section (scale 5) stretched to b x h, slab ts ----
     ts = r.get('slab', 0)
     k5 = 5.0; cx = 8200.0
