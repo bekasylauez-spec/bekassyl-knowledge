@@ -310,7 +310,7 @@ def dop_sheet(sh, zones, face, pos):
             else:
                 cb, cd = c1, c1 + 700; tr = text_rect(*sh.T((s + e) / 2, cd + 180), str(int(L)))
             ops.append({'t': 'dim', 'h': tp('dimLenH'), 'p1': sh.T(s, cb), 'p2': sh.T(e, cb), 'dl': sh.T(e, cd), 'rot': 0}); occupy(sh, tr)
-            if n > 1:
+            if n > 2:
                 txt = '200х%d' % (n - 1)
                 cands = [(e, e + 350), (s, s - 350)]
                 for xb, xd in cands:
@@ -321,10 +321,11 @@ def dop_sheet(sh, zones, face, pos):
             xl = s + min(0.33 * L, 900); ym = (c0 + c1) / 2
             for frac in (0.33, 0.5, 0.66, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
                 xl = s + frac * L
-                tr = text_rect(*sh.T(xl - 200, ym), str(p))
+                ty = ym if c1 - c0 >= 900 else c0 - 500
+                tr = text_rect(*sh.T(xl - 200, ty), str(p))
                 if free(sh, tr): break
             arr = [sh.T(xl, c0)] + ([sh.T(xl, c1)] if n > 1 else [])
-            ops.append({'t': 'ml', 'h': tp('mlX'), 'base': anchor('mlX'), 'to': sh.T(xl, ym if n > 1 else c0 + 500), 'text': str(p), 'arrows': arr}); occupy(sh, tr)
+            ops.append({'t': 'ml', 'h': tp('mlX'), 'base': anchor('mlX'), 'to': sh.T(xl, ty), 'text': str(p), 'arrows': arr}); occupy(sh, tr)
         else:
             cands = [(c0, c0 - 350), (c1, c1 + 350)]
             for cb, cd in cands:
@@ -333,7 +334,7 @@ def dop_sheet(sh, zones, face, pos):
             else:
                 cb, cd = c0, c0 - 700; tr = text_rect(*sh.T(cd - 180, (s + e) / 2), str(int(L)), horiz=False)
             ops.append({'t': 'dim', 'h': tp('dimLenV'), 'p1': sh.T(cb, s), 'p2': sh.T(cb, e), 'dl': sh.T(cd, e), 'rot': math.pi / 2}); occupy(sh, tr)
-            if n > 1:
+            if n > 2:
                 txt = '200х%d' % (n - 1)
                 cands = [(e, e + 350), (s, s - 350)]
                 for yb, yd in cands:
@@ -343,10 +344,11 @@ def dop_sheet(sh, zones, face, pos):
             xm = (c0 + c1) / 2
             for frac in (0.35, 0.5, 0.65, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
                 yl = s + frac * L
-                tr = text_rect(*sh.T(xm, yl + 300), str(p))
+                tx = xm if c1 - c0 >= 900 else c0 - 550
+                tr = text_rect(*sh.T(tx, yl + 300), str(p))
                 if free(sh, tr): break
             arr = [sh.T(c0, yl)] + ([sh.T(c1, yl)] if n > 1 else [])
-            ops.append({'t': 'ml', 'h': tp('mlY'), 'base': anchor('mlY'), 'to': sh.T(xm if n > 1 else c0 + 500, yl), 'text': str(p), 'arrows': arr}); occupy(sh, tr)
+            ops.append({'t': 'ml', 'h': tp('mlY'), 'base': anchor('mlY'), 'to': sh.T(tx, yl), 'text': str(p), 'arrows': arr}); occupy(sh, tr)
     return ops
 
 def zone_counts(res, z, pos):

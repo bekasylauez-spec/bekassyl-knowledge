@@ -344,6 +344,34 @@ else if (t == "sysvar")
                     foreach (var mi in ty.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly)) if (!mi.IsSpecialName) log.AppendLine("  M " + mi.Name + "(" + mi.GetParameters().Length + ")");
                 }
             }
+            else if (t == "leaderdump" || t == "leaderset")
+            {
+                // comb/note leader tree: dump segments, or set End of segment by path index ("0.2")
+                var id = H(db, S(m, "h", ""));
+                var mo = MGet(id);
+                var lp = mo.GetType().GetProperty("Leader");
+                var ld = (Multicad.Symbols.McBaseLeader)lp.GetValue(mo, null);
+                var all = new List<Multicad.Symbols.McBLSegment>();
+                Action<Multicad.Symbols.McBLSegment, string> walk = null;
+                walk = (sg, path) => {
+                    all.Add(sg);
+                    log.AppendLine("SEG " + path + " start " + sg.Start + " end " + sg.End + " arrow " + sg.Arrow + " childs " + sg.Childs.Count);
+                    int i = 0; foreach (Multicad.Symbols.McBLSegment c in sg.Childs) walk(c, path + "." + (i++));
+                };
+                int k = 0; foreach (Multicad.Symbols.McBLSegment c in ld.Childs) walk(c, "" + (k++));
+                if (t == "leaderset")
+                {
+                    foreach (var q in L(m["set"]))
+                    {
+                        var a = L(q); int idx = Convert.ToInt32(a[0]);
+                        var sg = all[idx]; if (a.Count > 2 && a[2].ToString() == "start") sg.Start = MP(a[1]); else sg.End = MP(a[1]);
+                    }
+                    var ne = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as Multicad.DatabaseServices.McDbEntity;
+                    ne.Update();
+                    log.AppendLine("leaderset done");
+                }
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
             else if (t == "knotinfo")
             {
                 var id = H(db, S(m, "h", ""));
@@ -903,7 +931,7 @@ else if (t == "sysvar")
             else if (t == "tdump")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForRead);
-                log.AppendLine("TABLE rows " + tb.Rows.Count + " cols " + tb.Columns.Count);
+                log.AppendLine("TABLE rows " + tb.Rows.Count + " cols " + tb.Columns.Count); { var wsb = new StringBuilder("COLW"); for (int c = 0; c < tb.Columns.Count; c++) wsb.Append(" " + tb.Columns[c].Width.ToString("0.#", IC)); log.AppendLine(wsb.ToString()); }
                 for (int r = 0; r < tb.Rows.Count; r++)
                 {
                     var sb = new StringBuilder("R" + r + " h" + tb.Rows[r].Height.ToString("0", IC) + ":");
@@ -1063,6 +1091,11 @@ else if (t == "sysvar")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
+            }
+            else if (t == "tcolw")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                foreach (var q in L(m["cols"])) { var a = L(q); tb.Columns[Convert.ToInt32(a[0])].Width = D(a[1]); }
             }
             else if (t == "theight")
             {

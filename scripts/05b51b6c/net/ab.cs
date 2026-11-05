@@ -75,7 +75,7 @@ namespace AB
             try { var js0 = new JavaScriptSerializer(); var mm = (Dictionary<string, object>)js0.DeserializeObject(File.ReadAllText(mapFile, Encoding.UTF8)); foreach (var kv in mm) map[kv.Key] = kv.Value.ToString(); } catch { }
             var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
             var db = doc.Database;
-            if (!db.Filename.EndsWith("КЖ Помещение обезвоживания.dwg", StringComparison.OrdinalIgnoreCase) && !db.Filename.Contains("_abwork"))
+            if (!db.Filename.EndsWith("КЖ Помещение обезвоживания.dwg", StringComparison.OrdinalIgnoreCase) && !doc.Name.EndsWith("КЖ Помещение обезвоживания.dwg", StringComparison.OrdinalIgnoreCase) && !db.Filename.Contains("_abwork"))
             {
                 // guard: never run ops on any other drawing; close stray documents this instance opened by itself
                 var dmx = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;

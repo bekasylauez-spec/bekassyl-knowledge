@@ -38,7 +38,7 @@ for e in m:
                 r=tbox(v)
                 if r: T.append((r[0],r[1],e.dxf.handle))
     if t=='LINE' and e.dxf.layer.startswith('ф'):
-        L.append((LineString([e.dxf.start[:2],e.dxf.end[:2]]),e.dxf.handle))
+        L.append((LineString([(e.dxf.start.x,e.dxf.start.y),(e.dxf.end.x,e.dxf.end.y)]),e.dxf.handle))
 from shapely.geometry import Polygon
 P=[Polygon(q[0]).buffer(-15) for q in T]
 n=0; out=[]
