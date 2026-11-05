@@ -80,7 +80,7 @@ def detect_axes(es, win):
     return xs, ys
 
 
-def do_plan(sheet, r=1200, extra_excl=()):
+def do_plan(sheet, r=1200, extra_excl=(), explode=('уцауа', 'зд')):
     import sheets
     E0 = ext.load(W + r'\ext0.txt')
     f = sheets.FRAME[sheet][1]
@@ -91,6 +91,9 @@ def do_plan(sheet, r=1200, extra_excl=()):
     if 'errors 0' not in out: print(out[-500:])
     sx, sy = sheets.slot(sheet)
     win = (sx - 50, sy - 50, sx + (f[2] - f[0]) + 50, sy + (f[3] - f[1]) + 50)
+    bl = [e for e in inn if e.dxf == 'INSERT' and e.kv.get('blk') in explode]
+    if bl:
+        print(ab.run([{'t': 'explode', 'h': 'C%s_%s' % (tag, e.h)} for e in bl], 'ex' + tag)[-120:])
     es = dump(win, 'n%sa' % tag)
     xs, ys = detect_axes(es, win)
     print(sheet, 'axes x', [round(v - xs[0]) for v in xs], 'y', [round(v - ys[0]) for v in ys])
@@ -127,3 +130,22 @@ def below_axes_box(sheet):
     ax = [e for e in E0 if e.h in vals and vals[e.h] in set('1234') and ext.inside(e, f, 1) and abs(e.sp[0][1] - e.sp[1][1]) > 9000]
     ylow = min(min(q[1] for q in e.sp) for e in ax)
     return shift_box(sheet, (f[0] - 10, f[1] - 10, f[2] + 10, ylow - 900))
+
+
+def chain_fix(sheet, w=99000, h=60000):
+    """dims with 'step x N = L' text: recompute N and L from the real measurement"""
+    import sheets, re
+    sx, sy = sheets.slot(sheet)
+    es = dump((sx - 100, sy - 100, sx + w, sy + h), 'cf')
+    ops = []
+    for e in es:
+        if e.dxf != 'DIMENSION': continue
+        t = e.kv.get('txt', '')
+        m = re.match(r'^\s*(\d+)\s*([xхХ×])\s*(\d+)\s*=\s*(<>|\d+)\s*$', t)
+        if not m: continue
+        step = int(m.group(1)); meas = float(e.kv.get('meas', '0'))
+        n = max(1, int(round(meas / step)))
+        nt = '%d%s%d=%d' % (step, m.group(2), n, round(meas))
+        if nt != t: ops.append({'t': 'dimtext', 'h': e.h, 's': nt})
+    print('chain_fix', sheet, len(ops))
+    if ops: ab.run(ops + [{'t': 'save'}], 'cf')

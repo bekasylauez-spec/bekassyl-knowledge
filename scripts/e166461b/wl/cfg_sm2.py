@@ -12,3 +12,5 @@ HOR = dict(SX=1219700.0, L=[13584, 18134, 22184, 25334, 28484, 31634, 34784, 379
            P0=12, CK0=2, VJSON='wl/sm2_vert.json', STRAIGHT=2850 - 40, NPAIR=2, XE=29000.0, XD=30165.0, OUT='wl/sm2_hor.json')
 SPEC = dict(SP='156C91', ST='156F9D', JSONS=['wl/sm2_vert.json', 'wl/sm2_hor.json'], TOTAL_ROW=1, CONC_OFF=1,
             CONC=28.68 * 5200 / 5075)          # analog pieces 1275+1100+1425+1275 -> ours 4 x 1300
+SPEC.update(SP='163EEB', ST='164172', TOTAL_ROW=1, CONC_OFF=2,
+            HOOPS=[('Шп1*', 8, 370, 345), ('Х1*', 8, 980, 1495), ('Х2*', 8, 730, 230), ('Х3*', 8, 830, 115)])

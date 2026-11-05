@@ -225,7 +225,8 @@ def plan_pass(es, ps, pre, opts=None):
                         q3 = P(dl, ax, (n[0] + n[1]) / 2)
                     else:
                         q3 = P(dl, ax, n[2])
-                    key = ('D', round(q1[0]), round(q1[1]), round(q2[0]), round(q2[1]), round(q3[ax ^ 1] if along else q3[ax]))
+                    pp = sorted([(round(q1[0]), round(q1[1])), (round(q2[0]), round(q2[1]))])
+                    key = ('D', pp[0], pp[1], round(q3[ax ^ 1] if along else q3[ax]))
                     if key in seen: continue
                     seen.add(key)
                     h = emit_clone(e, 0, k); k += 1
