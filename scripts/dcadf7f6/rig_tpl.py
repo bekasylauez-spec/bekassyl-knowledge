@@ -125,8 +125,8 @@ def build(X0, Y0, r, num):
         nh += len(pos)
         for z in bnd:
             if vis(z): lib.pl([A(fx(z), yb + 15), A(fx(z), yt - 15)], layer='диам8')
-        chain += seg
-    chain.append((sup[-1][0] + sup[-1][1] / 2, ''))
+        chain += [(sup[i][0], '')] + seg
+    chain.append((sup[-1][0], '')); chain.append((sup[-1][0] + sup[-1][1] / 2, ''))
     pts = [sup[0][0] - sup[0][1] / 2] + [p for p, t in chain]
     for i in range(len(chain)):
         p0 = chain[i - 1][0] if i else sup[0][0] - sup[0][1] / 2
@@ -145,11 +145,11 @@ def build(X0, Y0, r, num):
         elif brk:
             op(t='dim', h=R('1ADA9'), p1=A(fx(ax_x[i]), 14955), p2=A(fx(ax_x[i + 1]), 14955), dl=A(fx(ax_x[i]), 15555), rot=0.0,
                txt='%d' % (ax_x[i + 1] - ax_x[i]), layer='Размеры')
-    op(t='movegrp', h=[R('1B255')], d=[fx(x_end1) + 900 - 15912.0, 0])
+    op(t='erase', h=[R0('1B255')])
     if len(ax_x) > 1: op(t='dim', h=R('1ADA1'), p1=A(fx(ax_x[0]), 14955), p2=A(fx(ax_x[-1]), 14955), dl=A(fx(ax_x[0]), 15205), rot=0.0,
-       txt=('%d' % (ax_x[-1] - ax_x[0])) if brk else '', layer='Размеры')
+       txt=('%d' % (ax_x[-1] - ax_x[0])) if brk else '', tx=A((fx(ax_x[0]) + fx(ax_x[1])) / 2 if len(ax_x) > 2 else (fx(ax_x[0]) + fx(ax_x[-1])) / 2 + 1500, 15205), layer='Размеры')
     # ---- levels (top of ригель) and beam height dims ----
-    lib.lev(Y0 + yt - lev_top, A(fx(x_end0) - 100, yt), 50)
+    lib.lev(Y0 + yt - lev_top, A(fx(x_end0) - 100, yt), 50, ext=700)
     op(t='dim', h=R('1ADE9'), p1=A(fx(x_end0) - 400, yb), p2=A(fx(x_end0) - 400, yt), dl=A(fx(x_end0) - 700, yb), rot=math.pi / 2, txt='', layer='Размеры')
     # ---- callouts ----
     xm1 = (sup[0][0] + sup[1][0]) / 2
@@ -183,8 +183,9 @@ def build(X0, Y0, r, num):
         xs4 = [xb0 + (xb1 - xb0) * k / 3.0 for k in range(4)]
         for x in xs4[1:3]:
             for y in (ybar0, ybar1): op(t='circle', c=A(x, y), r=50 * D / 20.0, layer='диам%d' % D)
-        for i in range(3):
-            op(t='dim', h=R('1AD45'), p1=A(xs4[i], ybar0), p2=A(xs4[i + 1], ybar0), dl=A(xs4[i], 8386 + d_slab + d_bot), rot=0.0, txt='', layer='0_ANNOT_Dimensions')
+        stp = (xs4[1] - xs4[0]) / k5
+        op(t='dim', h=R('1AD45'), p1=A(xs4[0], ybar0), p2=A(xs4[3], ybar0), dl=A(xs4[0], 8386 + d_slab + d_bot), rot=0.0,
+           txt='%dх3=%d' % (round(stp), round(3 * stp)), layer='0_ANNOT_Dimensions')
         op(t='erase', h=[R('1AD47')]) if False else None
         # two hoops, each around 3 bars (rule 04_Ригели)
         op(t='dyn', h=R('1AD51'), prop='Расстояние1', value=xs4[2] - xs4[0])
