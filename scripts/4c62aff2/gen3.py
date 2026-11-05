@@ -8,27 +8,34 @@ Y0 = -992318
 X35, XA, XB = -393823, -183823, -141823
 d = ezdxf.readfile(S + '/kl4.dxf'); m = d.modelspace()
 plan = []
+X37 = -309823
+ak = [e for e in m.query('INSERT[name=="AKSNO"]') if X37 < e.dxf.insert.x < X37 + 42000 and Y0 < e.dxf.insert.y < Y0 + 29700]
+ymin = min(e.dxf.insert.y for e in ak); xmin = min(e.dxf.insert.x for e in ak)
+ax1 = min(e.dxf.insert.x for e in ak if abs(e.dxf.insert.y - ymin) < 50)
+axD = min(e.dxf.insert.y for e in ak if abs(e.dxf.insert.x - xmin) < 50) + 199
+print('axis1', ax1 - X37, 'axisD', axD - Y0)
 for e in m:
-    if e.dxf.layer.startswith('КЖ_') or e.dxf.layer == 'О_Формат' or e.dxftype() == 'ACAD_PROXY_ENTITY': continue
-    try: b = bbox.extents([e])
+    if e.dxf.layer.startswith('КЖ_') or e.dxf.layer == 'О_Формат' or e.dxftype() in ('ACAD_PROXY_ENTITY', 'HATCH'): continue
+    try: bb = bbox.extents([e])
     except Exception: continue
-    if not b.has_data: continue
-    if not (b.extmin.x >= X35 + 2500 and b.extmax.x <= X35 + 33000 and b.extmin.y >= Y0 + 5500 and b.extmax.y <= Y0 + 28000): continue
-    if e.dxftype() == 'DIMENSION' and e.get_measurement() < 1300: continue
+    if not bb.has_data: continue
+    if not (bb.extmin.x >= X37 + 500 and bb.extmax.x <= X37 + 40000 and bb.extmin.y >= Y0 + 5000 and bb.extmax.y <= Y0 + 28000): continue
+    if e.dxftype() == 'INSERT' and e.dxf.name == 'AKSNO' and (e.dxf.insert.x > ax1 + 22600 or e.dxf.insert.y > axD + 13900): continue
+    if e.dxftype() == 'LWPOLYLINE' and e.dxf.layer == 'kolon': continue
     plan.append(e.dxf.handle)
 print('plan', len(plan))
 
 # ---- количества
 def n(L): return int(L / 0.3) + 1
-Lbar = (4 * 21.94 * 4) + (2 * 13.24 * 4) + (4 * 5.74 * 4) + 2 * 5.74
+Lbar = (4 * 21.94 * 4) + (2 * 13.24 * 4) + (4 * 5.74 * 4)
 laps = (16 + 8) * 0.86
 L12 = round(Lbar + laps, 1); m12 = round(L12 * 0.888, 2)
 g1 = 16 * 4; mg1 = round(g1 * 1.0 * 0.888, 2)
-x2 = 4 * n(21.94) + 2 * (2 * n(5.0) + n(1.7)) + 4 * n(5.0) - n(5.0)
-x3 = n(5.0)
+x2 = 4 * n(21.94) + 2 * (2 * n(5.0) + n(1.7)) + 4 * n(5.0)
+x3 = 0
 mx2u = round(1.11 * 0.395, 2); mx3u = round(1.91 * 0.395, 2)
 mx2 = round(x2 * 1.11 * 0.395, 2); mx3 = round(x3 * 1.91 * 0.395, 2)
-V = round(54.56 * 0.2, 2)
+V = round(52.56 * 0.2, 2)
 a240 = round(mx2 + mx3, 2); a500 = round(m12 + mg1, 2); tot = round(a240 + a500, 2)
 print('L12', L12, m12, 'G1', g1, mg1, 'X2', x2, mx2, 'X3', x3, mx3, 'V', V, 'tot', tot)
 
@@ -44,7 +51,11 @@ def dim(a, b, c, lfac): L.append('(dl %s %s %s %g)' % (P(a), P(b), P(c), lfac))
 L.append('(sheetk %g %s %s %s)' % (XA - (-309823), q('3.11'), q('Фундаментный пояс ФП-1 на отм. -0.200. Сечение 1-1'),
                                    q('{\\LСхема фундаментного пояса ФП-1 на отм. -0.200...0.000}')))
 L.append('(sheetk %g %s %s nil)' % (XB - (-309823), q('3.12'), q('Спецификация фундаментного пояса ФП-1')))
-L.append('(plancp (list %s) %g %g)' % (' '.join(q(h) for h in plan), XA - X35, XA))
+L.append('(plancp2 (list %s) %g %g)' % (' '.join(q(h) for h in plan), XA + 9500 - ax1, Y0 + 10500 - axD))
+def W(u, v): return (XA + 9500 + u, Y0 + 10500 + v)
+for a, b in [((-200, -200), (21800, 13100)), ((200, 7700), (8750, 12700)), ((9150, 7700), (12450, 12700)), ((12850, 7700), (21400, 12700)),
+             ((200, 5600), (21400, 7300)), ((200, 200), (8750, 5200)), ((9150, 200), (12450, 5200)), ((12850, 200), (21400, 5200))]:
+    rc(W(*a), W(*b), 'КЖ_Фундамент')
 
 # ---- сечение пояса М1:10 (x10) на 3.11 справа
 sx, sy = XA + 34600, Y0 + 16500
@@ -65,11 +76,11 @@ for p in bars: L.append('(dn %s 120.0)' % P(p))
 dim((sx, sy), (sx + 440, sy), (sx + 220, sy - 1500), 0.1)
 dim((sx + 440, sy), (sx + 3560, sy), (sx + 2000, sy - 1500), 0.1)
 dim((sx + 3560, sy), (sx + 4000, sy), (sx + 3780, sy - 1500), 0.1)
-dim((sx, sy), (sx + 4000, sy), (sx + 2000, sy - 2100), 0.1)
+dim((sx, sy), (sx + 4000, sy), (sx + 2000, sy - 2500), 0.1)
 dim((sx + 4000, sy), (sx + 4000, sy + 440), (sx + 4900, sy + 220), 0.1)
 dim((sx + 4000, sy + 440), (sx + 4000, sy + 1560), (sx + 4900, sy + 1000), 0.1)
 dim((sx + 4000, sy + 1560), (sx + 4000, sy + 2000), (sx + 4900, sy + 1780), 0.1)
-dim((sx + 4000, sy), (sx + 4000, sy + 2000), (sx + 5500, sy + 1000), 0.1)
+dim((sx + 4000, sy), (sx + 4000, sy + 2000), (sx + 6300, sy + 1000), 0.1)
 # выноски: позиции
 ln((sx + 440, sy + 1560), (sx - 600, sy + 3000), 'КЖ_Марки'); ln((sx + 3560, sy + 1560), (sx - 600, sy + 3000), 'КЖ_Марки')
 ln((sx - 600, sy + 3000), (sx - 2400, sy + 3000), 'КЖ_Марки'); tx((sx - 1500, sy + 3200), 250, '1 (2%%c12)')
@@ -85,9 +96,8 @@ bx, by = XA + 2500, Y0 + 4800
 for i, s in enumerate(['Примечания:',
         '1. Пояс ФП-1 сечением 400х200 мм по всем стенам из ФБС (отм. -0.200...0.000), бетон В25.',
         '2. Армирование: 4%%c12 А500С (поз. 1), хомуты Х2 %%c8 А240 с шагом 300 мм.',
-        '3. По оси 6 в осях C-D (двойная стена) пояс 800х200: 6%%c12 А500С, хомуты Х3 %%c8 ш.300.',
-        '4. В углах и примыканиях - Г-образные стержни Г1 %%c12 (4 шт. на узел); нахлёст %%c12 - 860 мм вразбежку.',
-        '5. Сечение 1-1 действует для всех стен; спецификация - лист 3.12.']):
+        '3. В углах и примыканиях - Г-образные стержни Г1 %%c12 (4 шт. на узел); нахлёст %%c12 - 860 мм вразбежку.',
+        '4. Сечение 1-1 действует для всех стен; спецификация - лист 3.12.']):
     tx((bx, by - i * 450), 250, s, 'ML')
 
 # ---- лист 3.12: ведомость деталей + спецификация + ведомость стали
@@ -95,13 +105,13 @@ x0 = XB
 # ведомость деталей
 vx, vy = x0 + 3500, Y0 + 27500
 tx((vx + 2750, vy + 450), 350, 'Ведомость деталей')
-cw = [1500, 4000]; rh = [1000] + [2500] * 3
+cw = [1500, 4000]; rh = [1000] + [2500] * 2
 ys = [vy]
 for h in rh: ys.append(ys[-1] - h)
 for y in ys: ln((vx, y), (vx + sum(cw), y), 'КЖ_Таблица_т')
 for x in (vx, vx + cw[0], vx + sum(cw)): ln((x, vy), (x, ys[-1]), 'КЖ_Таблица_т')
 tx((vx + 750, vy - 500), 250, 'Поз.'); tx((vx + 3500, vy - 500), 250, 'Эскиз')
-det = [('Х2', 340, 140, 'L=1110'), ('Х3', 740, 140, 'L=1910'), ('Г1', None, None, 'L=1000')]
+det = [('Х2', 340, 140, 'L=1110'), ('Г1', None, None, 'L=1000')]
 for i, (pz, w, h, Ltxt) in enumerate(det):
     yt = ys[i + 1]; cx = vx + cw[0] + 2000; cy = yt - 1250
     tx((vx + 750, cy), 250, pz)
@@ -122,7 +132,6 @@ rows = [('', '', 'Фундаментный пояс ФП-1', '', '', '%.2f' % to
         ('1', 'ГОСТ 34028-2016', '%%c12 А500С  L= пог.м', '%.1f' % L12, '0.888', '%.2f' % m12, ''),
         ('Г1', 'ГОСТ 34028-2016', '%%c12 А500С  L=1000', str(g1), '0.89', '%.2f' % mg1, ''),
         ('Х2', 'ГОСТ 34028-2016', '%%c8 А240  L=1110', str(x2), '%.2f' % mx2u, '%.2f' % mx2, ''),
-        ('Х3', 'ГОСТ 34028-2016', '%%c8 А240  L=1910', str(x3), '%.2f' % mx3u, '%.2f' % mx3, ''),
         ('', '', 'Материалы:', '', '', '', 'H'),
         ('', '', 'Бетон кл. В25, м\\U+00B3', '', '', '%.2f' % V, '')]
 hh, rhh = 1400, 800

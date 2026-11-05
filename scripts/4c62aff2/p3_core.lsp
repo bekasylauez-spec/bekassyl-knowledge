@@ -31,6 +31,11 @@
   (foreach h lst (if (setq e (handent h)) (ssadd e ss)))
   (logm (strcat "plan n=" (itoa (sslength ss))))
   (command "_.COPY" ss "" "0,0" (strcat (rtos dx 2 2) ",0") ""))
+(defun plancp2 (lst dx dy / ss e)
+  (setq ss (ssadd))
+  (foreach h lst (if (setq e (handent h)) (ssadd e ss)))
+  (logm (strcat "plan n=" (itoa (sslength ss))))
+  (command "_.COPY" ss "" "0,0" (strcat (rtos dx 2 2) "," (rtos dy 2 2)) ""))
 ;;BODY
 (defun c:P3 (/ r)
   (setvar "CMDECHO" 0) (setvar "OSMODE" 0)

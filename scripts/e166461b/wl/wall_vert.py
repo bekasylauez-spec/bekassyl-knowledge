@@ -74,9 +74,29 @@ def run(go=False):
     er = [r['h'] for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and EL(r) and r['lay'].lower().startswith('диам')]
     er += [r['h'] for r in R if r['t'] == 'DIMENSION' and EL(r) and not (r['sp'][0][1] < 13200 and r['sp'][1][1] < 13200)]
     er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 1100 and len(r['sp']) > 2 and r['sp'][2][0] > AX1 - 1300 and r['x1'] < CFG['AXES'][-1] + 2000 and r['h'] not in er]
-    er += [n['h'] for n in N if AX1 - 2300 < n['pts'][0][0] < CFG['AXES'][-1] + 3200 and n['pts'][0][1] > L[0] - 1600]
+    AN = CFG.get('ANALOG_NOTES')
+    if not AN:
+        er += [n['h'] for n in N if AX1 - 2300 < n['pts'][0][0] < CFG['AXES'][-1] + 3200 and n['pts'][0][1] > L[0] - 1600]
+    else:                                               # Bekassyl: use the analog's own notes (text / leader points changed, clones for extra zones)
+        ANN = {}
+        for n in N:
+            if len(n['pts']) < 3 or n['pts'][0][1] < L[0] - 1600: continue
+            tx_ = [p[0] - AX1 for p in n['pts'][1:]]; cy = n['pts'][1][1]
+            for i_, (a_, b_) in enumerate(PIECES):
+                if a_ - 300 <= min(tx_) and max(tx_) <= b_ + 300:
+                    st_ = next((s_ for s_ in range(7) if L[s_] <= cy < L[s_ + 1]), 7)
+                    ANN.setdefault((i_, 'C' if n['l1'].startswith('Ск') else st_), []).append(n)
+        NSIDE = {}
+        for (i_, k_), lst in ANN.items():
+            n = lst[0]
+            if k_ != 'C': NSIDE[i_] = 'L' if n['pts'][0][0] < min(p[0] for p in n['pts'][1:]) else 'R'
     DIAG = {(round(r['sp'][0][0]), round(r['sp'][0][1])): (r['sp'][1], r['sp'][2]) for r in R if r['t'] == 'LWPOLYLINE' and len(r['sp']) == 3 and r['y0'] > L[0] - 1100}
     DIAGE = {(round(r['sp'][2][0]), round(r['sp'][2][1])): (r['sp'][0], r['sp'][1]) for r in R if r['t'] == 'LWPOLYLINE' and len(r['sp']) == 3 and r['y0'] > L[0] - 1100}
+    try:
+        mp_ = json.load(open(os.environ['TEMP'] + '/gx_map.json', encoding='utf-8-sig'))
+        old_ = [v_ for k_, v_ in mp_.items() if k_.startswith('WVa%d_' % SX)]
+    except Exception: old_ = []
+    er += old_                                           # clones of an earlier run of this sheet
     ops = [dict(t='clone', h=tN, base=[0, 0], to=[0, -200000], tag='S1N'), dict(t='clone', h=tC, base=[0, 0], to=[0, -200000], tag='S1C'),
            dict(t='erase', h=er)]
     POS = {}; BARS = []; k = [0]; LABELS = {}
@@ -141,10 +161,30 @@ def run(go=False):
                 top = max(U, Lo + (n_ - 1) * sp_)
                 ym = (top - ks.index(kind) * sp_) if n_ > 1 else (U + Lo) / 2
                 lab = ('%d' % pA) if pA == pB else ('%d;%d' % (pA, pB)); LABELS['%d|%d|%s' % (i, gi, kind)] = lab
-                note('S1N', '%s(%%%%C%d)' % (lab, d), 'ш.%d' % st, [SX + ox, SY + ym], [[SX + AX1 + x0 + DX, SY + ym], [SX + AX1 + x1 + DX, SY + ym]])
+                if AN:
+                    src = ANN.get((i, g1 - 1)) or ANN.get((i, g0))
+                    if src:
+                        n0 = src[0]; k_ = ks.index(kind)
+                        sb = next((L[s_] for s_ in range(7) if L[s_] <= n0['pts'][0][1] < L[s_ + 1]), ys); se = next((L[s_ + 1] for s_ in range(7) if L[s_] <= n0['pts'][0][1] < L[s_ + 1]), ye) - SLAB
+                        ys_ = [n0['pts'][0][1] + 950 * ((n_ - 1) / 2.0 - j) for j in range(n_)]       # stack centred on the analog note, inside its storey
+                        sh = max(0, sb + 450 - min(ys_)) - max(0, max(ys_) - (se - 450))
+                        oy = ys_[k_] + sh
+                        h_ = n0['h']
+                        if k_:
+                            h_ = 'WVa%d_%d_%d_%d' % (SX, i, gi, k_); ops.append(dict(t='clone', h=n0['h'], base=[0, 0], to=[0, 0], tag=h_))
+                        ops.append(dict(t='spmove', h=h_, items=[[0, SX + n0['pts'][0][0], SY + oy], [1, SX + AX1 + x0 + DX, SY + oy], [2, SX + AX1 + x1 + DX, SY + oy]]))
+                        ops.append(dict(t='mcset', h=h_, set={'FirstLine': '%s(%%%%C%d)' % (lab, d), 'SecondLine': 'ш.%d' % st}))
+                else:
+                    note('S1N', '%s(%%%%C%d)' % (lab, d), 'ш.%d' % st, [SX + ox, SY + ym], [[SX + AX1 + x0 + DX, SY + ym], [SX + AX1 + x1 + DX, SY + ym]])
             if gi < 3 and i not in CFG.get('CHAIN_SKIP', []):      # laps are the same in every piece (one Ø per group): one chain per opening
                 lp = max(lap_at(i, gi, z[0]) for z in D[i][gi]); gp = GAP(lp)
                 xa = AX1 + min(z[1] for z in D[i][0]) + DX; xd = AX1 + CFG['CHAIN_X'][i] - 350
+                csd = CFG.get('CHAIN_SIDE', 'L' * NP)[i]
+                if AN and i in NSIDE:
+                    csd = 'R' if NSIDE[i] == 'L' else 'L'
+                    if i in CFG.get('CHAIN_SAME', []): csd = NSIDE[i]      # only free side holds the notes: same side, other storey (analog)
+                    xa = AX1 + (max(z[2] for z in D[i][0]) if csd == 'R' else min(z[1] for z in D[i][0])) + DX
+                    xd = AX1 + (PIECES[i][1] + CFG.get('CHAIN_OFF_R', [350] * NP)[i] if csd == 'R' else PIECES[i][0] - 350)
                 yy = [yt, yt + lp, yt + lp + gp, yt + 2 * lp + gp]
                 for kk in range(3):
                     kw = dict(t='dim', h='WT_DV', p1=W(xa, yy[kk]), p2=W(xa, yy[kk + 1]), dl=W(xd, (yy[kk] + yy[kk + 1]) / 2), rot=math.pi / 2, txt='')
@@ -154,7 +194,7 @@ def run(go=False):
                         if sl - SLAB - band < ym_ < sl + 350:
                             below = sl - SLAB - band - 50
                             ym_ = below if below - 450 > yy[kk] else sl + 450   # below the slab first (the storey above holds notes)
-                    sg = 1 if CFG.get('CHAIN_SIDE', 'L' * NP)[i] == 'R' else -1      # texts on the outer side of the chain
+                    sg = 1 if csd == 'R' else -1      # texts on the outer side of the chain
                     if kk == 1: kw['tx'] = W(xd + sg * (260 if sg < 0 else 540), ym_)
                     elif ym_ != (yy[kk] + yy[kk + 1]) / 2:
                         nxt = min([sl for sl in L if sl > yy[kk]] or [L[-1]])
@@ -176,7 +216,13 @@ def run(go=False):
             BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=len(z[5])))
         ox = AX1 + PIECES[i][0] + (-300 if ENDS[i][0] else 400)
         yy = SY + L[7] - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
-        note('S1C', 'Ск' + ';'.join(str(n) for n in sorted(set(nums))), '', [SX + ox, SY + L[7] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
+        lab_c = 'Ск' + ';'.join(str(n) for n in sorted(set(nums)))
+        if AN and ANN.get((i, 'C')):
+            n0 = ANN[(i, 'C')][0]
+            ops.append(dict(t='spmove', h=n0['h'], items=[[1, SX + min(tg), yy], [2, SX + max(tg), yy]]))
+            ops.append(dict(t='mcset', h=n0['h'], set={'FirstLine': lab_c, 'SecondLine': ''}))
+        else:
+            note('S1C', lab_c, '', [SX + ox, SY + L[7] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
     # bottom chain (basement): 50 | 100x4 | steps (leftover in the middle) | 100x4 | 50 — as in the analog
     AXES = CFG['AXES']
     for i in range(NP):

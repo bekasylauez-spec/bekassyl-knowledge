@@ -3,6 +3,7 @@
 # usage: python wl/wall_hor2.py cfg_sm2 [--run]
 import sys, os, json, math, importlib; sys.path.insert(0, 'wl'); from common import *
 from notes import notes
+from rowsplit import rows as ROWS
 CFG = importlib.import_module(sys.argv[1]).HOR
 SX, SY = CFG['SX'], 455939.0
 def W(x, y): return [SX + x, SY + y]
@@ -19,11 +20,11 @@ def hd(s):
 HD = [hd(s) for s in range(7)]
 def grid(s):
     d, st = HD[s]; y0 = L[s] + 50
-    n = int((L[s + 1] - SLAB - 50 - y0) // st); return y0, y0 + n * st, n
+    pos, segs = ROWS(L[s], L[s + 1], st, SLAB); return pos[0], pos[-1], len(pos) - 1
 def storey(y):
     for s in range(7):
         if L[s] - 10 <= y <= L[s + 1] - 10: return s
-P0 = CFG['P0']; POS = {}
+P0 = len(json.load(open(CFG['VJSON'], encoding='utf-8'))['POS']) if CFG.get('VJSON') else CFG['P0']; POS = {}
 def pos_of(k):
     if k not in POS: POS[k] = P0 + len(POS) + 1
     return POS[k]
@@ -54,7 +55,7 @@ for nn in N:
     ops.append(dict(t='spmove', h=nn['h'], items=[[0, SX + nn['pts'][0][0], SY + (y0 + y1) / 2], [1, SX + nn['pts'][1][0], SY + y0], [2, SX + nn['pts'][2][0], SY + y1]]))
 # straight bars and caps per storey
 for s in range(7):
-    d, st = HD[s]; y0, y1, n = grid(s); rows = n + 1
+    d, st = HD[s]; y0, y1, n = grid(s); rows = n + 1                  # n spaces -> n + 1 rows
     BARS.append(dict(pos=pos_of(('S', d)), d=d, L=CFG['STRAIGHT'], n=2 * rows * CFG['NPAIR']))
     BARS.append(dict(pos='Ск%d' % ck_of(d), d=d, L=2 * LAP(d) + 170, n=rows * 2 * CFG['NPAIR']))
 # step chain on the right (analog): template = one of the analog chain dims, the rest erased
@@ -65,7 +66,7 @@ for s in range(7):
     yb = L[s]; d, st = HD[s]; y0, ytop, n = grid(s)
     ch = []
     if s == 0: ch.append((yb, y0, ''))
-    ch.append((y0, ytop, '%dх%d' % (st, n)))
+    for a_, b_, v_, k_ in ROWS(L[s], L[s + 1], st, SLAB)[1]: ch.append((a_, b_, ('%dх%d' % (v_, k_)) if k_ > 1 else ''))
     ch.append((ytop, (L[s + 1] + 50) if s < 6 else L[7], ''))
     for a, b, txt in ch:
         kw = dict(t='dim', h=tdim, p1=W(XE, a), p2=W(XE, b), dl=W(XD, (a + b) / 2), rot=math.pi / 2, txt=txt)
