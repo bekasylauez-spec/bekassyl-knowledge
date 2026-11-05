@@ -1037,6 +1037,19 @@ namespace GX
             {
                 map.Clear();
             }
+            else if (t == "tbreak")
+            {
+                // break a table into parts (one object, formulas kept): heights [h0, h1...], offsets [[dx,dy],...] of parts 1.., top labels repeated
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                tb.BreakEnabled = true;
+                tb.BreakOptions = TableBreakOptions.EnableBreaking | TableBreakOptions.RepeatTopLabels | TableBreakOptions.AllowManualPositions | TableBreakOptions.AllowManualHeights;
+                tb.BreakFlowDirection = TableBreakFlowDirection.Right;
+                if (Has(m, "heights")) { var hs = L(m["heights"]); for (int i = 0; i < hs.Count; i++) tb.SetBreakHeight(i, D(hs[i])); }
+                if (Has(m, "offsets")) { var os = L(m["offsets"]); for (int i = 0; i < os.Count; i++) { var v = L(os[i]); tb.SetBreakOffset(i + 1, new Vector3d(D(v[0]), D(v[1]), 0)); } }
+                tb.GenerateLayout(); tb.RecordGraphicsModified(true);
+                var x = tb.GeometricExtents;
+                log.AppendLine("tbreak ext " + x.MinPoint + " " + x.MaxPoint + " rows " + tb.Rows.Count);
+            }
             else if (t == "axismk")
             {
                 // SPDS axis markers: list them; "keep": n -> remove all markers after the first n (reflection, API-version safe)
