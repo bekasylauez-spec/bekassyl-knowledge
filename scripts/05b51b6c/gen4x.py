@@ -171,7 +171,7 @@ for a, b in zip(LV, LV[1:]):
     dim('3E874A', E(-C.BY / 2, a), E(-C.BY / 2, b), W(XL1, 0), True)
 dim('3E874A', E(-C.BY / 2, bot), E(-C.BY / 2, top), W(XL2, 0), True)
 P, segs = C.colgeo.chain([bot] + [s[1] for s in st], [s[2] for s in st])
-XR = FR + (650 + C.CONS['l'] + 300 if CONS else 650)
+XR = FR + (650 + C.CONS['l'] + 500 if CONS else 650)
 colx = 0
 for (y1, y2, stp, n) in segs:
     if y2 - y1 < 1: continue

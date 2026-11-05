@@ -33,11 +33,16 @@ base += [e['h'] for e in E if e['t'] == 'DIMENSION' and round(D.entitydb.get(e['
 stamp_y = Y0 + 6500
 base += [e['h'] for e in E if e['t'] in ('LWPOLYLINE', 'HATCH') and e['e'][1] > stamp_y - 4000 and not (e['e'][0] > SRC + 23000 and e['e'][3] < Y0 + 6000)]
 
+BB = [e for e in E if e['h'] in set(base)]
+bx0 = min(e['e'][0] for e in BB); bx1 = max(e['e'][2] for e in BB); by1 = max(e['e'][3] for e in BB)
+DX = SLOT + 29700 - (bx0 + bx1) / 2
+DYP = Y0 + 37500 - by1
+XA, YA = V[0]['pts'][0][0] + DX, H[0]['pts'][0][1] + DYP
 O = [{'t': 'sysvar', 'n': 'TILEMODE', 'v': 1},
      {'t': 'eraseregion', 'win': [SLOT + 1, Y0 + 1, SLOT + 59399, Y0 + 41999], 'mode': 'intersect'},
      {'t': 'clonexf', 'hs': ['a2_31_3E425D', 'a2_31_3E425E', 'a2_31_3E425F', 'a2_31_3E4261'], 'd': [SLOT - (-1107303.0), 0], 'pre': 'fr%s_' % SNO},
      {'t': 'clonexf', 'hs': base, 'd': [DX, DYP], 'pre': 'b%s_' % SNO},
-     {'t': 'clonexf', 'hs': ['37FCCB', '37FCCC'], 'd': [SLOT - X35, 2000], 'pre': PRE}]
+     {'t': 'clonexf', 'hs': ['37FCCB', '37FCCC'], 'd': [SLOT - X35, 2000 - 22500], 'pre': PRE}]
 m = ab.tagmap()
 TITLE = {'Пм-1': 'Плита по грунту Пм-1 на отм. 0.000. Армирование', 'Пм-2': 'Плита Пм-2 на отм. +6.200. Армирование'}[MARK]
 O += [{'t': 'settext', 'h': 'fr%s_' % SNO + m['a2_31_3E4261'], 's': TITLE}, {'t': 'settext', 'h': 'fr%s_' % SNO + m['a2_31_3E425F'], 's': SNO}]
@@ -86,7 +91,7 @@ x0, y0, x1, y1 = SD.SL
 d = 12 if MARK == 'Пм-1' else 14
 lay = 'диам%d' % d
 # representative bars: along X at y = Б+1050 (bay Б-В, clear of beams), along Y at x mid of bay 4-5
-yr = BO.AY[1] + 1050; xr = (BO.AX[3] + BO.AX[4]) / 2 + 100
+yr = 4500; xr = 8800
 ops = [] if MARK == 'Пм-1' else list(BO.OPEN62.values())
 for p, q in SD.intervals(x0 + 30, x1 - 30, [(o[0], o[2]) for o in ops if o[1] - 30 <= yr <= o[3] + 30]):
     pl([P(p, yr), P(q, yr)], lay, 40)
@@ -101,11 +106,11 @@ if MARK == 'Пм-2':
     o = BO.OPEN62['О-2']
     for yy in (o[1] - 100, o[3] + 100):
         pl([P(o[0] - 600, yy), P(o[2] + 600, yy)], lay, 40)
-    note('3(%%C14)', '2 шт. у каждой грани', P(o[0] + 2500, o[3] + 100), P(o[0] + 3500, o[3] + 1300))
-    note('1(%%C14) низ', 'ш.200', P(x0 + 2000, yr), P(x0 + 2600, yr - 1200))
-    note('2(%%C14) верх', 'ш.200', P(x0 + 4000, yr2), P(x0 + 4600, yr2 + 1300))
+    note('3(%%C14)', 'по 2 шт.', P(14300, o[1] - 100), P(13700 + 900, o[1] + 950))
+    note('1(%%C14) низ', 'ш.200', P(9000, yr), P(9600, 5400))
+    note('2(%%C14) верх', 'ш.200', P(9300, yr2), P(9600, 3700))
 else:
-    note('1(%%C12)', 'ш.200, 2 сетки', P(x0 + 2000, yr), P(x0 + 2600, yr - 1200))
+    note('1(%%C12)', 'ш.200, 2 сетки', P(9000, yr), P(9600, 5400))
 # bar-step chains: top edge (bars along Y), right edge (bars along X)
 nyb = int((x1 - x0 - 2 * SD.C0) // SD.STEP); nxb = int((y1 - y0 - 2 * SD.C0) // SD.STEP)
 xs = [x0, x0 + SD.C0, x0 + SD.C0 + SD.STEP * nyb, x1]
@@ -120,11 +125,11 @@ for k, (p, q) in enumerate(zip(ys, ys[1:])):
     txt = '200х%d=%d' % (nxb, SD.STEP * nxb) if k == 1 else None
     tx = None if k == 1 else (P(xt - 170, p - 450) if k == 0 else P(xt - 170, q + 450))
     dim(P(x1, p), P(x1, q), XA + xt, True, txt, tx)
-O.append({'t': 'mtext', 'at': P(16000, 12000 + 1500 + 2800 + 1000), 'h': 300, 'att': 2, 'style': 'ISOCPEUR.', 'layer': 'Размеры', 's': '{\\L%s}' % TITLE})
+O.append({'t': 'mtext', 'at': P(16000, 12450 + 1500 + 1300), 'h': 300, 'att': 2, 'style': 'ISOCPEUR.', 'layer': 'Размеры', 's': '{\\L%s}' % TITLE})
 
 # ---------------- section 1-1 (1:20)
 KS = 5.0
-SX, SY = 9000.0, 9000.0
+SX, SY = 12500.0, 11000.0
 def Q(x, z): return W(SX + KS * x, SY + KS * z)
 t = sch['t']
 if MARK == 'Пм-1':
@@ -175,7 +180,7 @@ for p in POS: by[p[1]] = by.get(p[1], 0) + SD.KG[p[1]] * p[3]
 sc = [[5, 1, '%%C12'], [5, 2, '%%C14'], [5, 3, '-'], [5, 4, '-'], [5, 5, '-'], [6, 0, 'Плита %s' % MARK],
       [6, 1, '%.2f' % by.get(12, 0)], [6, 2, '%.2f' % by.get(14, 0)], [6, 3, '0.00'], [6, 4, '0.00'], [6, 5, '0.00']]
 O += [{'t': 'tset', 'h': ST, 'cells': sc}, {'t': 'tformula', 'h': ST, 'cells': [[6, 6, 'Sum(B7:F7)'], [6, 7, 'G7']], 'fmt': '%lu2%pr2'},
-      {'t': 'move', 'h': [ST], 'd': [0, 400 * (11 - Np + 1) + 1000]}]
+      {'t': 'move', 'h': [ST], 'd': [-17500, 400 * (11 - Np + 1) + 1000 + 1500 + 3500 + 3000]}]
 O.append({'t': 'vpset2', 'layout': SNO, 'media': 'ISO_full_bleed_A2_(594.00_x_420.00_MM)', 'win': [SLOT, Y0, SLOT + 59400, Y0 + 42000], 'scale': 100})
 O.append({'t': 'save'})
 print(MARK, SNO, len(O), 'ops; kg %.1f' % sum(by.values()), 'base', len(base))

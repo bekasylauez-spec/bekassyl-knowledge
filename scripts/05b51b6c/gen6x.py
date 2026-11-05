@@ -167,7 +167,7 @@ hz2 = LN['hz'][LN['spans'].index((s2a, s2c))]
 note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(e0 + 400, ztop(e0) - h + cov), [X0 + XS0 - 900, Y0 + YT + KE * (ztop(e0) - lvl - h) - 500])
 note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(sa + (sc_ - sa) * 0.25, ztop(sa) - cov), [P(sa + (sc_ - sa) * 0.25, 0)[0] + 700, Y0 + YT + KE * (ztop(sa) - lvl) + 1800])
 hxx = hz2[len(hz2) // 3] if len(sp2) > 2 else hz2[int(len(hz2) * 0.6)]
-note('Х1(%%C10)', 'см. цепочку', P(hxx, ztop(s2a) - h / 2), [max(P(hxx, 0)[0] + 700, P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 2600), Y0 + YT + KE * (ztop(s2a) - lvl) + 1800])
+note('Х1(%%C10)', 'см. цепочку', P(hxx, ztop(s2a) - h / 2), [max(P(hxx, 0)[0] + 700, P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 2600) if len(sp2) > 1 else P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 1900, Y0 + YT + KE * (ztop(s2a) - lvl) + 1800])
 note('Ск1(%%C16)', '', P(e1 - 55, ztop(e1) - h / 2), [P(e1, 0)[0] + 900, Y0 + YT + KE * (ztop(e1) - lvl) + 900])
 t = tag(); O.append({'t': 'clone', 'h': SECT, 'tag': t})
 O.append({'t': 'spmove', 'h': t, 'items': [[0] + [P(sm, 0)[0], P(sm, ztop(sm) - h)[1] - 750], [1] + [P(sm, 0)[0], P(sm, ztop(sm))[1] + 750]]})

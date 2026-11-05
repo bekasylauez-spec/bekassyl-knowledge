@@ -206,7 +206,7 @@ for name, (x0, y0, x1, y1) in sheets.items():
             if st.crosses(ls) or (st.intersects(ls) and st.intersection(ls).length > 1):
                 found.append(('ЗНАК РАЗРЕЗА/ЛИНИЯ', '|'.join(ptexts.get(ps, []))+'#'+ps, pl, st.centroid))
     # every text inside the inner frame (20 mm left, 5 mm elsewhere) and off the stamp (185 x 55 mm, bottom right)
-    SC = {'2.3': 50, '3.7': 25, '1.3': 100, '1.3x': 100, '2.1': 100, '2.2': 100, '2.3': 100, '2.4': 100, '2.5': 100, '3.1': 100, '3.2': 100, '2.6': 100, '2.7': 100, '3.3': 100, '3.4': 100, '3.5': 100, '3.6': 100, '4.1': 50, **{'6.%d' % k: 100 for k in range(1, 18)}, '7.1': 100, '7.2': 100, '7.3': 100, '7.4': 100, '4.2': 50, '4.3': 50, '4.4': 50, '4.5': 50, '4.6': 50}.get(name, max(1, round((x1 - x0) / 594))); m5, m20 = 5 * SC, 20 * SC
+    SC = {'2.3': 50, '3.7': 25, '1.3': 100, '1.3x': 100, '2.1': 100, '2.2': 100, '2.3': 100, '2.4': 100, '2.5': 100, '3.1': 100, '3.2': 100, '2.6': 100, '2.7': 100, '3.3': 100, '3.4': 100, '3.5': 100, '3.6': 100, '4.1': 50, **{'6.%d' % k: 100 for k in range(1, 18)}, '7.1': 100, '7.2': 100, '7.3': 100, '7.4': 100, **{'КМ-%d' % k: 100 for k in range(1, 7)}, '4.2': 50, '4.3': 50, '4.4': 50, '4.5': 50, '4.6': 50}.get(name, max(1, round((x1 - x0) / 594))); m5, m20 = 5 * SC, 20 * SC
     inner = box(x0 + m20, y0 + m5, x1 - m5, y1 - m5); stamp = box(x1 - m5 - 185 * SC, y0 + m5, x1 - m5, y0 + m5 + 55 * SC)
     for p_, poly, s_ in T:
         if ptype.get(p_, '') in ('SPDSFORMAT',): continue
