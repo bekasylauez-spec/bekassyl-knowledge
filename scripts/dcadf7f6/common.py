@@ -97,4 +97,4 @@ def rowL(pos, d, L, n, cls='A500C'):
 
 
 def rowPM(pos, d, m, cls='A500C'):
-    return (pos, 'ГОСТ 34028-2016', '%%%%C%d %s (п.м)' % (d, cls), '%.1f п.м' % m, '%.3f' % KG[d], KG[d] * m)
+    return (pos, 'ГОСТ 34028-2016', '%%%%C%d %s (п.м)' % (d, cls), '%.0f' % m, '%.3f' % KG[d], KG[d] * m)

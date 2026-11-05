@@ -4,7 +4,7 @@
 import sys, os, json, math; sys.path.insert(0, 'wl'); from common import *
 from notes import notes
 from rowsplit import rows as ROWS
-SX, SY = 2352600.0, 455939.0; AX1 = 16952.0
+SX, SY = 2352600.0, 455939.0; AX1 = float(os.environ.get('AX1', 16952.0))
 def W(x, y): return [SX + AX1 + x, SY + y]
 L = [27614, 32164, 36214, 39364, 42514, 45664, 48814, 51964, 53714]
 LEV = [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7, 21.45]
@@ -46,14 +46,20 @@ for n in NE:
     k = ('pos' if n['l2'].startswith('ш.') or not n['l1'].startswith('Ск') else 'ck') + tside(n)
     TPL.setdefault(k, n['h'])
 print('templates', TPL)
-TP = {'pos': TPL.get('posL') or TPL.get('posR'), 'ckL': TPL.get('ckR') or TPL.get('posR'), 'ckR': TPL.get('ckL') or TPL.get('posL')}
+TP = {k: v for k, v in {'pos': TPL.get('posL'), 'ckL': TPL.get('ckR'), 'ckR': TPL.get('ckL')}.items() if v}
 er = [r['h'] for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and r['lay'].lower().startswith('диам') and r['y0'] > L[0] - 100 and inE(r['x0']) and inE(r['x1'])]
 er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 300 and r['x0'] > AX1 - 1500]
 er += [n['h'] for n in NE]
+THIN = [((r['x0'] + r['x1']) / 2 - AX1, r['y0'], r['y1']) for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and r['x1'] - r['x0'] < 2 and r['y1'] - r['y0'] > 1500
+        and not r['lay'].lower().startswith('диам') and r['y0'] > L[0] - 50 and inE(r['x0'])]          # thin verticals of the analog background
+THIN += [(x - AX1, r['y0'], r['y1']) for r in R if r['t'] == 'LWPOLYLINE' and 200 < r['x1'] - r['x0'] < 300 and r['y1'] - r['y0'] > 1500 and r['y0'] > L[0] - 50 and inE(r['x0']) for x in (r['x0'], r['x1'])]   # cross-wall strips
 ops = [dict(t='clone', h=v, base=[0, 0], to=[0, -300000], tag='H8' + k) for k, v in TP.items()]
 ops.append(dict(t='erase', h=sorted(set(er))))
 BARS = []
 def note(tpl, l1, l2, x, ym, y0, y1):
+    if tpl not in TP:                                    # no analog template with the text on this side: new SPDS note (text right)
+        ops.append(dict(t='note', l1=l1, l2=l2, origin=W(x, ym), targets=[W(x, y0), W(x, y1)], scale=100, ts=2.5, style='ГОСТ 2.304', arrow='oblique', layer='Размеры'))
+        return
     tg = 'H8n%d' % len(ops)
     ops.append(dict(t='clone', h='H8' + tpl, base=[0, 0], to=[0, 0], tag=tg))
     ops.append(dict(t='spmove', h=tg, items=[[0] + W(x, ym), [1] + W(x, y0), [2] + W(x, y1)]))
@@ -73,11 +79,14 @@ for s in range(NS):
             ops.append(dict(t='pl', p=[W(xa, y0 + 20), W(xb, y0 + 20)], layer=lay, lw=40))
             ops.append(dict(t='pl', p=[W(xa, y1 - 20), W(xb, y1 - 20)], layer=lay, lw=40))
             BARS.append(dict(pos='Ск%d' % c, d=d, L=2 * leg + 170, n=rows, storey=s))
-            xc = (xa + xb) / 2; xs_ck.append(xc)
-            note('ckL' if end == 'L' else 'ckR', 'Ск%d' % c, '(%%%%C%d)' % d, xc, ym + 550, y0 + 20, y1 - 20)
-        w_ = fb - fa                                         # pos note: leader inside the piece, text to its left
-        xp = (fa + fb) / 2 + 600 if w_ > 4000 else (fb - 450 if not ckr else (fa + fb) / 2 + 300)
-        if ckr and w_ <= 4000: xp = fb - leg - 100 - 40 if False else min(fb - leg - 140, fa + leg + 1300)
+            xc = xa + 150 if end == 'L' else xb - 150; xs_ck.append(xc)      # leader near the free end, text inward (analog «Ск5»)
+            note('ckL' if end == 'L' else 'ckR', 'Ск%d' % c, '', xc, ym + 550 if (y1 - y0) > 1500 else ym, y0 + 20, y1 - 20)
+        xp = fb - 900 if ckr else fb - 50                    # pos note: leader near the right end, text to its left
+        if fb - fa > 6000: xp = (fa + fb) / 2 + 600
+        tl = [x for x, b0, b1 in THIN if b0 < ym < b1]
+        for dx_ in [0] + [s_ * 50 * k_ for k_ in range(1, 30) for s_ in (-1, 1)]:      # text [xp-1000, xp] clear of the thin lines
+            x_ = xp + dx_
+            if fa + 190 < x_ - 950 and x_ < fb - 20 and not any(x_ - 990 < t < x_ + 40 for t in tl): xp = x_; break
         note('pos', str(p), 'ш.%d' % st, xp, ym - 550 if (y1 - y0) > 1500 else ym, y0, y1)
     # chain right of the wall
     ch = []
@@ -96,7 +105,7 @@ for s in range(NS):
             ch = [(L[s], y0, '')] + [(a_, b_, ('%dх%d' % (v_, k_)) if k_ > 1 else '') for a_, b_, v_, k_ in segs] + [(y1, L[s + 1] - SLAB, '')]
             for a, b, txt in ch:
                 kw = dict(t='dim', h='WT_DV', p1=W(xf, a), p2=W(xf, b), dl=W(xf + dx, (a + b) / 2), rot=math.pi / 2, txt=txt)
-                if b - a < 450: kw['tx'] = W(xf + dx - 150, (a + 520) if a == L[s] else (b - 650))
+                if b - a < 450: kw['tx'] = W(xf + dx + 200, a + 350) if a == L[s] else (W(xf + dx - 150, b - 650) if b > L[s + 1] - SLAB - 5 else W(xf + dx + 200, (a + b) / 2))
                 ops.append(kw)
 ops.append(dict(t='erase', h=['H8' + k for k in TP]))
 ops.append(dict(t='save'))

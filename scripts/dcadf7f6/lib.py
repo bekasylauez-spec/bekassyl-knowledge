@@ -128,14 +128,15 @@ def plev(value, at, sc=100):
     """plane level mark (in plans): clone '-3,700' and replace value text"""
     t = tag('pl')
     op(t='clone', h=A_PLEV, tag=t)
-    op(t='moveto', h=t, idx=0, to=list(at))
+    k0 = sc / 100.0
+    op(t='moveto', h=t, idx=0, to=list(at), _box=[at[0] - 30 * k0, at[1] - 30 * k0, at[0] + 1224 * k0, at[1] + 460 * k0])
     t2 = tag('pv')
     op(t='levelval', h=t, old='-3,700', value=value, tag=t2)
     if sc != 100: op(t='mcscale', h=t2, v=sc)
     return t2
 
 
-def lev(y_zero, at, sc=100, ref=None):
+def lev(y_zero, at, sc=100, ref=None, side='L', ext=None):
     """section level mark: shows (Y - y_zero)/1000; at = point on the level line (idx0)"""
     t = tag('lv')
     op(t='clone', h=A_LEV, tag=t)
@@ -147,10 +148,14 @@ def lev(y_zero, at, sc=100, ref=None):
     t3 = tag('lt')
     op(t='levelval', h=t2, old='-2,000', value=txt, tag=t3)
     op(t='mcscale', h=t3, v=sc)
-    op(t='moveto', h=t3, idx=0, to=list(at))
-    if sc != 100:
-        k = sc / 100.0
-        op(t='sp_set', h=t3, pts=[[2, at[0] - 2902 * k, at[1]], [1, at[0] - 4156 * k, at[1] + 600 * k]])
+    k = sc / 100.0
+    _e = (ext if ext is not None else 2902 * k) + 1254 * k
+    _bx = [at[0] - _e, at[1] - 30 * k, at[0], at[1] + 650 * k] if side == 'L' else [at[0], at[1] - 30 * k, at[0] + _e, at[1] + 650 * k]
+    op(t='moveto', h=t3, idx=0, to=list(at), _box=_bx)
+    e = ext if ext is not None else 2902 * k
+    sg = -1 if side == 'L' else 1
+    if sc != 100 or side != 'L' or ext is not None:
+        op(t='sp_set', h=t3, pts=[[2, at[0] + sg * e, at[1]], [1, at[0] + sg * (e + 1254 * k), at[1] + 600 * k]])
     return t3
 
 

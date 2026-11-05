@@ -33,8 +33,7 @@ def wall_section(OX, OZ):
     for xv, sg in ((50 + 16 + 10, -1), (400 - 76, 1)):
         rbar([(X(xv + sg * 200), Z(zb + 45)), (X(xv), Z(zb + 45)), (X(xv), Z(-4000 + 1220))])
         xb = xv - sg * 22
-        rbar([(X(xb), Z(-4000 + 50)), (X(xb), Z(3500 - 40 - 12)), (X(xb - sg * 0 + (500 if sg < 0 else -500) * (-1 if sg < 0 else 1) * 0 + (-500 if sg < 0 else 500)), Z(3500 - 40 - 12))])
-        rbar([(X(xb + sg * 0), Z(-4000 + 100)), (X(xb), Z(-1000))], 20) if False else None
+        rbar([(X(xb), Z(-4000 + 50)), (X(xb), Z(3500 - 40 - 12)), (X(xb + sg * 500), Z(3500 - 40 - 12))])
         # доп. поз.2 (lower zone 3000) shown offset
         rbar([(X(xb - sg * 22), Z(-4000 + 50)), (X(xb - sg * 22), Z(-1000))])
     # horizontal поз.3 dots (outside verticals)
@@ -47,7 +46,7 @@ def wall_section(OX, OZ):
     chain_v([Z(z) for z in (-4700, -4000, -1000, 3300, 3500)], X(1700), X(2200), SC, texts=['700', '3000', '4300', '200'])
     chain_h([X(0), X(200), X(400)], Z(-4700), Z(-5100), SC)
     axis('2', (X(200), Z(4300)), (X(200), Z(-5900)), SC, True)
-    for z in (-4700, -4000, 3300, 3500): lev(OZ, (X(-1400), Z(z)), SC)
+    for z in (-4700, -4000, 3500): lev(OZ, (X(-1400), Z(z)), SC)
     note('1', 'ш.200', (X(400 + 250), Z(1300)), (X(400 - 98), Z(1000)), SC)
     note('2', 'ш.200', (X(400 + 250), Z(-2200)), (X(400 - 120), Z(-2500)), SC)
     note('3', 'ш.200', (X(-750), Z(0 + 150)), (X(58), Z(-100 + 0)), SC)
