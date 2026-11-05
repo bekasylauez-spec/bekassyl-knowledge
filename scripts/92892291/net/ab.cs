@@ -1726,6 +1726,11 @@ else if (t == "sysvar")
                 for (int i = 2; i < vps.Count; i++) { var x = vps[i]; x.UpgradeOpen(); x.Erase(); }
                 log.AppendLine("vpset2 " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " extra " + (vps.Count - 2));
             }
+            else if (t == "laydel")
+            {
+                LayoutManager.Current.DeleteLayout(S(m, "name", ""));
+                log.AppendLine("laydel " + S(m, "name", ""));
+            }
             else if (t == "laycopy")
             {
                 LayoutManager.Current.CopyLayout(S(m, "src", ""), S(m, "dst", ""));
