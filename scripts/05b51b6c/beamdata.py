@@ -56,7 +56,7 @@ def supports(mark, seg):
 
 
 def hoops(a, b):
-    if b - a >= 1200:
+    if b - a >= 3000:
         p, z, s = colgeo.storey_hoops(a, b)
         return p
     n = max(1, int((b - a - 100) // 100) + 1)

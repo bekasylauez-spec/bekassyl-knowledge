@@ -122,13 +122,16 @@ for (a, c), hz in zip(LN['spans'], LN['hz']):
         pl([P(z_, zt - 30), P(z_, zt - h + 30)], 'диам10', 30)
 lowest = min(top0, top1) - h
 ych = YT + KE * (lowest - lvl) - 900
-alt = 0
+span_ends = set()
+for a_, c_ in LN['spans']: span_ends.add(round(a_)); span_ends.add(round(c_))
 for (p, q, st, n) in runs_all:
     txt = ('%dх%d' % (st, n)) if n > 1 else None
     tx = None
-    if q - p < 450 or (n > 1 and q - p < 700):
-        mid_ = 0 < runs_all.index((p, q, st, n)) and (p, q, st, n) != runs_all[-1] and not any(abs(p - sa_) < 1 or abs(q - sc2_) < 1 for sa_, sc2_ in LN['spans'])
-        tx = [X0 + XS0 + KE * ((p + q) / 2 - e0) - (520 if mid_ else 0), Y0 + ych - (480 if alt == 0 else 760)]; alt = 1 - alt
+    if q - p < 450:
+        xm = X0 + XS0 + KE * ((p + q) / 2 - e0)
+        if round(p) in span_ends: tx = [X0 + XS0 + KE * (p - e0) - 330, Y0 + ych + 170]
+        elif round(q) in span_ends: tx = [X0 + XS0 + KE * (q - e0) + 330, Y0 + ych + 170]
+        else: tx = [xm - 600, Y0 + ych - 300]
     dim(P(p, lowest), P(q, lowest), Y0 + ych, False, txt, tx, 1 / KE)
 # axes chain + overall + SPDS axes
 axpos = [(sp, kind) for sp, w, kind in LN['S']]
@@ -154,7 +157,10 @@ if slope and abs(top1 - top0) > 1: level(X0 + XS0 + KE * (e1 - e0) + 700 + 3900,
 (sa, sc_) = LN['spans'][0] if LN['spans'][0][1] - LN['spans'][0][0] > 1 else LN['spans'][1]
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
 spL = sp2[-1]
-sm = spL[0] + (spL[1] - spL[0]) * (0.8 if len(sp2) == 1 else 0.42)
+bnd = sorted(set([spL[0], spL[1]] + [r[0] for r in runs_all if spL[0] <= r[0] <= spL[1]] + [r[1] for r in runs_all if spL[0] <= r[1] <= spL[1]]))
+gaps = [(q_ - p_, (p_ + q_) / 2) for p_, q_ in zip(bnd, bnd[1:])]
+if len(sp2) == 1: gaps = [g for g in gaps if g[1] > spL[0] + (spL[1] - spL[0]) * 0.55] or gaps
+sm = max(gaps)[1]
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
 s2a, s2c = sp2[1] if len(sp2) > 1 else sp2[0]
 hz2 = LN['hz'][LN['spans'].index((s2a, s2c))]
@@ -194,11 +200,11 @@ for k, (a, c) in enumerate(hs):
 dim(Q(-b / 2, 0), Q(b / 2, 0), Y0 + SY - 1200, lfac=1 / KS)
 dim(Q(-b / 2, 0), Q(xs[0], 0), Y0 + SY - 600, lfac=1 / KS, tx=Q(-b / 2 - 90, -150))
 dim(Q(xs[-1], 0), Q(b / 2, 0), Y0 + SY - 600, lfac=1 / KS, tx=Q(b / 2 + 90, -150))
-dim(Q(xs[0], 0), Q(xs[-1], 0), Y0 + SY - 600, lfac=1 / KS, tx=[X0 + SX, Y0 + SY - 600 - 300], txt='%dх%d=%d' % (round((b - 2 * cov) / (A['n'] - 1)), A['n'] - 1, b - 2 * cov) if A['n'] > 2 else None)
+pass
 dim(Q(-b / 2, 0), Q(-b / 2, h), X0 + SX - KS * b / 2 - 600, True, lfac=1 / KS)
 ox = b / 2 + 120
-note('2(%%%%C%d)' % A['d'], '', Q(xs[-1], h - cov), Q(ox, h + 60), 'None')
-note('1(%%%%C%d)' % A['d'], '', Q(xs[-1], cov), Q(ox, -60), 'None')
+note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], Q(xs[-1], h - cov), Q(ox, h + 60), 'None')
+note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], Q(xs[-1], cov), Q(ox, -60), 'None')
 if A['side']: note('3(%%C12)', '', Q(xs[-1], h / (A['side'] + 1)), Q(ox, h * 0.35), 'None')
 note('Х1(%%C10)', '%d шт. в сеч.' % A['hoops'], Q(hs[-1][1], h * 0.6), Q(ox, h * 0.7))
 level(X0 + SX - KS * b / 2 - 1300, Y0 + SY + KS * h, top0)
