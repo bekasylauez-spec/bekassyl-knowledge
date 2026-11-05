@@ -142,8 +142,10 @@ for x in AX_X:
         n0 = node(x, y, Z0); supports.append(n0)
         el(10, 2, [n0, node(x, y, Z1)], 'col')
         el(10, 2, [node(x, y, Z1), node(x, y, Z2)], 'col')
-        zt = Z_STUB_MID if y == 6.0 else Z_STUB_EDGE
-        stubs[(x, y)] = (el(10, 2, [node(x, y, Z2), node(x, y, zt)], 'stub'), zt - Z2)
+        # колонна заканчивается на верхней плите +6.600 (замечание пользователя 05.11): оголовков нет
+        j = iy[y]
+        if j < len(Y) - 1: stubs[(x, y)] = (beamy[(Z2, x, j)], 0.0)            # ригель начинается в узле колонны
+        else: stubs[(x, y)] = (beamy[(Z2, x, j - 1)], Y[j] - Y[j - 1])         # ригель заканчивается в узле колонны
 
 # ---------------- loads ----------------
 rows = []; rowid = {}
@@ -176,7 +178,7 @@ for (z, i, j), e in slab.items():
         L(e, 16, 2, (PIR_ATTIC, 0, 0, 0)); summ[2] += PIR_ATTIC * A
         L(e, 16, 7, (LIVE_H, 0, 0, 0)); summ[7] += LIVE_H * A
 
-# roof trusses -> concentrated on stub tops (вид 15, привязка a = длина оголовка)
+# roof trusses -> concentrated at column top node +6.600 (вид 15 на ригель, привязка a = 0 или L)
 for (x, y), (e, ln) in stubs.items():
     s_along = 3.4 if x in (0.0, 60.0) else 6.0
     w = TRIB_MID if y == 6.0 else TRIB_EDGE

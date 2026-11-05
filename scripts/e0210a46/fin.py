@@ -4,7 +4,7 @@ import ext, ab, plan, sheets, re
 LET = ['А', 'Б', 'В', 'Г', 'Д', 'Е']
 FMT = {  # name -> (Format, Multiplicity, width, height) in mm
     'A3x3': ('A3', 3, 891, 420), 'A3': ('A3', 1, 297, 420), 'A2': ('A2', 1, 594, 420), 'A4x3': ('A4', 3, 630, 297),
-    'A2x3': ('A2', 3, 1261, 594), 'A3x4': ('A3', 4, 1189, 420), 'A1': ('A1', 1, 841, 594)}
+    'A2x3': ('A2', 3, 1261, 594), 'A2x4': ('A2', 4, 1682, 594), 'A3x4': ('A3', 4, 1189, 420), 'A1': ('A1', 1, 841, 594)}
 
 
 def clean(s):
@@ -46,7 +46,7 @@ def stamp_group(es, frame):
     return grp
 
 
-def finish(sheet, fmt, plan_d, win_extra=80000, labels=(True, True), extra_stamp=()):
+def finish(sheet, fmt, plan_d, win_extra=80000, labels=(True, True), extra_stamp=(), sc=None):
     sx, sy = sheets.slot(sheet)
     win = (sx - 100, sy - 100, sx + win_extra + 10000, sy + 60000)
     es = plan.dump(win, 'fin_' + sheet.replace('.', ''))
@@ -54,8 +54,9 @@ def finish(sheet, fmt, plan_d, win_extra=80000, labels=(True, True), extra_stamp
     fr = min(fr, key=lambda f: abs(f.bb[0] - sx) + abs(f.bb[1] - sy))
     frame = fr.bb
     F, mul, wmm, hmm = FMT[fmt]
-    sc = 100.0 if (frame[2] - frame[0]) > 20000 * 1.0 and abs((frame[2] - frame[0]) / 297 - 100) < 1 or True else 100.0
-    sc = round((frame[3] - frame[1]) / 420.0) if abs((frame[3] - frame[1]) / 420.0 - round((frame[3] - frame[1]) / 420.0)) < 0.01 else round((frame[2] - frame[0]) / 297.0)
+    sc0 = round((frame[3] - frame[1]) / 420.0) if abs((frame[3] - frame[1]) / 420.0 - round((frame[3] - frame[1]) / 420.0)) < 0.01 else round((frame[2] - frame[0]) / 297.0)
+    if sc: pass
+    sc = sc or sc0
     grp = stamp_group(es, frame) + [e for e in es if e.h in extra_stamp]
     gh = set(e.h for e in grp)
     body = [e for e in es if e.h not in gh and e.h != fr.h and e.bb and e.bb[0] >= frame[0] - 100 and e.bb[1] >= frame[1] - 100]
