@@ -66,6 +66,9 @@ def note(tpl, l1, l2, x, ym, y0, y1):
     ops.append(dict(t='mcset', h=tg, set={'FirstLine': l1, 'SecondLine': l2}))
 for s in range(NS):
     d, st = HD[s]; pos, segs = ROWS(L[s], L[s + 1], st, SLAB); y0, y1 = pos[0], pos[-1]; rows = len(pos)
+    if len(segs) == 3 and segs[1][3] == 1:               # leftover space at the top (analog 4.31: «150» under the slab), not in the middle
+        n_ = segs[0][3] + segs[2][3]; rem = segs[1][2]
+        pos = [y0 + st * k for k in range(n_ + 1)] + [y1]; segs = [(y0, y0 + st * n_, st, n_), (y0 + st * n_, y1, rem, 1)]
     lay = 'диам%d' % d; leg = LAP(d); ym = (y0 + y1) / 2; c = ck_of(d)
     for k, (a, b, ckl, ckr) in enumerate(PCS.get(s, FL)):
         fa = a + (50 if a in FREE else 20); fb = b - (50 if b in FREE else 20)
@@ -98,7 +101,10 @@ for s in range(NS):
         if s == NS - 1:
             pass
         kw = dict(t='dim', h='WT_DV', p1=W(xr, a), p2=W(xr, b), dl=W(xr + 1440, (a + b) / 2), rot=math.pi / 2, txt=txt)
-        if b - a < 450: kw['tx'] = W(xr + 1440 + 620, (a + b) / 2)
+        if b - a < 450:
+            k_ = ch.index((a, b, txt)); prv = k_ > 0 and ch[k_ - 1][1] - ch[k_ - 1][0] < 450; nxt_ = k_ < len(ch) - 1 and ch[k_ + 1][1] - ch[k_ + 1][0] < 450
+            yt_ = b + 300 if prv else (a - 300 if nxt_ else (a + b) / 2)      # two short spaces in a row: texts beyond their ends (analog «150 / 300»)
+            kw['tx'] = W(xr + 1440 + 620, yt_)
         ops.append(kw)
     if True:                                                # chain left of piece 1 (analog: left of the wall, every storey)
         for xf, dx in ((15225, -1440),):
@@ -107,7 +113,9 @@ for s in range(NS):
                 kw = dict(t='dim', h='WT_DV', p1=W(xf, a), p2=W(xf, b), dl=W(xf + dx, (a + b) / 2), rot=math.pi / 2, txt=txt)
                 if b - a < 450:
                     tight = len(segs) > 1                         # a leftover space in the middle: the step texts are long, «50» close to the slabs
-                    kw['tx'] = W(xf + dx + 200, a + (250 if tight else 350)) if a == L[s] else (W(xf + dx - 150, b - (250 if tight else 650)) if b > L[s + 1] - SLAB - 5 else W(xf + dx + 200, (a + b) / 2))
+                    k_ = ch.index((a, b, txt)); prv = k_ > 0 and ch[k_ - 1][1] - ch[k_ - 1][0] < 450; nxt_ = k_ < len(ch) - 1 and ch[k_ + 1][1] - ch[k_ + 1][0] < 450
+                    yt_ = (b + (450 if s == NS - 1 else 100)) if prv else (((a + b) / 2 if s == NS - 1 else a - 400) if nxt_ else (a + 350 if a == L[s] else (b - 650 if b > L[s + 1] - SLAB - 5 else (a + b) / 2)))
+                    kw['tx'] = W(xf + dx - 200, yt_)
                 ops.append(kw)
 ops.append(dict(t='erase', h=['H9' + k for k in TP]))
 ops.append(dict(t='save'))
