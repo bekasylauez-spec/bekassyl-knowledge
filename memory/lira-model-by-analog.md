@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 62d8a218-7d3b-4f20-a503-ee957c18a98a
-  modified: 2026-10-12T17:48:10.382Z
+  modified: 2026-11-05T08:53:54.433Z
 ---
 
 Task pattern "аналог етіп ал, тек каркасты өзгерт": geometry from the DWG, everything else (stiffness, loads, seismic, RSN, design variant, materials) identical to the analog .lir.
@@ -24,3 +24,11 @@ Editing an existing .lir without losing РСН/materials/variant (2026-10-21, Р
 - Calc sections must be 5 (Ctrl+A → Схема → Расчетные сечения), otherwise purlin midspan strength and deflection are not checked.
 
 User rule (2026-10-22): «Сен расчет жасағанда Настройкасында нормативная нагрузка деп қой». Before every LIRA calculation I run, set the loads to normative values in the settings («нормативная нагрузка»). The user did not say which menu; find it in LIRA (Настройки / load editor) and confirm it before calculating.
+
+LIRA text gotchas (2026-11-05, АБК):
+- No round brackets in load case names (section 39). `(`/`)` break document 0 and section 35 is lost, so the seismic cases get no dynamic parameters.
+- Import a .txt via File → Импортировать задачу → Текстовые файлы. The «Открыть» dialog does not list .txt.
+- Start LIRA from a script only with `Bin\x64\LiraSapr.exe`. `Bin\LiraSapr.exe` crashes with 0xc0000005.
+- No computer-use tools on BEKA-2: drive LIRA with PowerShell (SetCursorPos/mouse_event + SendKeys + CopyFromScreen), script `D:\РАБОЧКА\От Маке\Завод\АБК\Расчет\ui.ps1` (click/keys/screenshot).
+- Mass conversion in text = doc 6 rows with kind 4: element field = static case, row value = coefficient, case = seismic case.
+- Line load on a plate edge = kind 19, doc-7 row `i j q1 q2` (local node pair). Rect КЭ 41 nodes are in Z order (1-2, 3-4 opposite; 1-3, 2-4).
