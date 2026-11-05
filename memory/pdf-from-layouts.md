@@ -24,3 +24,8 @@ On 2026-10-17 the user rejected an album I had plotted from model-space frame wi
 **2026-10-30 hard lesson — NEVER replace the user's viewports.** Sheets like 5.3 «Разрезы 1-1; 2-2 (См-1)», 5.8/5.11–5.13/5.16–5.18 and all ригель 6.x are COMPOSED in the layout: the main viewport shows the model frame, extra viewports bring sections/узлы (1:50, 1:20) from other model areas, so the model frame alone is nearly empty («разрездер жоқ ішінде»). The model-frame album had been wrong on those sheets since 26.10. Correct pipeline now: keep layouts as they are (only rename to sheet numbers / create missing ones with a frame viewport), compute the plot window = frame rectangle projected into paper space through the main viewport (CenterPoint + (frame − (ViewCenter+ViewTarget))·CustomScale), PLOTL `win` 1:1 on full-bleed media, crop. Scripts: `w\chk\genlay2.py`, `layrun2.ps1`, `layfix.cs` (jobs only for missing layouts), `album_full.py pL2_`. Verify by text-count: layout page ≥ model page.
 
 Related: [[baitursynova-album-stamps]], [[cad-console-net-workflow]]
+
+**06.11.2026 (АБК, the user):** «Рамканың сыртында ақ бос жер көп… PDF рамканың ең шеткі сызығынан тұру керек, артық ақ жер болмасын». Every album page is cropped to the frame.
+- PyMuPDF: crop to the largest drawing rect (the frame), extended by the union of the drawings for the 1.1 side stamp (Инв. № подл.), plus «Формат А2» text under the frame, ±1.5 pt.
+- `set_mediabox` takes PDF coordinates: y = H − y. Without this, A3x3 pages on A0 came out blank.
+- Script: scratchpad `dw\crop.py`. Check every corner at 150 dpi: the frame line must be intact.

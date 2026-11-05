@@ -194,9 +194,24 @@ namespace BK
                     if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
                     if (e is MText && ((MText)e).Contents.Contains(a)) { e.UpgradeOpen(); ((MText)e).Contents = ((MText)e).Contents.Replace(a, b); n++; }
                     else if (e is DBText && ((DBText)e).TextString.Contains(a)) { e.UpgradeOpen(); ((DBText)e).TextString = ((DBText)e).TextString.Replace(a, b); n++; }
+                    else if (e is Dimension && ((Dimension)e).DimensionText.Contains(a)) { e.UpgradeOpen(); ((Dimension)e).DimensionText = ((Dimension)e).DimensionText.Replace(a, b); n++; }
+                    else if (e is MLeader && ((MLeader)e).MText != null && ((MLeader)e).MText.Contents.Contains(a)) { e.UpgradeOpen(); var ml = (MLeader)e; var mt = ml.MText; mt.Contents = mt.Contents.Replace(a, b); ml.MText = mt; n++; }
                     else if (e is BlockReference) foreach (ObjectId aid in ((BlockReference)e).AttributeCollection) { var ar = (AttributeReference)tr.GetObject(aid, OpenMode.ForRead); if (ar.TextString.Contains(a)) { ar.UpgradeOpen(); ar.TextString = ar.TextString.Replace(a, b); n++; } }
                 }
                 log.AppendLine("replace " + a + " " + n);
+            }
+            else if (t == "eraselayer")
+            {
+                var w = L(m["win"]); string lay = S(m, "layer", ""); int n = 0; var ids = new List<ObjectId>();
+                foreach (ObjectId id in MS(db, tr))
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null || e.Layer != lay) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
+                    ids.Add(id);
+                }
+                foreach (var id in ids) { tr.GetObject(id, OpenMode.ForWrite).Erase(); n++; }
+                log.AppendLine("eraselayer " + lay + " " + n);
             }
             else if (t == "eraseregion")
             {

@@ -11,3 +11,4 @@ User decisions: «арматуру максимально»; ригели 350×5
 **How to apply:** continue from the Obsidian note; open items there (oc TOTAL 580, лист 1.1, gaps in model). Related: [[obsidian-first]], [[column-rules-template]], [[reservoir-kzh]]
 
 05.11 вечер: user shrank 3.1 to A2 → all Фм/плита plans A2 (Пм-1 spec moved to 7.3); order 1 ОД, 2 схема, 3 фундамент+выпуски (Фм-2 = 3.8), 4 колонна, 5 стена, 6 ригель, 7 плита; model row gapless in that order; 1.1 content from АБК 1.1 (same zavod), 1.2 ведомость. Live DWG is master now — generator scripts (s3x/s7x slots) are stale, do not rerun them blindly. Geology/climate text in 1.1 (from АБК) confirmed correct by user 05.11 — same site data for all Маке zavod buildings.
+06.11: added 3.9/3.10 (выпуски, user: «выпусктар қайда») and walls per axis 5.1–5.24 (См-1…См-8, opalubka + arm + A3 spec each, user approved structure); album 59 sheets. Rule saved in Obsidian: every КЖ needs 3.9/3.10 выпуски and per-axis wall sets.

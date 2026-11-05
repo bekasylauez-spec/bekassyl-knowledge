@@ -11,6 +11,8 @@ for z in res:
             # round length down to 50 (bars clipped by an edge end 25..75 from it)
             Z['L']=int(Z['L']//50*50); Z['e']=Z['s']+Z['L']
             if Z['L']<1000: continue
+            if len(Z['cs'])<=2 and Z['need']<=3.0: continue
+            if Z['need']<1.0 and len(Z['cs'])*0.2*Z['L']/1000<4.0: continue
             if Z['L']<=11700: out.append(Z); continue
             k=math.ceil((Z['L']-LAP[Z['d']])/(11700-LAP[Z['d']])); 
             piece=math.ceil(((Z['L']+(k-1)*LAP[Z['d']])/k)/50)*50

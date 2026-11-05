@@ -85,7 +85,9 @@ def plan_common(sh, kind):
     xs = [AXX[a] for a in dx]; ys = [AXY[a] for a in dy]
     x_l, y_b, x_r, y_t = sl['outer'].bounds
     # background beams (as analog: dashed gray outlines)
+    ob = sl['outer'].buffer(300)
     for b in sl['beams']:
+        if not ob.intersects(box(*b)): continue
         p = [sh.T(b[0], b[1]), sh.T(b[2], b[1]), sh.T(b[2], b[3]), sh.T(b[0], b[3])]
         ops.append({'t': 'pl', 'p': p, 'closed': True, 'tpl': tp('kark')})
     # digit axes
@@ -190,7 +192,7 @@ def main_bars(sh):
         ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(f, y_b), 'p2': sh.T(l, y_b), 'dl': sh.T(l, yd), 'rot': 0, 'txt': '200х%d=<>' % n})
         ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(l, y_b), 'p2': sh.T(b, y_b), 'dl': sh.T(b, yd), 'rot': 0})
         if not ml_done['Y']:
-            ym = (AXY['А'] + AXY['Б']) / 2 + 500
+            ym = (AXY['В'] + AXY['Г']) / 2 if z == '7.0' else 4500
             ops.append({'t': 'ml', 'h': tp('ml1Y'), 'base': anchor('ml1Y'), 'to': sh.T((f + l) / 2, ym), 'text': '1', 'arrows': [sh.T(f, ym), sh.T(l, ym)]})
             ml_done['Y'] = True
     # X bars (horizontal) in letter bands
@@ -205,7 +207,7 @@ def main_bars(sh):
         ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, f), 'p2': sh.T(x_l, l), 'dl': sh.T(xd, l), 'rot': math.pi / 2, 'txt': '200х%d=<>' % n})
         ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, l), 'p2': sh.T(x_l, b), 'dl': sh.T(xd, b), 'rot': math.pi / 2})
         if not ml_done['X']:
-            xm = (xa[0] + xa[1]) / 2 + 700
+            xm = (xa[1] + xa[2]) / 2 + 1000
             ops.append({'t': 'ml', 'h': tp('ml1X'), 'base': anchor('ml1X'), 'to': sh.T(xm, (f + l) / 2), 'text': '1', 'arrows': [sh.T(xm, f), sh.T(xm, l)]})
             ml_done['X'] = True
     return ops
@@ -222,34 +224,37 @@ def base_quantities(z):
     return 2 * tot / 1000.0
 
 def sk_marks(sh):
-    """Ск1 U-bars along free edges: symbol + text per span (analog style); returns ops and edge length"""
+    """Ск1 U-bars along free edges: symbol + text (analog style); returns ops and edge length"""
     ops = []; z = sh.z; sl = geom.slab(z)
     total = 0.0
-    rings = [list(sl['outer'].exterior.coords)]
+    G = sl['geom'].buffer(1)
+    def side_of(x, y, horiz):
+        if horiz: return 'B' if G.contains(LineString([(x, y + 5), (x, y + 300)])) else 'T'
+        return 'L' if G.contains(LineString([(x + 5, y), (x + 300, y)])) else 'R'
+    ring = list(sl['outer'].exterior.coords)
+    for p, q in zip(ring[:-1], ring[1:]):
+        L = math.hypot(q[0] - p[0], q[1] - p[1]); total += L
+        if L < 900: continue
+        horiz = abs(q[1] - p[1]) < 1
+        if horiz:
+            a, b = sorted((p[0], q[0])); pts = [a] + [x for x in sorted(AXX.values()) if a + 300 < x < b - 300] + [b]
+            for u, v in zip(pts[:-1], pts[1:]):
+                if v - u < 900: continue
+                m = u + 0.25 * (v - u); ops += sk_one(sh, m, p[1], side_of(m, p[1], True))
+        else:
+            a, b = sorted((p[1], q[1])); pts = [a] + [y for y in sorted(AXY.values()) if a + 300 < y < b - 300] + [b]
+            for u, v in zip(pts[:-1], pts[1:]):
+                if v - u < 900: continue
+                m = u + 0.3 * (v - u); ops += sk_one(sh, p[0], m, side_of(p[0], m, False))
     for H in sl['holes']:
-        if H['geom'].area > 0.3e6: rings.append(list(H['geom'].exterior.coords))
-    cuts = sorted(AXX.values()) + sorted(AXY.values())
-    for ri, ring in enumerate(rings):
-        is_hole = ri > 0
-        for p, q in zip(ring[:-1], ring[1:]):
-            L = math.hypot(q[0] - p[0], q[1] - p[1]); total += L
-            if L < 900: continue
-            horiz = abs(q[1] - p[1]) < 1
-            # one mark per span between axes along the edge
-            if horiz:
-                a, b = sorted((p[0], q[0])); pts = [a] + [x for x in sorted(AXX.values()) if a + 300 < x < b - 300] + [b]
-                for u, v in zip(pts[:-1], pts[1:]):
-                    if v - u < 900: continue
-                    m = (u + v) / 2 + 600; y = p[1]
-                    inside_up = sl['geom'].buffer(1).contains(LineString([(m, y + 5), (m, y + 300)]))
-                    ops += sk_one(sh, m, y, 'B' if inside_up else 'T')
-            else:
-                a, b = sorted((p[1], q[1])); pts = [a] + [y for y in sorted(AXY.values()) if a + 300 < y < b - 300] + [b]
-                for u, v in zip(pts[:-1], pts[1:]):
-                    if v - u < 900: continue
-                    m = (u + v) / 2 - 500; x = p[0]
-                    inside_r = sl['geom'].buffer(1).contains(LineString([(x + 5, m), (x + 300, m)]))
-                    ops += sk_one(sh, x, m, 'L' if inside_r else 'R')
+        g = H['geom']; total += g.length
+        if H['kind'] != 'rect': continue
+        x0, y0, x1, y1 = g.bounds; w, h = x1 - x0, y1 - y0
+        sides = []
+        if w >= 1500: sides += [('h', x0 + (0.3 if h < 1300 else 0.5) * w - 100, y0), ('h', x0 + (0.7 if h < 1300 else 0.5) * w - 100, y1)]
+        if h >= 1500: sides += [('v', x0, y0 + 0.5 * h - 100), ('v', x1, y0 + 0.5 * h - 100)]
+        for k, x, y in sides:
+            ops += sk_one(sh, x, y, side_of(x, y, k == 'h'))
     return ops, total
 
 def sk_one(sh, x, y, side):
@@ -302,6 +307,8 @@ def dop_sheet(sh, zones, face, pos):
             for cb, cd in cands:
                 tr = text_rect(*sh.T((s + e) / 2, cd + (180 if cd > cb else -180)), str(int(L)))
                 if free(sh, tr): break
+            else:
+                cb, cd = c1, c1 + 700; tr = text_rect(*sh.T((s + e) / 2, cd + 180), str(int(L)))
             ops.append({'t': 'dim', 'h': tp('dimLenH'), 'p1': sh.T(s, cb), 'p2': sh.T(e, cb), 'dl': sh.T(e, cd), 'rot': 0}); occupy(sh, tr)
             if n > 1:
                 txt = '200х%d' % (n - 1)
@@ -312,7 +319,7 @@ def dop_sheet(sh, zones, face, pos):
                 ops.append({'t': 'dim', 'h': tp('dimCrossV'), 'p1': sh.T(xb, c0), 'p2': sh.T(xb, c1), 'dl': sh.T(xd, c1), 'rot': math.pi / 2, 'txt': txt}); occupy(sh, tr)
             # mark
             xl = s + min(0.33 * L, 900); ym = (c0 + c1) / 2
-            for frac in (0.33, 0.5, 0.66, 0.2, 0.8):
+            for frac in (0.33, 0.5, 0.66, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
                 xl = s + frac * L
                 tr = text_rect(*sh.T(xl - 200, ym), str(p))
                 if free(sh, tr): break
@@ -323,6 +330,8 @@ def dop_sheet(sh, zones, face, pos):
             for cb, cd in cands:
                 tr = text_rect(*sh.T(cd + (180 if cd > cb else -180), (s + e) / 2), str(int(L)), horiz=False)
                 if free(sh, tr): break
+            else:
+                cb, cd = c0, c0 - 700; tr = text_rect(*sh.T(cd - 180, (s + e) / 2), str(int(L)), horiz=False)
             ops.append({'t': 'dim', 'h': tp('dimLenV'), 'p1': sh.T(cb, s), 'p2': sh.T(cb, e), 'dl': sh.T(cd, e), 'rot': math.pi / 2}); occupy(sh, tr)
             if n > 1:
                 txt = '200х%d' % (n - 1)
@@ -332,7 +341,7 @@ def dop_sheet(sh, zones, face, pos):
                     if free(sh, tr): break
                 ops.append({'t': 'dim', 'h': tp('dimCrossH'), 'p1': sh.T(c0, yb), 'p2': sh.T(c1, yb), 'dl': sh.T(c1, yd), 'rot': 0, 'txt': txt}); occupy(sh, tr)
             xm = (c0 + c1) / 2
-            for frac in (0.35, 0.5, 0.65, 0.2, 0.8):
+            for frac in (0.35, 0.5, 0.65, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
                 yl = s + frac * L
                 tr = text_rect(*sh.T(xm, yl + 300), str(p))
                 if free(sh, tr): break
