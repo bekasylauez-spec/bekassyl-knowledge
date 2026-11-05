@@ -364,6 +364,21 @@ else if (t == "sysvar")
                 dbe.Update();
                 var dd = mo as IDisposable; if (dd != null) dd.Dispose();
             }
+            else if (t == "mtinfo")
+            {
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForRead); double cx;
+                    if (e is MText)
+                    {
+                        var mt = (MText)e; int col = ((int)mt.Attachment - 1) % 3; double aw = mt.ActualWidth;
+                        if (mt.Contents.Contains("\\pxqc") && col == 0 && mt.Width > 0) cx = mt.Location.X + mt.Width / 2;
+                        else cx = mt.Location.X + (col == 0 ? aw / 2 : (col == 1 ? 0 : -aw / 2));
+                        log.AppendLine("MTI\t" + e.Handle + "\t" + cx.ToString("0.0", IC) + "\t" + aw.ToString("0.0", IC) + "\t" + mt.Location.Y.ToString("0.0", IC) + "\t" + mt.ActualHeight.ToString("0.0", IC));
+                    }
+                    else { var x = e.GeometricExtents; log.AppendLine("MTI\t" + e.Handle + "\t" + ((x.MinPoint.X + x.MaxPoint.X) / 2).ToString("0.0", IC) + "\t" + (x.MaxPoint.X - x.MinPoint.X).ToString("0.0", IC) + "\t" + x.MaxPoint.Y.ToString("0.0", IC) + "\t" + (x.MaxPoint.Y - x.MinPoint.Y).ToString("0.0", IC)); }
+                }
+            }
             else if (t == "mtcenter")
             {
                 // атауды көрінетін мәтін ортасы x = target болатындай көлденең жылжыту (MText: ActualWidth + Attachment + \pxqc)
@@ -1657,7 +1672,7 @@ else if (t == "sysvar")
                 var psv = PlotSettingsValidator.Current;
                 psv.SetPlotConfigurationName(lo, S(m, "dev", "DWG To PDF.pc3"), null);
                 psv.RefreshLists(lo);
-                foreach (var nm in psv.GetCanonicalMediaNameList(lo)) log.AppendLine("MEDIA	" + nm + "	" + psv.GetLocaleMediaName(lo, nm));
+                foreach (var nm in psv.GetCanonicalMediaNameList(lo)) log.AppendLine("MEDIA	" + nm + "\t" + psv.GetLocaleMediaName(lo, nm));
             }
             else if (t == "vpset")
             {
@@ -1702,7 +1717,7 @@ else if (t == "sysvar")
                     foreach (ObjectId id in btr)
                     {
                         var vp = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (vp == null) continue;
-                        log.AppendLine("VPL	" + lo.LayoutName + "	" + (k++) + "	" + vp.Handle + "	n" + vp.Number + "	c" + vp.CenterPoint.X.ToString("0", IC) + "," + vp.CenterPoint.Y.ToString("0", IC) + "	w" + vp.Width.ToString("0", IC) + "	h" + vp.Height.ToString("0", IC) + "	vc" + vp.ViewCenter.X.ToString("0", IC) + "," + vp.ViewCenter.Y.ToString("0", IC) + "	vh" + vp.ViewHeight.ToString("0", IC) + "	t" + vp.ViewTarget.X.ToString("0", IC) + "," + vp.ViewTarget.Y.ToString("0", IC) + "	on" + vp.On);
+                        log.AppendLine("VPL	" + lo.LayoutName + "\t" + (k++) + "\t" + vp.Handle + "	n" + vp.Number + "	c" + vp.CenterPoint.X.ToString("0", IC) + "," + vp.CenterPoint.Y.ToString("0", IC) + "	w" + vp.Width.ToString("0", IC) + "	h" + vp.Height.ToString("0", IC) + "	vc" + vp.ViewCenter.X.ToString("0", IC) + "," + vp.ViewCenter.Y.ToString("0", IC) + "	vh" + vp.ViewHeight.ToString("0", IC) + "	t" + vp.ViewTarget.X.ToString("0", IC) + "," + vp.ViewTarget.Y.ToString("0", IC) + "	on" + vp.On);
                     }
                 }
             }

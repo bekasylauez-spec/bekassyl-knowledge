@@ -15,7 +15,7 @@ o = pl2.Ops('g32_')
 o.add({'t': 'sysvar', 'n': 'TILEMODE', 'v': 1})
 PARK = [h for h in TPL if any(e['h'] == h for e in si['E'])]
 if PARK: o.add({'t': 'move', 'h': PARK, 'd': [0, -30000]})
-o.add({'t': 'eraseregion', 'win': WIN, 'keep': si['keep'] + TPL})
+o.add({'t': 'eraseregion', 'win': [X0, Y0 - 2000, X0 + 59400, Y0 + 40000], 'keep': si['keep'] + TPL + ['37FB3A', '37FC4A', '37FC4B', '37FC4D', SPEC, STEEL]})
 
 
 class View:
@@ -78,12 +78,12 @@ def stubs_plan(v):
 
 PX, PY = FD.PX, FD.PY
 # ---------------- plan: bottom mesh
-v1 = View(5500, 22500)
+v1 = View(7100, 22500)
 rect(v1, 0, 0, PX, PY); stubs_plan(v1)
 for x in FD.B1: pl(v1, [(x, 50), (x, PY - 50)], T_BAR)
 for y in FD.B2: pl(v1, [(50, y), (PX - 50, y)], T_BAR)
 chain(v1, [0, 50, FD.B1[-2], FD.B1[-1], PX], -700, texts=[None, '150х%d=%d' % (len(FD.B1) - 2, FD.B1[-2] - 50), None, None], origin=0,
-      small={0: (-250, -560), 2: (PX - 100, -560), 3: (PX + 220, -560)})
+      small={0: (-250, -560), 2: (PX - 300, -560), 3: (PX + 220, -560)})
 dim(v1, (0, 0), (PX, 0), -1150)
 chain(v1, [0, 50, FD.B2[-2], FD.B2[-1], PY], -700, True, texts=[None, '150х%d=%d' % (len(FD.B2) - 2, FD.B2[-2] - 50), None, None], origin=0,
       small={0: (-560, -250), 2: (-560, PY - 100), 3: (-560, PY + 220)})
@@ -93,7 +93,7 @@ note(v1, '2(%%C20)', 'ш.150', (1700, FD.B2[4]), (PX + 450, FD.B2[4] - 450))
 title(v1, 'Подушка Фм-1. Нижняя сетка', 0, PX, PY + 450)
 
 # ---------------- plan: top mesh + column dowels
-v2 = View(20500, 22500)
+v2 = View(21300, 22500)
 rect(v2, 0, 0, PX, PY); stubs_plan(v2)
 rect(v2, 650, 1050, 1350, 1950)
 for x in FD.T3: pl(v2, [(x, 50), (x, PY - 50)], T_BAR)
@@ -101,9 +101,9 @@ for y in FD.T4: pl(v2, [(50, y), (PX - 50, y)], T_BAR)
 for dx, dy in FD.DOW: dot(v2, 1000 + dx, 1500 + dy, 28)
 rect(v2, 1000 - FD.X1_A / 2 - 20, 1500 - FD.X1_B / 2 - 20, 1000 + FD.X1_A / 2 + 20, 1500 + FD.X1_B / 2 + 20, T_BAR)
 chain(v2, [0, 50, FD.T3[-2], FD.T3[-1], PX], -700, texts=[None, '200х%d=%d' % (len(FD.T3) - 2, FD.T3[-2] - 50), None, None], origin=0,
-      small={0: (-250, -560), 2: (PX - 100, -560), 3: (PX + 220, -560)})
+      small={0: (-250, -560), 2: (PX - 300, -560), 3: (PX + 220, -560)})
 chain(v2, [0, 50, FD.T4[-2], FD.T4[-1], PY], -700, True, texts=[None, '200х%d=%d' % (len(FD.T4) - 2, FD.T4[-2] - 50), None, None], origin=0,
-      small={0: (-560, -250), 2: (-560, PY - 100), 3: (-560, PY + 220)})
+      small={0: (-560, -250), 2: (-560, PY - 300), 3: (-560, PY + 220)})
 note(v2, '3(%%C16)', 'ш.200', (FD.T3[-4], 2650), (PX + 450, PY - 150))
 note(v2, '4(%%C16)', 'ш.200', (1800, FD.T4[2]), (PX + 450, FD.T4[2] - 450))
 note(v2, 'Вп1(%%C28)', '14 шт.', (1000 + FD.COLX[-1], 1500 + FD.COLY[2]), (PX + 450, 1500 + 300), 'none')
@@ -157,7 +157,7 @@ def section(v, L, along_y):
     note(v, '2(%%C20)' if along_y else '1(%%C20)', '', (lo[2], 60), (-700, -230), 'none')
     note(v, 'Ск1(%%C16)', 'ш.200', (40, 700), (-600, 1500))
     note(v, 'Вп1(%%C28)', '', (L / 2 + off[-1], 1500), (L / 2 + off[-1] + 500, 2300))
-    note(v, 'Х1(%%C8)', 'ш.200', (L / 2 + w, 550), (L / 2 + w + 500, 1300))
+    note(v, 'Х1(%%C8)', 'ш.200', (L / 2 + w, 550), (L / 2 + w + 500, 2000))
     note(v, '3(%%C16)' if along_y else '4(%%C16)', '', (L * 0.8, 942), (L * 0.8 + 400, 1500))
 
 
@@ -209,7 +209,7 @@ for k, (pos, kind) in enumerate(DET):
         cx = sx + 900
         B([(cx + 180, sy + h - 180), (cx, sy + h), (cx + w, sy + h), (cx + w, sy), (cx, sy), (cx, sy + h), (cx + 180 + 40, sy + h - 180 + 40)])
         tx(cx + w / 2, sy + h + 180, '%d' % a); tx(cx - 200, sy + h / 2, '%d' % b, rot=math.pi / 2)
-        tx(cx + w + 1000, sy + h / 2, 'крюки 2х100')
+        tx(cx + w + 1150, sy + h / 2, 'крюки 2х100')
 
 o.add({'t': 'settext', 'h': '37FC4B', 's': 'Фундамент Фм-1. Армирование'})
 o.add({'t': 'settext', 'h': '37FC4D', 's': '3.2'})

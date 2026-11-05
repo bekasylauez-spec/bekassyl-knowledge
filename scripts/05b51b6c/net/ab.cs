@@ -1743,6 +1743,11 @@ else if (t == "sysvar")
                 LayoutManager.Current.DeleteLayout(S(m, "name", ""));
                 log.AppendLine("laydel " + S(m, "name", ""));
             }
+            else if (t == "layren")
+            {
+                LayoutManager.Current.RenameLayout(S(m, "src", ""), S(m, "dst", ""));
+                log.AppendLine("layren " + S(m, "src", "") + " -> " + S(m, "dst", ""));
+            }
             else if (t == "laycopy")
             {
                 LayoutManager.Current.CopyLayout(S(m, "src", ""), S(m, "dst", ""));
