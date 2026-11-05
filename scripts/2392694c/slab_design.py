@@ -25,15 +25,19 @@ def cells(Z):
         try: v = [float(x) for x in r[8:12]]
         except ValueError: continue
         e = int(r[4]); AS[e] = [max(a, b) for a, b in zip(AS.get(e, [0, 0, 0, 0]), v)]
-    out = []
+    env = {}
     for i, r in enumerate(els):
         if int(r[0]) not in (41, 42, 44): continue
         ns = [nodes[int(k) - 1] for k in r[2:]]
         zs = [n[2] for n in ns]
-        if max(zs) - min(zs) > 1e-3 or abs(zs[0] - Z) > 1e-3: continue
+        Zs = Z if isinstance(Z, (list, tuple)) else [Z]
+        if max(zs) - min(zs) > 1e-3 or not any(abs(zs[0] - z) < 1e-3 for z in Zs): continue
         xs = [n[0] * 1000 for n in ns]; ys = [M.fy(n[1]) for n in ns]
-        out.append(dict(x0=min(xs), x1=max(xs), y0=min(ys), y1=max(ys), As=AS.get(i + 1, [0, 0, 0, 0])))
-    return out
+        key = (round(min(xs)), round(min(ys)), round(max(xs)), round(max(ys)))
+        a = AS.get(i + 1, [0, 0, 0, 0])
+        if key in env: env[key]['As'] = [max(p, q) for p, q in zip(env[key]['As'], a)]      # envelope over the levels
+        else: env[key] = dict(x0=min(xs), x1=max(xs), y0=min(ys), y1=max(ys), As=list(a))
+    return list(env.values())
 
 
 class Slab:

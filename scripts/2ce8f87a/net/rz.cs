@@ -455,6 +455,14 @@ namespace RG
                     if (i >= segs.Count) break;
                     var q = L(segs[i]); c.Start = MP(q[0]); c.End = MP(q[1]); i++;
                 }
+                if (Has(m, "trim"))
+                {
+                    var extra = new List<object>(); int j = 0;
+                    foreach (Multicad.Symbols.McBLSegment c in lead.Childs) { if (j >= segs.Count) extra.Add(c); j++; }
+                    var chs = lead.Childs; var rm = chs.GetType().GetMethod("Remove", new Type[] { typeof(Multicad.Symbols.McBLSegment) });
+                    foreach (var c in extra) { if (rm != null) rm.Invoke(chs, new object[] { c }); }
+                    log.AppendLine("combsegs trimmed " + extra.Count + (rm == null ? " (no Remove)" : ""));
+                }
                 if (Has(m, "start")) mo.GetType().GetProperty("Start").SetValue(mo, MP(m["start"]), null);
                 if (Has(m, "end")) mo.GetType().GetProperty("End").SetValue(mo, MP(m["end"]), null);
                 ((McDbEntity)mo.GetType().GetProperty("DbEntity").GetValue(mo, null)).Update();
@@ -464,6 +472,21 @@ namespace RG
             {
                 var br = (BlockReference)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 br.Position = P(m["at"]);
+            }
+            else if (t == "trowcopy")
+            {
+                // copy text height / style / alignment of every cell of row "src" to row "dst" (same table)
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                int sr = Convert.ToInt32(m["src"]), dr = Convert.ToInt32(m["dst"]);
+                for (int c = 0; c < tb.Columns.Count; c++)
+                {
+                    var a = tb.Cells[sr, c]; var b = tb.Cells[dr, c];
+                    try { b.TextStyleId = a.TextStyleId; } catch { }
+                    try { b.TextHeight = a.TextHeight; } catch { }
+                    try { b.Alignment = a.Alignment; } catch { }
+                    try { if (b.Contents.Count > 0 && a.Contents.Count > 0) { b.Contents[0].TextHeight = a.Contents[0].TextHeight; b.Contents[0].TextStyleId = a.Contents[0].TextStyleId; } } catch { }
+                }
+                tb.GenerateLayout();
             }
             else if (t == "eraseregion")
             {

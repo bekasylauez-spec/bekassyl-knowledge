@@ -24,7 +24,8 @@ def cells_asw(Z):
     for i, r in enumerate(els):
         if int(r[0]) not in (41, 42, 44): continue
         ns = [nodes[int(k) - 1] for k in r[2:]]; zs = [n[2] for n in ns]
-        if max(zs) - min(zs) > 1e-3 or abs(zs[0] - Z) > 1e-3: continue
+        Zs = Z if isinstance(Z, (list, tuple)) else [Z]
+        if max(zs) - min(zs) > 1e-3 or not any(abs(zs[0] - z) < 1e-3 for z in Zs): continue
         w = W.get(i + 1, 0)
         if w > 0:
             xs = [n[0] * 1000 for n in ns]; ys = [SD.M.fy(n[1]) for n in ns]
@@ -69,7 +70,7 @@ def zones(Z, rect, gap=800):
 
 def build(k, Zn, posmap):
     dx = SW * (k - 2)
-    X, Y = G.OX + dx, G.OY
+    X, Y = lev.ox(k), C['oy']
     def P(a, b): return [X + a, Y + b, 0]
     x0 = 231579 + dx
     ops = [{'t': 'eraseregion', 'win': [x0 - 1, 455930, x0 + SW + 1, 497950]}]
@@ -79,7 +80,7 @@ def build(k, Zn, posmap):
     ops.append({'t': 'clone', 'h': '2B479D', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '6.%d' % k})
     for tg, h in gx.tagmap().items():
-        if tg.startswith('P62_'): ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [dx, 0]})
+        if tg.startswith(C['bgp']): ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [SW * (k - C['km']), 0]})
     occ = []
     def hit(r): return any(not (r[2] < o[0] or r[0] > o[2] or r[3] < o[1] or r[1] > o[3]) for o in occ)
     for z in Zn: occ.append((z['x0'], z['y0'], z['x1'], z['y1']))
@@ -125,6 +126,7 @@ def build(k, Zn, posmap):
         ops.append({'t': 'clone', 'h': pick[0], 'tag': tn})
         ops.append({'t': 'spmove', 'h': tn, 'items': [[0, X + pick[1], Y + pick[2]], [1, X + cx, Y + cy]]})
         ops.append({'t': 'noteh', 'h': tn, 'l1': '%d(ф%d)' % (posmap[z['d']], z['d']), 'l2': 'ш.200х200'})
+    ops.append({'t': 'trepl', 'win': [x0 - 5, 455900, x0 + SW + 5, 498000], 'pairs': [['КЖ-6.1 ... 6.8', 'КЖ-6.%d ... 6.%d' % (lev.CUR['k0'], lev.CUR['k0'] + 7)]]})
     ops.append({'t': 'save'})
     return ops
 

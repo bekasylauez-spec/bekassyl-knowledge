@@ -11,7 +11,7 @@ SW = 59400.0
 OX2, OY = G.OX, G.OY                     # sheet 6.2 plan origin
 AXX = [0, 6800, 13250, 20050]
 AXY = [0, 5000, 14750, 22750, 28750]
-SX0, SY0, SX1, SY1 = G.SX0, G.SY0, G.SX1, G.SY1
+SX0, SY0, SX1, SY1 = lev.CUR['rect']
 TITLES = {'bot_x': 'нижней зоны по буквенным осям', 'top_x': 'верхней зоны по буквенным осям',
           'bot_y': 'нижней зоны по цифровым осям', 'top_y': 'верхней зоны по цифровым осям'}
 T_BAR, T_NOTE, T_DV, T_DH = '2B8500', '2B8538', '2B8502', '2B851E'
@@ -30,7 +30,7 @@ def positions(R):
 
 def build(key, k, R, pos):
     dx = SW * (k - 2)
-    X, Y = OX2 + dx, OY
+    X, Y = lev.ox(k), C['oy']
     def P(a, b): return [X + a, Y + b, 0]
     x0 = 231579 + dx
     ops = [{'t': 'eraseregion', 'win': [x0 - 1, 455930, x0 + SW + 1, 497950]}]
@@ -43,7 +43,7 @@ def build(key, k, R, pos):
     # plan background = the 2.2 clones of sheet 6.2
     mp = gx.tagmap()
     for tg, h in mp.items():
-        if tg.startswith('P62_'): ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [dx, 0]})
+        if tg.startswith(C['bgp']): ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [SW * (k - C['km']), 0]})
     along_x = key.endswith('_x')
     TH = 300                                   # text height incl. gap, mm on the plan (2.5 mm × 100 + gap)
 
@@ -126,6 +126,7 @@ def build(key, k, R, pos):
             items[0] = [0, items[0][1] + (0 if along_x else 300), items[0][2] + (300 if along_x else 0)]
         ops.append({'t': 'spmove', 'h': tg, 'items': items})
         ops.append({'t': 'noteh', 'h': tg, 'l1': str(num), 'l2': 'ш.200'})
+    ops.append({'t': 'trepl', 'win': [x0 - 5, 455900, x0 + SW + 5, 498000], 'pairs': [['КЖ-6.1 ... 6.8', 'КЖ-6.%d ... 6.%d' % (lev.CUR['k0'], lev.CUR['k0'] + 7)]]})
     ops.append({'t': 'save'})
     return ops
 

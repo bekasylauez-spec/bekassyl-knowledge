@@ -4,10 +4,12 @@
 # right 11700..13125 (arriving from below).
 import gx, math
 import gen_dop as GD
+import lev
+C = lev.CUR
 SW = 59400.0
-K = 9
-X = -173564.0 + (172179.0 - -184221.0) + SW * (K - 1)
-Y = 463756.885
+K = C['k0']
+X = lev.ox(K)
+Y = C['oy']
 U = 4300000.0
 DX = 172179.0 + SW * (K - 1) - U          # analog sheet -> sheet 6.9 (same place on the sheet)
 EDGE = 18025
@@ -54,6 +56,7 @@ def build():
             op = {'t': 'dim', 'h': GD.T_DH, 'p1': P(p, yb), 'p2': P(q, yb), 'dl': P(p, yl), 'rot': 0, 'txt': txt}
             if q - p < 300 and (p == a or q == b): op['tx'] = P(p - 250 if p == a else q + 250, yl + 180)
             elif q - p < 300: op['tx'] = P((p + q) / 2, yl - 330)
+            if txt: op['tx'] = P((p + q) / 2, yl + 180)
             ops.append(op)
     # length chain on the right of the right group: 700 | 980 | 1280
     xr = FL[1][1] + 250 + 600
@@ -61,11 +64,11 @@ def build():
         ops.append({'t': 'dim', 'h': GD.T_DV, 'p1': P(FL[1][1] - 50, p), 'p2': P(FL[1][1] - 50, q), 'dl': P(xr, p), 'rot': math.pi / 2, 'txt': ''})
     # section mark 2-2 along the left flight
     ops.append({'t': 'clone', 'h': '2DE43E', 'tag': 'STS'})
-    ops.append({'t': 'spmove', 'h': 'STS', 'items': [[0, X + 11100, Y + EDGE + 2700], [1, X + 11100, Y + EDGE - 2300]]})
+    ops.append({'t': 'spmove', 'h': 'STS', 'items': [[0, X + 11100, Y + EDGE + 2300], [1, X + 11100, Y + EDGE - 2300]]})
     # Разрез 2-2 (analog group), level of this slab
     SEC = ['2DE366', '2DE367', '2DE368', '2DE369', '2DE36A', '2DE36C', '2DE37B', '2DE388', '2DE395', '2DE396', '2DE397', '2DE3A4']
     for h in SEC: ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [DX, 0], 'tag': 'STX_' + h})
-    ops.append({'t': 'levelval', 'h': 'STX_2DE396', 'old': '+3.050', 'value': '+3.950'})
+    ops.append({'t': 'levelval', 'h': 'STX_2DE396', 'old': '+3.050', 'value': C['lvl'].replace(',', '.')})
     ops.append({'t': 'save'})
     return ops, nb
 

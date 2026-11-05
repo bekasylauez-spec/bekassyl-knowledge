@@ -48,6 +48,7 @@ def quantities():
     area = (x1 - x0) * (y1 - y0) / 1e6 - sum((c - a) * (d - b) for a, b, c, d in P['openings']) / 1e6
     rows.append(('Ск1', 12, 1540, int(math.ceil(per / 200))))
     rows.append(('Ф1', 12, 1180, int(math.ceil(area / 0.4))))
+    rows += C.get('extra', [])
     return rows, round(area, 2)
 
 
@@ -114,6 +115,7 @@ def build():
            [6, 11, '(Sum(E7:K7))', '%lu2%pr2'], [6, 12, '(Sum(L7:L7)+Sum(D7:D7))', '%lu2%pr2']]
     ops.append({'t': 'tformula', 'h': 'SP_2BDEA3', 'cells': vf})
     ops.append({'t': 'tset', 'h': 'SP_2BDEA3', 'cells': [[6, 0, C['name']]]})
+    ops.append({'t': 'trepl', 'win': [X0 - 5, 455900, X0 + SW + 5, 498000], 'pairs': [['КЖ-5.1... 5.8', 'КЖ-6.%d ... 6.%d' % (C['k0'], C['k0'] + 7)]]})
     ops += [{'t': 'evalf'}, {'t': 'save'}]
     return ops, rows, area
 

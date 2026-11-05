@@ -76,8 +76,9 @@ for P in C['PLANS']:
                 xb_ = min(bars, key=lambda q: abs(q - x)); pins.append(xb_); x += 400
         for x in pins: ins('pin', PX(x), Y + WL)
         if pins:
-            mid = (a + b) / 2; pk = sorted(pins, key=lambda q: abs(q - mid))[:3]
-            note('nsh', [[PX(mid) - 200, Y + WL + 2171]] + [[PX(x), Y + WL] for x in sorted(pk, reverse=True)], 'Шп1', 'ш.400х400', 0)
+            mid = (a + b) / 2; rp = [q for q in pins if q >= mid - 50]
+            pk = sorted(rp if len(rp) >= 3 else pins, key=lambda q: abs(q - mid))[:3]     # pins right of the middle: legs clear of the bar note (left)
+            note('nsh', [[PX(mid), Y + WL + 2171]] + [[PX(x), Y + WL] for x in sorted(pk, reverse=True)], 'Шп1', 'ш.400х400', 0)
         # horizontal bars: polyline A (bottom bar, U at a free left end), polyline B (top bar, U at a free right end)
         fl = ea[0] == 'F'; fr = eb[0] == 'F'
         x0 = PX(a) + 46 if fl else PX(ea[2] - 105) if ea[0] == 'J' else PX(a + 20)
@@ -92,21 +93,40 @@ for P in C['PLANS']:
         ck = 'Ск%d' % HCK[d0]
         if fl: note('nck', [[PX(a) - 398, Y + WL + 429], [x0, Y + WL]], ck, '(%%%%C%d)' % d0, math.pi)
         if fr: note('nck', [[PX(b) + 398, Y + WL + 429], [x1, Y + WL]], ck, '(%%%%C%d)' % d0, 0)
-        q = a + 0.22 * (b - a)
-        note('nck', [[PX(q), Y + WL + 760], [PX(q) - 250, Y + WL + 210]], str(P['hpos'][i]), '(%%%%C%d)' % d0, 0)
+        q = a + 0.18 * (b - a)
+        note('nck', [[PX(q), Y + WL + 760], [PX(q), Y + WL + 210]], str(P['hpos'][i]), '(%%%%C%d)' % d0, 0)      # vertical leader from the shelf start (Bekassyl 05.11)
         # zone notes: fans below, shelves left -> right
         YT, YS = Y + WL - 144, Y + WL - 1161
         cur = PX(a) - 1e9 if cur is None else cur
+        zn = []                                                     # neighbouring zones with the same positions and step: one note
         for z in zs:
             lab = LAB['%d|%d|%s' % (i, gi, z[0])]
-            if z[2] - z[1] <= 600:                                  # edge zone: both legs to one point right of it, shelf to the right
-                A_ = max(PX(z[2]) + 300, cur); ops.append(dict(t='pl', p=[[PX(z[1]), YT], [A_, YS], [A_ + 1400, YS]], layer='Размеры'))
-                ops.append(dict(t='pl', p=[[PX(z[2]), YT], [A_, YS]], layer='Размеры'))
-                note('nz', [[A_, YS], [A_, YS]], lab, 'ш.%d' % z[4]); cur = A_ + 1800
+            if zn and zn[-1][0] == lab and zn[-1][3] == z[4]: zn[-1] = (lab, zn[-1][1], z[2], z[4])
+            else: zn.append((lab, z[1], z[2], z[4]))
+        bnd = [PX(v) for sg in [q_ for z in zs for q_ in z[6]] for v in sg[:2]] + [PX(zs[0][1] - 50), PX(zs[-1][2] + 50)]
+        bnd += [X + r['sp'][0][0] for r in R if r['t'] == 'SPDSCONSTRUCTIONLINE' and abs(r['sp'][0][0] - r['sp'][1][0]) < 1 and min(r['y0'], r['y1']) < WL - 1161 < max(r['y0'], r['y1'])]   # axis lines
+        def place(c0, lo_, hi_):                                     # text (about 950 wide, centred) clear of the chain's extension lines
+            for dd in [0] + [sg_ * 60 * k for k in range(1, 60) for sg_ in (1, -1)]:
+                c = c0 + dd
+                if lo_ <= c - 480 and c + 480 <= hi_ and not any(c - 540 < v < c + 540 for v in bnd): return c
+            return c0
+        for k_, (lab, z1, z2, stp) in enumerate(zn):
+            edge = z2 - z1 <= 600 and len(zn) > 1
+            if edge and k_ == 0:                                     # free-end edge zone at the left: fan out of the end, shelf in the opening
+                A_ = PX(z1) - 300; c = place(A_ - 700, A_ - 3000, A_)
+                ops.append(dict(t='pl', p=[[PX(z2), YT], [A_, YS], [min(A_ - 1400, c - 520), YS]], layer='Размеры'))
+                ops.append(dict(t='pl', p=[[PX(z1), YT], [A_, YS]], layer='Размеры'))
+                note('nz', [[c, YS], [c, YS]], lab, 'ш.%d' % stp)
+            elif edge:                                                # free-end edge zone at the right
+                A_ = PX(z2) + 300; c = place(A_ + 700, A_, A_ + 3000)
+                ops.append(dict(t='pl', p=[[PX(z1), YT], [A_, YS], [max(A_ + 1400, c + 520), YS]], layer='Размеры'))
+                ops.append(dict(t='pl', p=[[PX(z2), YT], [A_, YS]], layer='Размеры'))
+                note('nz', [[c, YS], [c, YS]], lab, 'ш.%d' % stp)
             else:
-                B_ = max(PX(z[1]) + 500, cur); E_ = max(PX(z[2]) - 400, B_ + 1400)
-                ops.append(dict(t='pl', p=[[PX(z[1]), YT], [B_, YS], [E_, YS], [PX(z[2]), YT]], layer='Размеры'))
-                note('nz', [[B_, YS], [B_, YS]], lab, 'ш.%d' % z[4]); cur = E_ + 400
+                B_ = PX(z1) + 500; E_ = max(PX(z2) - 400, B_ + 1100)
+                ops.append(dict(t='pl', p=[[PX(z1), YT], [B_, YS], [E_, YS], [PX(z2), YT]], layer='Размеры'))
+                tx0 = place((B_ + E_) / 2, B_, E_)
+                note('nz', [[tx0, YS], [tx0, YS]], lab, 'ш.%d' % stp)
         # bottom chain
         lo = zs[0][1] - 50; hi = zs[-1][2] + 50
         segs = [(lo, lo + 50, 50, 1)] + sorted([sg for z in zs for sg in z[6]]) + [(hi - 50, hi, 50, 1)]

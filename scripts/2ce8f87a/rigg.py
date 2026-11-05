@@ -171,10 +171,13 @@ def sections(mark):
             cs = pre + ('2CB019' if d['top'] else '2CB01A')
             t = '%sDC%s' % (pre, d['pos'])
             ops.append(dict(t='clone', h=cs, tag=t))
-            ys = 432240 if d['top'] else 431183
-            ends = [[xx - 140, ys] for xx in bx]
-            ops.append(dict(t='combsegs', h=t, segs=[[f(xx, y + (-1 if d['top'] else -2)), f(*e)] for xx, e in zip(bx, ends)],
-                            start=f(min(e[0] for e in ends) - 260, ys), end=f(max(e[0] for e in ends), ys)))
+            # parallel to the main comb (no crossing of leaders), shelf above / below it
+            if d['top']:
+                ys = 432300; segs = [[f(xx, y - 1), f(xx + (ys - y) * 88 / 213.0, ys)] for xx in bx]
+            else:
+                ys = 431180; segs = [[f(xx, y - 2), f(xx + (y - ys) * 70 / 151.0, ys)] for xx in bx]
+            xe = [q[1][0] for q in segs]
+            ops.append(dict(t='combsegs', h=t, segs=segs, start=[max(xe), segs[0][1][1]], end=[min(xe), segs[0][1][1]]))
             ops.append(dict(t='mcset', h=t, set={'FirstLine': d['pos'], 'SecondLine': '(ф25)'}))
     return ops
 
