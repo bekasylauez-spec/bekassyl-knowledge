@@ -28,19 +28,19 @@ def base(s, PX, PY, walls=True):
     chain_v([PY + y for y in [-900, 25600]], PX + 5900, PX + 4000)
 
 
-def zone_note(pos, step, z, d, PX, PY, sc=100, layer=L_R20, lab_off=(500, 500), frac=0.5):
+def zone_note(pos, step, z, d, PX, PY, sc=100, layer=L_R20, lab_off=(500, 500), frac=0.5, tfrac=0.5):
     """dashed zone, typical bar in the middle, ticks; note 'pos / ш.step'; dims zone width as 200xN"""
     x0, y0, x1, y1 = z
     rect(PX + x0, PY + y0, PX + x1, PY + y1, layer=L_THIN, **HID)
     if d == 'X':
         ym = y0 + (y1 - y0) * frac; n = int(round((y1 - y0) / step))
         pl([(PX + x0, PY + ym), (PX + x1, PY + ym)], layer=layer, lw=40)
-        note(pos, 'ш.%d' % step, (PX + (x0 + x1) / 2 + lab_off[0], PY + ym + lab_off[1]), (PX + (x0 + x1) / 2, PY + ym), sc, arrow='oblique')
+        xt_ = x0 + (x1 - x0) * tfrac; note(pos, 'ш.%d' % step, (PX + xt_ + lab_off[0], PY + ym + lab_off[1]), (PX + xt_, PY + ym), sc, arrow='oblique')
         return n + 1, x1 - x0
     else:
         xm = x0 + (x1 - x0) * frac; n = int(round((x1 - x0) / step))
         pl([(PX + xm, PY + y0), (PX + xm, PY + y1)], layer=layer, lw=40)
-        note(pos, 'ш.%d' % step, (PX + xm + lab_off[0], PY + (y0 + y1) / 2 + lab_off[1]), (PX + xm, PY + (y0 + y1) / 2), sc, arrow='oblique')
+        yt_ = y0 + (y1 - y0) * tfrac; note(pos, 'ш.%d' % step, (PX + xm + lab_off[0], PY + yt_ + lab_off[1]), (PX + xm, PY + yt_), sc, arrow='oblique')
         return n + 1, y1 - y0
 
 

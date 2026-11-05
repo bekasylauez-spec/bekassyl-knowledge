@@ -2,6 +2,7 @@
 """7.1 Плита Пм-1 (+3.500, A1 1:100); 7.2 Плита Пм-2 (+4.950, A3 book 1:100); 8.1 Фм-2 (A3 1:25)"""
 import math
 from common import *
+import lib
 from s3x import zone_note, HID
 
 L12 = 'ф12_арм'
@@ -20,51 +21,80 @@ def pm1_zones():
     return zx, zy, ex, ey
 
 
-def build71(X0, Y0):
-    s = Sheet('7.1', 'Армирование плиты покрытия Пм-1', 'Схема армирования плиты покрытия Пм-1 на отм. +3.500', X0, Y0, 'A1')
-    PX, PY = X0 + 9500, Y0 + 15000
+def _pm1_base(s, PX, PY, beams=True):
     rect(PX + PM1[0], PY + PM1[1], PX + PM1[2], PY + PM1[3])
-    b1 = unary_union([box(*bar_rect(b, 350)) for b in BM1]); b2 = unary_union([box(*bar_rect(b, 300)) for b in BM2]).difference(b1)
     W = unary_union(walls_geom() + [col_sq(c) for c in COLS_PIL]); outline(W, PX, PY, layer=L_THIN, **HID)
-    outline(b1.difference(W), PX, PY, layer=L_THIN, **HID); outline(b2.difference(W), PX, PY, layer=L_THIN, **HID)
+    if beams:
+        b1 = unary_union([box(*bar_rect(b, 350)) for b in BM1]); b2 = unary_union([box(*bar_rect(b, 300)) for b in BM2]).difference(b1)
+        outline(b1.difference(W), PX, PY, layer=L_THIN, **HID); outline(b2.difference(W), PX, PY, layer=L_THIN, **HID)
     axes(PX, PY, {k: v for k, v in AX.items() if k != '1'}, AY, -4600, 46200, -4600, 26600)
     xs = sorted(AX.values())[1:]; ys = sorted(AY.values())
     chain_h([PX + x for x in [6600] + xs + [44400]], PY - 200, PY - 2000); chain_h([PX + x for x in (6600, 44400)], PY - 200, PY - 2800)
     chain_v([PY + y for y in [-200] + ys + [24900]], PX + 6600, PX + 4800); chain_v([PY + y for y in (-200, 24900)], PX + 6600, PX + 4000)
-    # основная поз.1 Ø12 ш.200 низ и верх
+
+
+def _pm1_counts():
     x0, y0, x1, y1 = PM1[0] + 30, PM1[1] + 30, PM1[2] - 30, PM1[3] - 30
-    pl([(PX + x0, PY + 2600), (PX + x1, PY + 2600)], layer=L12, lw=40); pl([(PX + 42000, PY + y0), (PX + 42000, PY + y1)], layer=L12, lw=40)
-    note('1', 'ш.200', (PX + 27400, PY + 3000), (PX + 27000, PY + 2600)); note('1', 'ш.200', (PX + 42400, PY + 8000), (PX + 42000, PY + 7600))
     ny = int((x1 - x0) / 200); nx = int((y1 - y0) / 200)
+    zx, zy, ex, ey = pm1_zones()
+    n2 = sum(int(round((z[3] - z[1]) / 200)) + 1 for z in zx) + sum(int(round((z[2] - z[0]) / 200)) + 1 for z in zy)
+    n3 = sum(int(round((z[3] - z[1]) / 200)) + 1 for z in ex) + sum(int(round((z[2] - z[0]) / 200)) + 1 for z in ey)
+    return x0, y0, x1, y1, nx, ny, n2, n3
+
+
+def build71(X0, Y0):
+    s = Sheet('7.1', 'Схема расположения основной\Pарматуры плиты Пм-1', 'Схема расположения основной арматуры плиты покрытия Пм-1 на отм. +3.500', X0, Y0, 'A1')
+    PX, PY = X0 + 9500, Y0 + 15000
+    _pm1_base(s, PX, PY, beams=True)
+    x0, y0, x1, y1, nx, ny, n2, n3 = _pm1_counts()
+    yb, xb = 2600, 42000
+    pl([(PX + x0, PY + yb), (PX + x1, PY + yb)], layer=L12, lw=40); pl([(PX + xb, PY + y0), (PX + xb, PY + y1)], layer=L12, lw=40)
+    note('1', 'ш.200', (PX + 27400, PY + yb + 450), (PX + 27000, PY + yb), arrow='oblique')
+    note('1', 'ш.200', (PX + xb + 400, PY + 8000), (PX + xb, PY + 7600), arrow='oblique')
+    for (tx, ty, dx, dy) in ((x0, yb, 400, 450), (x1, yb, -1400, 450), (xb, y0, 400, 400), (xb, y1, 400, -400)):
+        note('Ск1', 'ш.200', (PX + tx + dx, PY + ty + dy), (PX + tx, PY + ty), arrow='oblique')
     dim((PX + x0, PY + 24900), (PX + x1, PY + 24900), (PX + x0, PY + 27200), 0.0, 100, txt='200х%d=%d' % (ny, ny * 200))
     dim((PX + 44400, PY + y0), (PX + 44400, PY + y1), (PX + 46600, PY + y0), math.pi / 2, 100, txt='200х%d=%d' % (nx, nx * 200))
-    zx, zy, ex, ey = pm1_zones()
-    n2 = n3 = 0
-    for i, z in enumerate(sorted(zx)):
-        fr = 0.5 if (z[3] - z[1]) < 12000 else ((3300 - z[1]) / (z[3] - z[1]) if i % 2 == 0 else (15600 - z[1]) / (z[3] - z[1]))
-        n, _ = zone_note('2', 200, z, 'X', PX, PY, layer=L12, lab_off=(1000, 300), frac=fr); n2 += n
-    for z in zy:
-        fr = 0.5 if (z[2] - z[0]) < 12000 else (24850 - z[0]) / (z[2] - z[0])
-        n, _ = zone_note('2', 200, z, 'Y', PX, PY, layer=L12, lab_off=(300, 1000), frac=fr); n2 += n
-    for z in ex: n, _ = zone_note('3', 200, z, 'X', PX, PY, layer=L12, lab_off=(400, -900)); n3 += n
-    for z in ey: n, _ = zone_note('3', 200, z, 'Y', PX, PY, layer=L12, lab_off=(-1500, 400)); n3 += n
-    z = zx[0]; dim((PX + z[0], PY + 26000 - 1100), (PX + z[2], PY + 26000 - 1100), (PX + z[0], PY + 26000), 0.0)
     run = lambda L: (L + max(0, math.ceil(L / 11700.0) - 1) * 730) / 1000.0
     pm = 2 * ((nx + 1) * run(x1 - x0) + (ny + 1) * run(y1 - y0))
     rows = [rowPM('1', 12, round(pm, 1)), rowL('2', 12, 1600, n2), rowL('3', 12, 1000, n3),
-            rowL('Ск1', 10, 360, 2 * (nx + ny), 'A500C'), rowL('Ф1', 10, 700, int(924 / 0.64), 'A500C')]
+            rowL('Ск1*', 10, 360, 2 * (nx + ny), 'A500C'), rowL('Ф1', 10, 700, int(924 / 0.64), 'A500C')]
     tot, hh = spec_table(X0 + 65100, Y0 + 56000, 100, 'Спецификация арматуры плиты Пм-1', rows)
-    s.notes(['Общие указания см. лист 1.1. Схему расположения элементов см. лист 2.2.',
+    s.notes(['Общие указания см. лист 1.1. Схему расположения элементов см. лист 2.2. Дополнительную арматуру см. лист 7.2.',
              'Плита Пм-1 толщиной 200 мм, бетон C30/37 W8 F200, бетонировать совместно с ригелями Рм-1...Рм-5.',
              'Поз. 1 - %%C12 A500C ш.200 нижняя и верхняя сетки в обоих направлениях; стыки 61d (730 мм) вразбежку.',
-             'Поз. 2 - дополнительная верхняя %%C12 ш.200 L=1600 над ригелями и внутренними стенами; поз. 3 - L=1000 у наружных стен (заводить в стену).',
              'По контуру - скоба Ск1 %%C10 ш.200; сетки фиксировать Ф1 %%C10 ш.800х800. Защитный слой 30 мм.',
-             'Общая масса арматуры %.1f кг.' % tot], x=X0 + 65100, y=Y0 + 6462)
+             'Ригели, стены и колонны под плитой показаны условно штриховой линией.',
+             'Общая масса арматуры плиты Пм-1 (листы 7.1, 7.2) %.1f кг.' % tot], x=X0 + 65100, y=Y0 + 6462)
+    return s
+
+
+def build71d(X0, Y0):
+    s = Sheet('7.2', 'Схема расположения доп. верхней\Pарматуры плиты Пм-1', 'Схема расположения дополнительной верхней арматуры плиты покрытия Пм-1 на отм. +3.500', X0, Y0, 'A1')
+    PX, PY = X0 + 9500, Y0 + 15000
+    _pm1_base(s, PX, PY, beams=False)
+    wallX = {(8700, 10500, 14200), (37800, 4600, 20100)}
+    zx, zy, ex, ey = pm1_zones()
+    for i, z in enumerate(sorted(zx)):
+        c_ = (z[0] + z[2]) / 2
+        fr = 0.5 if (z[3] - z[1]) < 12000 else ((3300 - z[1]) / (z[3] - z[1]) if i % 2 == 0 else (15600 - z[1]) / (z[3] - z[1]))
+        zone_note('2', 200, z, 'X', PX, PY, layer=L12, lab_off=(250, 450), frac=fr, tfrac=0.1)
+        if not any(abs(c_ - w[0]) < 1 for w in wallX): lib.OPS[-1]['fixed'] = True     # beam zone: no lines inside -> callout inside the zone
+    for z in zy:
+        fr = 0.5 if (z[2] - z[0]) < 12000 else (24850 - z[0]) / (z[2] - z[0])
+        zone_note('2', 200, z, 'Y', PX, PY, layer=L12, lab_off=(300, 450), frac=fr, tfrac=0.2)
+        if not any(abs((z[1] + z[3]) / 2 - wy) < 1 for wy in (12350, 10500, 14200, 4600, 10950, 13750, 20100)): lib.OPS[-1]['fixed'] = True
+    for z in ex: zone_note('3', 200, z, 'X', PX, PY, layer=L12, lab_off=(250, 450), frac=0.12, tfrac=0.1)
+    for z in ey: zone_note('3', 200, z, 'Y', PX, PY, layer=L12, lab_off=(-1500, 400))
+    z = zx[0]; dim((PX + z[0], PY + 26000 - 1100), (PX + z[2], PY + 26000 - 1100), (PX + z[0], PY + 26000), 0.0)
+    s.notes(['Общие указания см. лист 1.1. Данный лист читать совместно с листом 7.1 (основная арматура и спецификация).',
+             'Поз. 2 - дополнительная верхняя %%C12 A500C ш.200 L=1600 над ригелями и внутренними стенами (зоны показаны штриховой линией по осям ригелей).',
+             'Поз. 3 - L=1000 у наружных стен, заводить в стену. Дополнительные стержни укладывать между стержнями поз. 1 верхней сетки.'], x=X0 + 65100, y=Y0 + 6462)
     return s
 
 
 def build72(X0, Y0):
-    s = Sheet('7.2', 'Армирование плиты Пм-2', 'Армирование плиты Пм-2 на отм. +4.950', X0, Y0, 'A2', 100, horiz=False)
+    s = Sheet('7.3', 'Армирование плиты Пм-2', 'Армирование плиты Пм-2 на отм. +4.950', X0, Y0, 'A2', 100, horiz=False)
     PX, PY = X0 + 9000, Y0 + 22000
     for r in PM2: rect(PX + r[0], PY + r[1], PX + r[2], PY + r[3])
     rm = unary_union([box(*bar_rect(b, 350)) for b in RM1])
