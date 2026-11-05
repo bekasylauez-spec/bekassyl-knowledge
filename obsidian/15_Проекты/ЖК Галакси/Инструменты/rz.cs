@@ -755,6 +755,8 @@ namespace GX
                     f = rx.Replace(f, mm => "%<\\_ObjId " + H(db, mm.Groups[1].Value).OldIdPtr.ToInt64() + ">%");
                     double th = 0; try { th = cell.Contents[0].TextHeight; } catch { }
                     string fmt = null; try { fmt = cell.DataFormat; } catch { }
+                    if (a.Count >= 4 && a[3] != null && a[3].ToString() != "") fmt = a[3].ToString();   // per-cell format, e.g. "%lu2%pr0"
+                    else if (Has(m, "fmt")) fmt = S(m, "fmt", "");                                    // forced format, e.g. "%lu2%pr2"
                     cell.TextString = "";
                     if (f.StartsWith("TEXT:"))
                     {
@@ -771,6 +773,25 @@ namespace GX
                     }
                     if (th > 0) try { cell.Contents[0].TextHeight = th; } catch { }
                 }
+                tb.GenerateLayout();
+            }
+            else if (t == "eprops")
+            {
+                // copy color / lineweight / layer / linetype from entity "src" to entities "h" (list)
+                var src = (Entity)tr.GetObject(H(db, S(m, "src", "")), OpenMode.ForRead);
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite);
+                    e.Color = src.Color; e.LineWeight = src.LineWeight; e.Layer = src.Layer; e.Linetype = src.Linetype; e.LinetypeScale = src.LinetypeScale;
+                    log.AppendLine("eprops " + hh + " <- " + src.Handle + " lw=" + src.LineWeight + " c=" + src.Color);
+                }
+            }
+            else if (t == "tfmtset")
+            {
+                // set DataFormat (e.g. "%lu2%pr2" = 2 decimals) of cells [[r,c]] of h
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                string fmt = S(m, "fmt", "%lu2%pr2");
+                foreach (var q in L(m["cells"])) { var a = L(q); tb.Cells[Convert.ToInt32(a[0]), Convert.ToInt32(a[1])].DataFormat = fmt; }
                 tb.GenerateLayout();
             }
             else if (t == "tfmtcopy")
@@ -868,6 +889,12 @@ namespace GX
                 if (S(m, "mode", "del") == "ins") tb.InsertColumnsAndInherit(Convert.ToInt32(m["at"]), Convert.ToInt32(m["from"]), Convert.ToInt32(m["n"]));
                 else tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
             }
+            else if (t == "twidth")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                foreach (var q in L(m["cols"])) { var a = L(q); tb.Columns[Convert.ToInt32(a[0])].Width = D(a[1]); }
+                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width);
+            }
             else if (t == "theight")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
@@ -957,7 +984,7 @@ namespace GX
                 {
                     if (Has(m, "scale")) a.DbEntity.Scale = D(m["scale"]);
                     var lin = a.Axis.Methods as McBasicAxis.McAxisSpecificLinear;
-                    lin.setPoints(MP(m["s"]), MP(m["e"]));
+                    if (Has(m, "s")) lin.setPoints(MP(m["s"]), MP(m["e"]));
                     if (Has(m, "val")) a.Axis.Methods.Markers.First.Value = S(m, "val", "");
                     a.DbEntity.Update();
                     log.AppendLine("AXIS " + S(m, "h", "") + " " + S(m, "val", "") + " S=" + lin.StartPoint + " E=" + lin.EndPoint);
@@ -987,6 +1014,62 @@ namespace GX
                 var nid = new ObjectId(ne.ID.ToOldIdPtr());
                 string tg = S(m, "tag", null);
                 if (tg != null) { var ee = tr.GetObject(nid, OpenMode.ForRead) as Entity; if (ee != null) map[tg] = ee.Handle.ToString(); }
+            }
+            else if (t == "plotpdf")
+            {
+                // plot a model-space window to PDF from this (live) AutoCAD: SPDS objects drawn by their own enabler
+                var w = L(m["win"]); string media = S(m, "media", "ISO_full_bleed_A2_(594.00_x_420.00_MM)");
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable("BACKGROUNDPLOT", 0);
+                var btr = (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
+                var lo = (Layout)tr.GetObject(btr.LayoutId, OpenMode.ForRead);
+                var ps = new Autodesk.AutoCAD.DatabaseServices.PlotSettings(lo.ModelType); ps.CopyFrom(lo);
+                var v = Autodesk.AutoCAD.DatabaseServices.PlotSettingsValidator.Current;
+                v.SetPlotConfigurationName(ps, "DWG To PDF.pc3", null); v.RefreshLists(ps);
+                string found = null;
+                foreach (string mn in v.GetCanonicalMediaNameList(ps)) { if (mn == media || v.GetLocaleMediaName(ps, mn) == media) { found = mn; break; } }
+                if (found == null) { var sbm = new StringBuilder(); foreach (string mn in v.GetCanonicalMediaNameList(ps)) sbm.Append(mn + " | "); log.AppendLine("media? " + sbm); return; }
+                v.SetPlotConfigurationName(ps, "DWG To PDF.pc3", found);
+                v.SetPlotWindowArea(ps, new Extents2d(D(w[0]), D(w[1]), D(w[2]), D(w[3])));
+                v.SetPlotType(ps, Autodesk.AutoCAD.DatabaseServices.PlotType.Window);
+                v.SetUseStandardScale(ps, true); v.SetStdScaleType(ps, StdScaleType.ScaleToFit);
+                v.SetPlotCentered(ps, true);
+                v.SetPlotRotation(ps, S(m, "rot", "0") == "90" ? PlotRotation.Degrees090 : PlotRotation.Degrees000);
+                v.SetCurrentStyleSheet(ps, "monochrome.ctb");
+                ps.ShowPlotStyles = true; ps.PrintLineweights = true;
+                var pi = new Autodesk.AutoCAD.PlottingServices.PlotInfo(); pi.Layout = btr.LayoutId; pi.OverrideSettings = ps;
+                var piv = new Autodesk.AutoCAD.PlottingServices.PlotInfoValidator(); piv.MediaMatchingPolicy = Autodesk.AutoCAD.PlottingServices.MatchingPolicy.MatchEnabled; piv.Validate(pi);
+                using (var pe = Autodesk.AutoCAD.PlottingServices.PlotFactory.CreatePublishEngine())
+                {
+                    var ppi = new Autodesk.AutoCAD.PlottingServices.PlotPageInfo();
+                    pe.BeginPlot(null, null);
+                    pe.BeginDocument(pi, "doc", null, 1, true, S(m, "file", ""));
+                    pe.BeginPage(ppi, pi, true, null); pe.BeginGenerateGraphics(null); pe.EndGenerateGraphics(null);
+                    pe.EndPage(null); pe.EndDocument(null); pe.EndPlot(null);
+                }
+                log.AppendLine("plotpdf " + S(m, "file", "") + " " + found);
+            }
+            else if (t == "mcprops")
+            {
+                // reflection dump of an SPDS object's DbEntity properties
+                var mo = MGet(H(db, S(m, "h", "")));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null);
+                foreach (var o in new object[] { mo, dbe })
+                    foreach (var p in o.GetType().GetProperties())
+                    {
+                        if (p.GetIndexParameters().Length > 0) continue;
+                        string val; try { var x = p.GetValue(o, null); val = x == null ? "null" : x.ToString(); } catch (System.Exception ex) { val = "!" + ex.GetType().Name; }
+                        log.AppendLine("P " + o.GetType().Name + "." + p.Name + " = " + val);
+                    }
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "mcdump")
+            {
+                // write the SPDS serialization of h to file
+                var mo = MGet(H(db, S(m, "h", "")));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity;
+                System.IO.File.WriteAllBytes(S(m, "file", ""), dbe.SerializeToBytes());
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+                log.AppendLine("mcdump " + S(m, "h", ""));
             }
             else if (t == "dimfix")
             {
