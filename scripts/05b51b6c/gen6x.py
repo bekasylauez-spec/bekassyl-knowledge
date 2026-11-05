@@ -88,7 +88,7 @@ for (sp, w, kind) in LN['S']:
     if kind == 'col':
         for s_ in (-1, 1):
             pl([P(sp + s_ * w / 2, zt + 700), P(sp + s_ * w / 2, zt - h - 250)], lw=5)
-        for zz in (zt + 700, zt - h - 250):
+        for zz in (zt + 700,):
             pl([P(sp - w / 2 - 100, zz), P(sp - 60, zz), P(sp - 20, zz + 80), P(sp + 20, zz - 80), P(sp + 60, zz), P(sp + w / 2 + 100, zz)], lw=5)
     elif kind != 'end':
         hb = BO.B62.get(kind, BO.B114.get(kind, (300, 400)))[1]
