@@ -38,20 +38,18 @@ def build(X0, Y0, r, num):
     R = lambda hh: P + hh
     A = lambda x, y: [X0 + x, Y0 + y]
     op(t='copywin', win=[TX - 1, TY - 1, TX + W + 1, TY + H + 1], d=[X0 - TX, Y0 - TY], pre=P)
-    # ---- erase template elevation + section drawing (keep titles, tables, details) ----
-    keep = {'1ADC8', '1AD4F'}
-    PR = {}
-    for hp in ('1ADE9', '1ADA9', '1ADA1', '1AD9F'):
-        PR[hp] = P + 'PR' + hp; op(t='clone', h=R(hp), tag=PR[hp]); op(t='move', h=[PR[hp]], d=[0, -30000])
-    op(t='eraseregion', win=A(1500, 13900) + A(16600, 19350), mode='inside', keep=[R(k) for k in keep])
+    # ---- erase the copied template elevation; it is rebuilt from clones of the template's own objects ----
+    keep = {'1ADC8'}
+    op(t='eraseregion', win=A(1500, 13900) + A(17000, 19350), mode='inside', keep=[R(k) for k in keep])
     R0 = R
-    R = lambda hh: PR.get(hh) or R0(hh)
-    # ---- geometry along the ригель: x = 0 at the first support axis ----
+    def C(hh, bx, by, tx, ty):
+        tg = lib.tag('c'); op(t='clone', h=hh, base=[TX + bx, TY + by], to=A(tx, ty), tag=tg); return tg
+    # ---- geometry along the ригель ----
     L = sup[-1][0] - sup[0][0]
     x_end0 = sup[0][0] - sup[0][1] / 2.0; x_end1 = sup[-1][0] + sup[-1][1] / 2.0
-    avail = X_MAX - X_LEFT
+    X_LEFT = 3845.0
     brk = None
-    if x_end1 - sup[0][0] + 400 > avail:      # break: keep the first 2 spans and the last span
+    if x_end1 - sup[0][0] + 1400 > 28400 - X_LEFT:
         xa = sup[2][0] - sup[2][1] / 2 - 900; xb = sup[-2][0] + sup[-2][1] / 2 + 900
         brk = (xa, xb, 1200.0)
     def fx(x):
@@ -60,116 +58,115 @@ def build(X0, Y0, r, num):
             xa, xb, g = brk[0] - sup[0][0], brk[1] - sup[0][0], brk[2]
             if x > xa: x = xa + g + (x - xb) if x >= xb else xa + g / 2
         return X_LEFT + x
-    def vis(x):
-        return not brk or x <= brk[0] or x >= brk[1]
-    yb, yt = YB, YB + h
-    # ---- concrete: spans and supports ----
-    for i in range(len(sup) - 1):
-        a = sup[i][0] + sup[i][1] / 2; c = sup[i + 1][0] - sup[i + 1][1] / 2
-        segs = [(a, c)]
-        if brk and a < brk[0] < c: segs = [(a, brk[0]), (brk[1], c)] if brk[1] < c else [(a, brk[0])]
-        elif brk and a < brk[1] < c and a > brk[0]: segs = [(brk[1], c)]
-        elif brk and brk[0] <= a and c <= brk[1]: segs = []
-        for s0, s1 in segs:
-            lib.pl([A(fx(s0), yb), A(fx(s1), yb)], layer='Размеры'); lib.pl([A(fx(s0), yt), A(fx(s1), yt)], layer='Размеры')
+    vis = lambda x: not brk or x <= brk[0] or x >= brk[1]
+    yb, yt0 = 17802.0, 18302.0            # template beam (h 500); stretched to h at the end
+    # supports (template column stub + SPDS breaks)
     for xs, w, kind in sup:
         if not vis(xs): continue
-        x0, x1 = fx(xs - w / 2), fx(xs + w / 2)
+        X = fx(xs)
         if kind == 'beam':
-            lib.rect(*(A(x0, yb) + A(x1, yt)), layer=L_THIN, ltype='HIDDEN2', ltscale=15)
+            t_ = C('1ADBB', 4045, 0, fx(xs - w / 2), 0)
+            op(t='plset', h=t_, p=[A(X - w / 2, yt0), A(X + w / 2, yt0), A(X + w / 2, yb), A(X - w / 2, yb)], closed=True, ltype='HIDDEN2', ltscale=15)
             continue
-        lo = yb - 350 if kind != 'wall_top' else yb
-        lib.pl([A(x0, yt + 350), A(x0, lo)], layer='Размеры'); lib.pl([A(x1, yt + 350), A(x1, lo)], layer='Размеры')
-        brk_h(A, yt + 350, x0, x1); brk_h(A, lo, x0, x1)
-    if brk:
-        gx0, gx1 = fx(brk[0]), fx(brk[1])
-        for gx in (gx0, gx1): brk_v(A, gx, yb, yt)
-    # ---- bars ----
-    cv = 30 + 8 + D / 2.0
-    lay = 'диам%d' % D
-    xs0, xs1 = x_end0 + 20, x_end1 - 20
-    def bar(y, z0, z1):
-        pts = [(z0, z1)] if not brk else [(z0, brk[0]), (brk[1], z1)]
-        for p0, p1 in pts: lib.pl([A(fx(p0), y), A(fx(p1), y)], layer=lay)
-    bar(yb + cv, xs0, xs1); bar(yt - cv, xs0, xs1)
-    if h >= 600: bar((yb + yt) / 2, xs0, xs1)
-    for xe, sg in ((xs0, 1), (xs1, -1)):    # Ск1 at the ends
-        lib.pl([A(fx(xe) + sg * 200, yb + cv - 20), A(fx(xe), yb + cv - 20), A(fx(xe), yt - cv + 20), A(fx(xe) + sg * 200, yt - cv + 20)], layer='диам16')
-    # splices (накладки) every 11.7 m stock: bottom over supports, top at mid-span
-    spl = []
-    if xs1 - xs0 > 11700:
-        n = int((xs1 - xs0) // 11000)
-        inner = [s[0] for s in sup[1:-1]]
-        for k in range(1, n + 1):
-            xt = xs0 + k * (xs1 - xs0) / (n + 1)
-            xbtm = min(inner, key=lambda q: abs(q - xt)) if inner else xt
-            spl.append((xbtm, yb + cv)); spl.append((xt + 400, yt - cv))
-    for xsp, ysp in spl:
-        if vis(xsp): lib.rect(*(A(fx(xsp) - 100, ysp - 15) + A(fx(xsp) + 100, ysp + 15)), layer=lay)
-    # ---- stirrups per clear span (X + 2X + X) + chain ----
-    ych = 16399.0
-    chain = []; nh = 0
+        t_ = C('1ADAF', 3845, 0, X, 0)
+        if w != 400: op(t='plset', h=t_, p=[A(X - w / 2, 18652), A(X + w / 2, 18652), A(X + w / 2, 17452), A(X - w / 2, 17452)], closed=True)
+        for hb_, yy in (('1ADB0', 17452), ('1ADB1', 18652)):
+            tb_ = C(hb_, 3845, 0, X, 0)
+    # beam between support faces (template span polyline)
     for i in range(len(sup) - 1):
-        a = sup[i][0] + sup[i][1] / 2; c = sup[i + 1][0] - sup[i + 1][1] / 2
+        a_ = sup[i][0] + sup[i][1] / 2; c_ = sup[i + 1][0] - sup[i + 1][1] / 2
+        segs = [(a_, c_)]
+        if brk:
+            if a_ < brk[0] < c_: segs = [(a_, brk[0])] + ([(brk[1], c_)] if brk[1] < c_ else [])
+            elif brk[0] <= a_ and c_ <= brk[1]: segs = []
+            elif a_ < brk[1] < c_: segs = [(brk[1], c_)]
+        for s0, s1 in segs:
+            t_ = C('1ADBB', 4045, 0, fx(s0), 0)
+            op(t='plset', h=t_, p=[A(fx(s0), yt0), A(fx(s1), yt0), A(fx(s1), yb), A(fx(s0), yb)], closed=True)
+    if brk:
+        for gx in (fx(brk[0]), fx(brk[1])):
+            t_ = C('1ADB0', 3845, 17452, gx, (yb + yt0) / 2)
+            op(t='xform', h=t_, base=A(gx, (yb + yt0) / 2), to=A(gx, (yb + yt0) / 2), ang=math.pi / 2, s=1.75)
+    # bars (template lines), Ск1 hooks at the ends
+    xs0, xs1 = x_end0 + 20, x_end1 - 20
+    def bar(hh, y):
+        pts_ = [(xs0, xs1)] if not brk else [(xs0, brk[0]), (brk[1], xs1)]
+        for p0, p1 in pts_: op(t='lineset', h=hh, s=A(fx(p0), y), e=A(fx(p1), y))
+    bar('1ADBE', 18272); bar('1ADBF', 17852)
+    C('1ADC0', 3665, 0, fx(xs0), 0); C('1ADC1', 15525, 0, fx(xs1), 0)
+    # ---- stirrups: template lines + ticks at zone limits; chain row as in the template ----
+    ych = 16399.0
+    pts = [(sup[0][0], None)]; nh = 0
+    for i in range(len(sup) - 1):
+        a_ = sup[i][0] + sup[i][1] / 2; c_ = sup[i + 1][0] - sup[i + 1][1] / 2
         try:
-            if c - a < 2000: raise ValueError
-            pos, zones, steps = colgeo.storey_hoops(a, c)
+            if c_ - a_ < 2000: raise ValueError
+            pos, zones, steps = colgeo.storey_hoops(a_, c_)
             n1, nm, n3 = zones
-            mid = steps[n1:n1 + nm]; k200 = sum(1 for s in mid if abs(s - 200) < 1e-6); rr = [s for s in mid if abs(s - 200) > 1e-6]
-            seg = [(pos[0], ''), (pos[n1], '100х%d' % n1), (pos[n1 + nm], ('200х%d' % k200) + ('+%d' % rr[0] if rr else '')), (pos[-1], '100х%d' % n3)]
-            bnd = [pos[0], pos[n1], pos[n1 + nm], pos[-1]]
+            mid = steps[n1:n1 + nm]; k200 = sum(1 for s_ in mid if abs(s_ - 200) < 1e-6); rr = [s_ for s_ in mid if abs(s_ - 200) > 1e-6]
+            seg = [(pos[0], None), (pos[n1], '100х%d' % n1), (pos[n1 + nm], ('200х%d=%d' % (k200, 200 * k200)) + ('+%d' % rr[0] if rr else '')), (pos[-1], '100х%d' % n3)]
         except Exception:
-            n_ = int((c - a - 100) // 100); pos = [a + 50 + 100 * j for j in range(n_ + 1)]
-            seg = [(pos[0], ''), (pos[-1], '100х%d' % n_)]
-            bnd = [pos[0], pos[-1]]
+            n_ = int((c_ - a_ - 100) // 100); pos = [a_ + 50 + 100 * j for j in range(n_ + 1)]
+            seg = [(pos[0], None), (pos[-1], '100х%d' % n_)]
         nh += len(pos)
-        for z in bnd:
-            if vis(z): lib.pl([A(fx(z), yb + 15), A(fx(z), yt - 15)], layer='диам8')
-        chain += [(sup[i][0], '')] + seg
-    chain.append((sup[-1][0], '')); chain.append((sup[-1][0] + sup[-1][1] / 2, ''))
-    pts = [sup[0][0] - sup[0][1] / 2] + [p for p, t in chain]
-    sup_ax = lambda p: min((s_[0] for s_ in sup), key=lambda q: abs(q - p))
-    for i in range(len(chain)):
-        p0 = chain[i - 1][0] if i else sup[0][0] - sup[0][1] / 2
-        p1, tt = chain[i]
+        for z, _ in seg:
+            if vis(z):
+                op(t='lineset', h='1ADDA', s=A(fx(z), 17817), e=A(fx(z), 18287)); C('1ADE4', 4095, 18045, fx(z), 18045)
+        pts += seg + [(sup[i + 1][0], None)]
+    for i in range(len(pts) - 1):
+        p0, p1, tt = pts[i][0], pts[i + 1][0], pts[i + 1][1]
         if p1 - p0 < 1 or not (vis(p0) and vis(p1)): continue
-        dd_ = dict(t='dim', h=R('1ADE9'), p1=A(fx(p0), yb), p2=A(fx(p1), yb), dl=A(fx(p0), ych), rot=0.0, txt=tt or '', layer='Размеры')
-        if p1 - p0 < 450:      # short pieces at the support axis: text on the lower row (as in the template), alternating sides
-            dd_['tx'] = A((fx(p0) + fx(p1)) / 2 + (-170 if abs(p1 - sup_ax(p1)) < 1 else 170), ych - 330)
-        op(**dd_)
-    # ---- axes + axis chain + overall ----
-    for (nm_, xa_) in axes:
-        if not vis(xa_): continue
-        t = lib.tag('ax'); op(t='clone', h=R('1AD9F'), tag=t)
-        op(t='axis', h=t, s=A(fx(xa_), yt + 700), e=A(fx(xa_), 14955), val=nm_, scale=50)
+        d_ = dict(t='dim', h='1ADEF', p1=A(fx(p0), yb), p2=A(fx(p1), yb), dl=A(fx(p0), ych), rot=0.0, txt=tt or '', layer='Размеры')
+        if p1 - p0 < 450:
+            axs = [s_[0] for s_ in sup]
+            if any(abs(p1 - q) < 1 for q in axs): xt_ = fx(p0) - 260          # piece left of a support axis: text further left
+            elif any(abs(p0 - q) < 1 for q in axs): xt_ = fx(p1) + 260        # right of the axis: further right
+            else: xt_ = (fx(p0) + fx(p1)) / 2
+            d_['tx'] = A(xt_, 16149)
+        op(**d_)
+    # ---- axes, axis chain, overall ----
     ax_x = [x for _, x in axes]
+    for nm_, xa_ in axes:
+        if not vis(xa_): continue
+        t_ = C('1AD9F', 3845, 0, fx(xa_), 0)
+        op(t='axis', h=t_, s=A(fx(xa_), 18992), e=A(fx(xa_), 14955), val=nm_)
     hid = []
     for i in range(len(ax_x) - 1 if len(ax_x) > 2 else 0):
         if vis(ax_x[i]) and vis(ax_x[i + 1]) and not (brk and ax_x[i] < brk[0] < ax_x[i + 1]):
-            op(t='dim', h=R('1ADA9'), p1=A(fx(ax_x[i]), 14955), p2=A(fx(ax_x[i + 1]), 14955), dl=A(fx(ax_x[i]), 15555), rot=0.0, txt='', layer='Размеры')
-        else:
-            hid.append(i)
-    if hid:      # spans through the break: one dim with the sum
+            op(t='dim', h='1ADA5', p1=A(fx(ax_x[i]), 14955), p2=A(fx(ax_x[i + 1]), 14955), dl=A(fx(ax_x[i]), 15555), rot=0.0, txt='', layer='Размеры')
+        else: hid.append(i)
+    if hid:
         a_, b_ = ax_x[hid[0]], ax_x[hid[-1] + 1]
-        op(t='dim', h=R('1ADA9'), p1=A(fx(a_), 14955), p2=A(fx(b_), 14955), dl=A(fx(a_), 15555), rot=0.0, txt='%d' % (b_ - a_), layer='Размеры')
-    op(t='erase', h=[R0('1ADC7'), R0('1B255')])
-    op(t='txtrep', win=A(19000, 2000) + A(W, 5000), pairs=[['КЖ-2.1 ... 2.5', '2.1, 2.2']])
-    if len(ax_x) > 1: op(t='dim', h=R('1ADA1'), p1=A(fx(ax_x[0]), 14955), p2=A(fx(ax_x[-1]), 14955), dl=A(fx(ax_x[0]), 15205), rot=0.0,
-       txt=('%d' % (ax_x[-1] - ax_x[0])) if brk else '', tx=A((fx(ax_x[0]) + fx(ax_x[1])) / 2 if len(ax_x) > 2 else (fx(ax_x[0]) + fx(ax_x[-1])) / 2 + 1500, 15205), layer='Размеры')
-    # ---- levels (top of ригель) and beam height dims ----
-    lib.lev(Y0 + yt - lev_top, A(fx(x_end0) - 100, yt), 50, ext=350)
-    op(t='dim', h=R('1ADE9'), p1=A(fx(x_end0) - 400, yb), p2=A(fx(x_end0) - 400, yt), dl=A(fx(x_end0) - 700, yb), rot=math.pi / 2, txt='', layer='Размеры')
-    # ---- callouts ----
-    xm1 = (sup[0][0] + sup[1][0]) / 2
-    xn = sup[0][0] + (sup[1][0] - sup[0][0]) * 0.3; lib.note('1', '(%%%%C%d)' % D, A(fx(xn) + 500, yt + 600), A(fx(xn), yt - cv), 50, arrow='oblique')
-    lib.note('1', '(%%%%C%d)' % D, A(fx(xn) + 500, yb - 500), A(fx(xn), yb + cv), 50, arrow='oblique')
-    if h >= 600: lib.note('2', '(%%C12)', A(fx(xm1) + 1700, yb - 500), A(fx(xm1) + 1200, (yb + yt) / 2), 50, arrow='oblique')
-    lib.note('Х1(%%C8)', 'ш.100;200', A(fx(x_end1) + 300, yb - 300), A(fx(x_end1) - sup[-1][1] - 60, yb + 15), 50, arrow='oblique')
-    lib.note('Ск1', '(%%C16)', A(fx(x_end0) - 900, yt + 500), A(fx(xs0), yt - cv + 20), 50, arrow='oblique')
-    # section mark 1-1 in the first span
-    xsec = fx(sup[0][0] + (sup[1][0] - sup[0][0]) * 0.75)
-    lib.section('1', A(xsec, yt + 950), A(xsec, yb - 800), 50)
-    # ---- section 1-1: the template section (scale 5) stretched to b x h, slab ts ----
+        op(t='dim', h='1ADA5', p1=A(fx(a_), 14955), p2=A(fx(b_), 14955), dl=A(fx(a_), 15555), rot=0.0, txt='%d' % (b_ - a_), layer='Размеры')
+    if len(ax_x) > 1:
+        op(t='dim', h='1ADA1', p1=A(fx(ax_x[0]), 14955), p2=A(fx(ax_x[-1]), 14955), dl=A(fx(ax_x[0]), 15205), rot=0.0,
+           txt=('%d' % (ax_x[-1] - ax_x[0])) if brk else '', layer='Размеры')
+    # ---- template callouts: bar note per span, Ск1 at the ends, Х1 at the right end, section mark ----
+    for i in range(len(sup) - 1):
+        xn = sup[i][0] + (sup[i + 1][0] - sup[i][0]) * 0.6
+        if vis(xn): C('1ADD1', 6349, 0, fx(xn), 0)
+    C('1ADCF', 3665, 0, fx(xs0), 0); C('1ADD0', 15525, 0, fx(xs1), 0); C('1B255', 15545, 0, fx(x_end1), 0)
+    C('1ADD3', 5600, 0, fx(sup[0][0] + (sup[1][0] - sup[0][0]) * 0.25), 0)
+    for hd in ('1ADCC', '1ADCD', '1ADCE'): C(hd, 3645, 0, fx(x_end0), 0)
+    # ---- splices (template groups): bottom 750 before a support axis, top 2250 after it ----
+    spl = []
+    if xs1 - xs0 > 11700:
+        n = int((xs1 - xs0) // 11000)
+        inner = [s_[0] for s_ in sup[1:-1]]
+        for k in range(1, n + 1):
+            xt = xs0 + k * (xs1 - xs0) / (n + 1)
+            spl.append(min(inner, key=lambda q: abs(q - xt)) if inner else xt)
+    for ax_ in spl:
+        if vis(ax_ - 750):
+            for hh in ('1AE06', '1AE07', '1AE08', '1AE09', '1AE0A'): C(hh, 8695, 0, fx(ax_), 0)
+        if vis(ax_ + 2250):
+            for hh in ('1AE0B', '1AE0C', '1AE0D', '1AE10', '1AE13', '1AE14'): C(hh, 10495, 0, fx(ax_), 0)
+    # ---- height: stretch everything above mid-beam by (h - 500) ----
+    if h != 500:
+        op(t='stretchwin', win=A(1500, 18050) + A(28950, 19400), d=[0, h - 500])
+    yt = yb + h
+    lib.lev(Y0 + yt - lev_top, A(fx(x_end0) + 400, yt), 50)
+    # ---- section 1-1: the template section (scale 5) stretched to b x h and slab ----
     ts = r.get('slab', 0)
     k5 = 5.0; cx = 8200.0
     dwh = k5 * (b - 300) / 2.0
@@ -181,32 +178,26 @@ def build(X0, Y0, r, num):
     d_bot = -k5 * (h - 500) - d_slab
     op(t='stretchwin', win=A(4800, 7000) + A(11200, 9650 + d_slab), d=[0, d_bot])
     ybar0 = 9486 + d_slab + d_bot; ybar1 = 11486.0
-    if not ts:       # Рб: no slab -> plain rectangle: erase flanges/breaks, close the outline
+    if not ts:
         op(t='erase', h=[R('1AD34'), R('1AD36'), R('1AD37'), R('1AD3B'), R('1AD38')])
         op(t='plset', h=R('1AD35'), p=[A(cx - k5 * b / 2, 11686), A(cx - k5 * b / 2, 11686 - k5 * h), A(cx + k5 * b / 2, 11686 - k5 * h), A(cx + k5 * b / 2, 11686)], closed=True)
     nb = 4 if b > 300 else 3
     xb0, xb1 = 7700.0 - dwh, 8700.0 + dwh
     xs4 = [xb0 + (xb1 - xb0) * k / (nb - 1) for k in range(nb)]
-    # bars: all of the main diameter (same size), template circles replaced
-    op(t='erase', h=[R0(h_) for h_ in ('1AD43', '1AD44', '1AD48', '1AD4B', '1AD4C', '1AD4D', '1AD51', '1AD46', '1AD49')])
-    for x in xs4:
-        for y in (ybar0, ybar1): op(t='circle', c=A(x, y), r=k5 * D / 2.0, layer='диам%d' % D)
-    # hoops: template dynamic block «хомут», b>300 -> two hoops each around 3 bars (rule 04_Ригели)
+    if nb == 4:
+        op(t='movegrp', h=[R('1AD48')], d=[xs4[1] - cx, 0]); op(t='movegrp', h=[R('1AD4D')], d=[xs4[1] - cx, 0])
+        C('1AD43', 7700, 9486, xs4[2], ybar0); C('1AD4B', 7700, 11486, xs4[2], ybar1)
+        op(t='dimpts', h=R('1AD46'), p1=A(xs4[0], ybar0), p2=A(xs4[1], ybar0))
+        op(t='dimpts', h=R('1AD49'), p1=A(xs4[2], ybar0), p2=A(xs4[3], ybar0))
+        op(t='dim', h='1AD46', p1=A(xs4[1], ybar0), p2=A(xs4[2], ybar0), dl=A(xs4[1], 8386 + d_slab + d_bot), rot=0.0, txt='',
+           tx=A((xs4[1] + xs4[2]) / 2 + 125, 8386 + d_slab + d_bot), layer='0_ANNOT_Dimensions')
+    # hoops: the template dynamic block; b>300 -> two hoops, each around 3 bars (04_Ригели)
     spans = [(0, 2), (1, 3)] if nb == 4 else [(0, 2)]
-    rr_ = k5 * D / 2.0 + k5 * 4          # hoop axis just outside the bar circles
-    for j, (i0, i1) in enumerate(spans):
-        o_ = 0 if j == 0 else 18           # second hoop drawn slightly inside so the two do not coincide
-        lib.pl([A(xs4[i0] - rr_ + o_, ybar0 - rr_ + o_), A(xs4[i1] + rr_ - o_, ybar0 - rr_ + o_), A(xs4[i1] + rr_ - o_, ybar1 + rr_ - o_),
-                A(xs4[i0] - rr_ + o_, ybar1 + rr_ - o_)], layer='диам8', closed=True, lw=30)
-        lib.pl([A(xs4[i0] - rr_ + o_ + 60, ybar1 + rr_ - o_ - 160), A(xs4[i0] - rr_ + o_ + 180, ybar1 + rr_ - o_ - 40)], layer='диам8', lw=30)   # 135° hook
-    # bar chain under the section: 50 | s | s | (s) | 50 (template style), texts clear of the axis
-    yrow = 8386 + d_slab + d_bot
-    for i in range(nb - 1):
-        dd_ = dict(t='dim', h=R('1AD45'), p1=A(xs4[i], ybar0), p2=A(xs4[i + 1], ybar0), dl=A(xs4[i], yrow), rot=0.0, txt='', layer='0_ANNOT_Dimensions')
-        if xs4[i] < cx < xs4[i + 1]: dd_['tx'] = A((xs4[i] + xs4[i + 1]) / 2 + 125, yrow)
-        op(**dd_)
-    op(t='dimtx', h=R0('1AD47'), at=A(xb1 + 250 + 280, yrow))
-    # section level: slab top
+    op(t='erase', h=[R('1AD51')])
+    for i0, i1 in spans:
+        t_ = C('1AD51', 7700, 9486, xs4[i0], ybar0)
+        op(t='dyn', h=t_, prop='Расстояние1', value=xs4[i1] - xs4[i0])
+        op(t='dyn', h=t_, prop='Расстояние2', value=ybar1 - ybar0)
     op(t='erase', h=[R('1AD9C'), R('1AD9D')])
     lib.lev(Y0 + 11686.0 - lev_top, A(6723 - dwh, 11686), 50)
     # ---- texts ----
@@ -247,7 +238,6 @@ def build(X0, Y0, r, num):
                                     [6, 4, '%.2f' % m2], [6, 5, '0.00'], [6, 6, '%.2f' % m_ck], [6, 7, '%.2f' % (m1 + m_n)],
                                     [6, 8, '%.2f' % a500], [6, 9, '%.2f' % (m_x + a500)]])
     op(t='mcrep', win=A(0, 0) + A(W, H), pairs=[['Ф20', 'Ф%d' % D], ['%%C20', '∅%d' % D], ['∅20', '∅%d' % D], ['Н5', 'Н3']])
-    op(t='erase', h=list(PR.values()))
     return dict(total=m_x + a500)
 
 

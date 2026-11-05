@@ -74,7 +74,7 @@ def collect(ops):
     return lines, polys, texts
 
 
-def resolve(ops, start):
+def resolve(ops, start, rmax=None):
     sheet = ops[start:]
     notes = [d for d in sheet if d.get('t') == 'note' and not d.get('fixed')]
     lines, polys, texts = collect(sheet)
@@ -86,8 +86,9 @@ def resolve(ops, start):
         prefer_up = d['origin'][1] >= ty
         own = Point(tx, ty).buffer(30 * k)
         cands = []
-        for dx in range(250, 3001 if k < 0.5 else 2401, 125):
-            for dyv in range(300, 3001 if k < 0.5 else 2401, 150):
+        RM = rmax or (3001 if k < 0.5 else 2401)
+        for dx in range(250, RM, 125):
+            for dyv in range(300, RM, 150):
                 for sy in (1, -1):
                     dy = sy * dyv
                     dist = math.hypot(dx, dy) + abs(abs(dx) - abs(dy)) * 0.3 + (0 if (dy > 0) == prefer_up else 150)

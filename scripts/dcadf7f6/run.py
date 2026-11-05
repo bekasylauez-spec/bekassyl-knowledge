@@ -7,7 +7,7 @@ def go(names, plot=True):
     for n in names:
         m,X0,W,H=SL[n][:4]
         lib.op(t='eraseregion',win=[X0+5,ROW_Y+5,X0+W-5,ROW_Y+H-5],mode='intersect')
-        mod=importlib.import_module(m); st=len(lib.OPS); mod.build(X0,ROW_Y); import place; print(n,'notes',place.resolve(lib.OPS,st))
+        mod=importlib.import_module(m); st=len(lib.OPS); mod.build(X0,ROW_Y); import place; print(n,'notes',place.resolve(lib.OPS,st,rmax=3601 if n=='7.1' else None))
     r=ab.run(lib.OPS,'run',1200); errs=[l for l in ab.log().splitlines() if 'ERR' in l or 'errors' in l or 'GUARD' in l]; print('\n'.join(errs[-15:]))
     if plot:
         items=[(n,(SL[n][1],ROW_Y,SL[n][1]+SL[n][2],ROW_Y+SL[n][3])) for n in names]

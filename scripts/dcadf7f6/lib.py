@@ -49,7 +49,7 @@ class Sheet:
             op(**d)
         self.stamp = (sx, sy, sx + 18500 * k, sy + 5500 * k)
         if title:
-            self.text(title_u(title), X0 + self.W / 2 + 10 * k * 100 / 100, Y0 + self.H - 1500 * k, 300 * k, att=8, layer='0')
+            self.text(title_u(title), X0 + self.W / 2 + 10 * k * 100 / 100, Y0 + self.H - 1200 * k, 300 * k, att=8, layer='0')
 
     def k(self):
         return self.sc / 100.0
