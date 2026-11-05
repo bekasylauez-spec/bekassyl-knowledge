@@ -14,8 +14,8 @@ def clean(s):
 def axes_labels(es, nums=True, lets=True, win=None):
     ops = []
     vals = plan.axis_vals(win) if win else {}
-    okv = lambda v: v.isdigit() or v in LET
-    ax = [e for e in es if e.dxf == 'SPDSCONSTRUCTIONLINE' and len(e.sp) >= 2 and (not vals or okv(vals.get(e.h, '')))]
+    okv = lambda v: v.isdigit() or (0 < len(v) <= 2 and '.' not in v)
+    ax = [e for e in es if e.dxf == 'SPDSCONSTRUCTIONLINE' and len(e.sp) >= 2 and (not vals or okv(vals.get(e.h, ''))) and abs(e.sp[0][0] - e.sp[1][0]) + abs(e.sp[0][1] - e.sp[1][1]) > 9000]
     vert = [e for e in ax if abs(e.sp[0][0] - e.sp[1][0]) < 1]
     hor = [e for e in ax if abs(e.sp[0][1] - e.sp[1][1]) < 1]
     if nums:

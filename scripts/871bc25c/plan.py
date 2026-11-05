@@ -72,8 +72,9 @@ def axis_vals(win):
 
 def detect_axes(es, win):
     vals = axis_vals(win)
-    ok = set(str(i) for i in range(1, 12)) | set('АБВГДЕ')
-    ax = [e for e in es if e.dxf == 'SPDSCONSTRUCTIONLINE' and len(e.sp) >= 2 and ext.inside(e, win, 1) and vals.get(e.h, '') in ok]
+    ok = lambda v: v.isdigit() or (0 < len(v) <= 2 and '.' not in v)
+    ax = [e for e in es if e.dxf == 'SPDSCONSTRUCTIONLINE' and len(e.sp) >= 2 and ext.inside(e, win, 1) and ok(vals.get(e.h, ''))
+          and abs(e.sp[0][0] - e.sp[1][0]) + abs(e.sp[0][1] - e.sp[1][1]) > 9000]
     xs = sorted(set(round(e.sp[0][0], 3) for e in ax if abs(e.sp[0][0] - e.sp[1][0]) < 1))
     ys = sorted(set(round(e.sp[0][1], 3) for e in ax if abs(e.sp[0][1] - e.sp[1][1]) < 1))
     return xs, ys
@@ -123,6 +124,6 @@ def below_axes_box(sheet):
     f = sheets.FRAME[sheet][1]
     E0 = ext.load(W + r'\ext0.txt')
     vals = axis_vals(f)
-    ax = [e for e in E0 if e.h in vals and vals[e.h] in set('1234') and ext.inside(e, f, 1)]
+    ax = [e for e in E0 if e.h in vals and vals[e.h] in set('1234') and ext.inside(e, f, 1) and abs(e.sp[0][1] - e.sp[1][1]) > 9000]
     ylow = min(min(q[1] for q in e.sp) for e in ax)
     return shift_box(sheet, (f[0] - 10, f[1] - 10, f[2] + 10, ylow - 900))

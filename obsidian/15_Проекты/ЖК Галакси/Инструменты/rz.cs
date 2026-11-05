@@ -329,6 +329,7 @@ namespace GX
             else if (t == "settext")
             {
                 var e = tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                try { if (e.HasFields) e.RemoveField(); } catch { }        // a field (e.g. «= top leg») would overwrite the new text
                 if (e is MText) ((MText)e).Contents = S(m, "s", ""); else if (e is DBText) ((DBText)e).TextString = S(m, "s", "");
                 if (Has(m, "w") && e is MText) ((MText)e).Width = D(m["w"]);
             }
@@ -864,7 +865,8 @@ namespace GX
             else if (t == "tcols")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
-                tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
+                if (S(m, "mode", "del") == "ins") tb.InsertColumnsAndInherit(Convert.ToInt32(m["at"]), Convert.ToInt32(m["from"]), Convert.ToInt32(m["n"]));
+                else tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
             }
             else if (t == "theight")
             {

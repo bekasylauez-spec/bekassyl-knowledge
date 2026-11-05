@@ -242,6 +242,11 @@ def plan_pass(es, ps, pre, opts=None):
                 else:
                     loops = hloops(e); closed = True
                 if not loops or not loops[0]: stats['skip'] += 1; continue
+                if t == 'HATCH' and any(len(lp) < 3 for lp in loops):
+                    loops = None
+            if t == 'HATCH' and loops is None:
+                pass
+            elif t == 'LWPOLYLINE' or t == 'HATCH':
                 allv = [v for lp in loops for v in lp]
                 anc_all = [ps.anchor(v[ax]) for v in allv]
                 cls = ps.classify(anc_all)
