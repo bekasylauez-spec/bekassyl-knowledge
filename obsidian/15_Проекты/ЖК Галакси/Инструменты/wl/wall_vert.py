@@ -70,10 +70,10 @@ def run(go=False):
     N = notes(SX, SY, 59400, 42000)
     tN = next(n['h'] for n in N if n['l2'].startswith('ш.') and len(n['pts']) == 3)
     tC = next((n['h'] for n in N if n['l1'].startswith('Ск') and len(n['pts']) == 3), tN)
-    EL = lambda r: AX1 - 800 < r['x0'] and r['x1'] < CFG['AXES'][-1] + 1700 and r['y0'] > L[0] - 3600
+    EL = lambda r: CFG.get('XLO', AX1 - 800) < r['x0'] and r['x1'] < CFG['AXES'][-1] + 1700 and r['y0'] > L[0] - 3600
     er = [r['h'] for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and EL(r) and r['lay'].lower().startswith('диам')]
-    er += [r['h'] for r in R if r['t'] == 'DIMENSION' and EL(r) and not (r['sp'][0][1] < 13200 and r['sp'][1][1] < 13200)]
-    er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 2900 and r['sp'][0][1] > L[0] - 5 and r['sp'][0][1] < L[0] + 5 and abs(r['sp'][0][1] - r['sp'][1][1]) < 1 and len(r['sp']) > 2 and r['sp'][2][0] > AX1 - 1300 and r['x1'] < CFG['AXES'][-1] + 2000 and r['h'] not in er]
+    er += [r['h'] for r in R if r['t'] == 'DIMENSION' and EL(r) and not (r['sp'][0][1] < L[0] - 1947 and r['sp'][1][1] < L[0] - 1947)]
+    er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 2900 and r['sp'][0][1] > L[0] - 5 and r['sp'][0][1] < L[0] + 5 and abs(r['sp'][0][1] - r['sp'][1][1]) < 1 and len(r['sp']) > 2 and r['sp'][2][0] > CFG.get('XLO', AX1 - 1300) and r['x1'] < CFG['AXES'][-1] + 2000 and r['h'] not in er]
     AN = CFG.get('ANALOG_NOTES')
     if not AN:
         er += [n['h'] for n in N if AX1 - 2300 < n['pts'][0][0] < CFG['AXES'][-1] + 3200 and n['pts'][0][1] > L[0] - 1600]
@@ -101,7 +101,7 @@ def run(go=False):
            dict(t='erase', h=er)]
     POS = {}; BARS = []; k = [0]; LABELS = {}
     def pos_of(key):
-        if key not in POS: POS[key] = len(POS) + 1
+        if key not in POS: POS[key] = len(POS) + 1 + CFG.get('P0', 0)
         return POS[key]
     kk_ = [0]
     def note(tpl, l1, l2, org, tg):          # analog note style; text away from the leaders: right of the origin (new note) or left (clone of the analog's left note)
@@ -209,7 +209,7 @@ def run(go=False):
         tg = []; nums = []
         for z in D[i][3]:
             kind, x0, x1, d, st = z[:5]
-            if d not in CAPS: CAPS[d] = len(CAPS) + 1
+            if d not in CAPS: CAPS[d] = len(CAPS) + 1 + CFG.get('CK0', 0)
             yt = L[7] - TOPC; leg = LAP(d)
             for x in (x0 - 20, x1 + 20):                                   # analog: legs 20 outside the zone's end bars
                 ops.append(dict(t='pl', p=[W(AX1 + x, yt), W(AX1 + x, yt - leg)], layer='диам%d' % d, lw=40))

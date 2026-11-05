@@ -24,7 +24,7 @@ def grid(s):
 def storey(y):
     for s in range(7):
         if L[s] - 10 <= y <= L[s + 1] - 10: return s
-P0 = len(json.load(open(CFG['VJSON'], encoding='utf-8'))['POS']) if CFG.get('VJSON') else CFG['P0']; POS = {}
+P0 = (len(json.load(open(CFG['VJSON'], encoding='utf-8'))['POS']) + CFG.get('P0X', 0)) if CFG.get('VJSON') else CFG['P0']; POS = {}
 def pos_of(k):
     if k not in POS: POS[k] = P0 + len(POS) + 1
     return POS[k]
@@ -36,7 +36,7 @@ def ck_of(d):
 R = listwin(SX, SY, 59400, 42000, None)
 N = notes(SX, SY, 59400, 42000)
 ops = []; BARS = []
-X1E = CFG['AXES'][0] - 300; X4E = CFG['AXES'][-1] + 300
+X1E = CFG.get('XLO', CFG['AXES'][0] - 300); X4E = CFG['AXES'][-1] + 300
 HL = [r for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and r['lay'].lower().startswith('диам') and abs(r['y1'] - r['y0']) < 1 and X1E < r['x0'] and r['x1'] < X4E and r['y0'] > L[0] - 100]
 LONG = [r for r in HL if r['x1'] - r['x0'] >= 1500]
 CK_X = []                                                              # (old centre, new centre) of the Ск lines, for the notes
@@ -54,7 +54,7 @@ for r in HL:
         ops.append(dict(t='pl', p=[W(xa, y), W(xb, y)], layer='диам%d' % d, lw=40))
         CK_X.append((s, (r['x0'] + r['x1']) / 2, (xa + xb) / 2))
 for nn in N:
-    if nn['pts'][0][1] < L[0] - 100 or len(nn['pts']) != 3 or not (CFG['AXES'][0] - 3000 < nn['pts'][0][0] < CFG['AXES'][-1] + 3000): continue
+    if nn['pts'][0][1] < L[0] - 100 or len(nn['pts']) != 3 or not (CFG.get('XLO', CFG['AXES'][0] - 3000) < nn['pts'][0][0] < CFG['AXES'][-1] + 3000): continue
     s = storey(nn['pts'][0][1])
     if s is None: continue
     d, st = HD[s]; y0, y1, n = grid(s)

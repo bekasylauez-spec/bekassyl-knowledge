@@ -775,6 +775,17 @@ namespace GX
                 }
                 tb.GenerateLayout();
             }
+            else if (t == "eprops")
+            {
+                // copy color / lineweight / layer / linetype from entity "src" to entities "h" (list)
+                var src = (Entity)tr.GetObject(H(db, S(m, "src", "")), OpenMode.ForRead);
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite);
+                    e.Color = src.Color; e.LineWeight = src.LineWeight; e.Layer = src.Layer; e.Linetype = src.Linetype; e.LinetypeScale = src.LinetypeScale;
+                    log.AppendLine("eprops " + hh + " <- " + src.Handle + " lw=" + src.LineWeight + " c=" + src.Color);
+                }
+            }
             else if (t == "tfmtset")
             {
                 // set DataFormat (e.g. "%lu2%pr2" = 2 decimals) of cells [[r,c]] of h
@@ -878,6 +889,12 @@ namespace GX
                 if (S(m, "mode", "del") == "ins") tb.InsertColumnsAndInherit(Convert.ToInt32(m["at"]), Convert.ToInt32(m["from"]), Convert.ToInt32(m["n"]));
                 else tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
             }
+            else if (t == "twidth")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                foreach (var q in L(m["cols"])) { var a = L(q); tb.Columns[Convert.ToInt32(a[0])].Width = D(a[1]); }
+                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width);
+            }
             else if (t == "theight")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
@@ -967,7 +984,7 @@ namespace GX
                 {
                     if (Has(m, "scale")) a.DbEntity.Scale = D(m["scale"]);
                     var lin = a.Axis.Methods as McBasicAxis.McAxisSpecificLinear;
-                    lin.setPoints(MP(m["s"]), MP(m["e"]));
+                    if (Has(m, "s")) lin.setPoints(MP(m["s"]), MP(m["e"]));
                     if (Has(m, "val")) a.Axis.Methods.Markers.First.Value = S(m, "val", "");
                     a.DbEntity.Update();
                     log.AppendLine("AXIS " + S(m, "h", "") + " " + S(m, "val", "") + " S=" + lin.StartPoint + " E=" + lin.EndPoint);

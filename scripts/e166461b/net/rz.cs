@@ -889,6 +889,12 @@ namespace GX
                 if (S(m, "mode", "del") == "ins") tb.InsertColumnsAndInherit(Convert.ToInt32(m["at"]), Convert.ToInt32(m["from"]), Convert.ToInt32(m["n"]));
                 else tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
             }
+            else if (t == "twidth")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                foreach (var q in L(m["cols"])) { var a = L(q); tb.Columns[Convert.ToInt32(a[0])].Width = D(a[1]); }
+                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width);
+            }
             else if (t == "theight")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
