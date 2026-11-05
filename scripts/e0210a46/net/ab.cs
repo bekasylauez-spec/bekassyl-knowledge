@@ -602,6 +602,10 @@ namespace AB
                 }
                 log.AppendLine("movewin " + n + " fail " + nf);
             }
+            else if (t == "dimdef")
+            {
+                foreach (var hh in L(m["h"])) { try { var d = (Dimension)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite); d.UsingDefaultTextPosition = true; d.RecomputeDimensionBlock(true); } catch { } }
+            }
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);

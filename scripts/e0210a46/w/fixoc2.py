@@ -129,6 +129,12 @@ for name, (x0, y0, x1, y1) in sheets.items():
                 for tt, ss in cands:
                     dx = (tt - tc) * ux + (ss - sc_) * nx; dy = (tt - tc) * uy + (ss - sc_) * ny
                     c = cost_text(pid, affinity.translate(poly, dx, dy), mine[0][2]) + 0.02 * math.hypot(dx, dy) / max(hgt, 1)
+                    # AutoCAD draws a leader when the text leaves its line (DIMTMOVE=1): line from the text to the dim line
+                    if abs(ss - sc_) > 0.5 * hgt or tt < tA or tt > tB:
+                        tn = min(max(tt, tA), tB)
+                        lx0 = dp.x + tn * ux + 0 * nx; ly0 = dp.y + tn * uy
+                        cx_, cy_ = c0.x + dx, c0.y + dy
+                        c += cross_others([LS([(lx0, ly0), (cx_ - (ss - sc_) * 0 , cy_)])], pid) * 1.0
                     if best is None or c < best[0]: best = (c, dx, dy)
                 if best and best[0] < base - 0.5:
                     ops.append({'t': 'dimtx', 'h': pid, 'at': [c0.x + best[1], c0.y + best[2]]})

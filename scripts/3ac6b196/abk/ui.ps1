@@ -22,7 +22,7 @@ if ($procId -gt 0) {
     $fpid = 0; [U]::GetWindowThreadProcessId([U]::GetForegroundWindow(), [ref]$fpid) | Out-Null
     if ($fpid -eq $procId) { break }
     [U]::keybd_event(0x12, 0, 0, 0); [U]::keybd_event(0x12, 0, 2, 0)
-    [U]::ShowWindow($p.MainWindowHandle, 9) | Out-Null; [U]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
+    [U]::ShowWindow($p.MainWindowHandle, 3) | Out-Null; [U]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
     Start-Sleep -Milliseconds 400
   }
 }

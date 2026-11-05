@@ -77,7 +77,7 @@ HW = {Z1: 4.95, Z2: 2.6}; HW_GABLE = 3.6      # грузовые высоты ф
 
 CASES = ["СОБСТВЕННЫЙ ВЕС", "ПОСТОЯННЫЕ ОТ ПИРОГА И ГРУНТА", "ПОСТОЯННОЕ ОТ СТЕН И ПЕРЕГОРОДОК",
          "ВРЕМЕННОЕ КАТ.B ОФИСЫ", "СНЕГОВАЯ НАГРУЗКА", "ЧРЕЗВЫЧАЙНАЯ СНЕГОВАЯ НАГРУЗКА",
-         "ВРЕМЕННОЕ КАТ.Н ЧЕРДАК", "ВРЕМЕННОЕ КАТ.C 1 ЭТАЖ, КОРИДОРЫ, ЛЕСТНИЦА",
+         "ВРЕМЕННОЕ КАТ.Н ЧЕРДАК", "ВРЕМЕННОЕ КАТ.C КОРИДОРЫ, ЛЕСТНИЦА",
          "ВЕТЕР ПО +X", "ВЕТЕР ПО -X", "ВЕТЕР ПО +Y", "ВЕТЕР ПО -Y",
          "СЕЙСМИКА ПО Х", "СЕЙСМИКА ПО Y", "СЕЙСМИКА ПО Z"]
 MASS = [(1, 1.0), (2, 1.0), (3, 1.0), (4, 0.3), (5, 0.2), (8, 0.6)]
@@ -102,7 +102,7 @@ def keyset(base, cands):
 def nearest(v, k): return min(k, key=lambda t: abs(t - v))
 
 parts = []   # (floor_z, orient, coord_raw, lo, hi)
-for z, H, V in ((Z0, H1, V1), (Z1, H2, V2)):
+for z, H, V in ((Z1, H2, V2),):   # плита по грунту в ЛИРА не моделируется (пользователь 05.11)
     for y, segs in H.items():
         for a, b in segs: parts.append((z, 'H', snap05(y), a / 1000, b / 1000))
     for x, segs in V.items():
@@ -138,7 +138,7 @@ def el(t, s, ns, tag): els.append((t, s, ns, tag)); return len(els)
 # stiffness: 1 плита 200 (+3.3/+6.6), 2 колонна 40x40, 3 ригель 30x50, 4 стенка См-1 200,
 #            5 подушка Фм-1 300, 6 лента Фм-1 50x30, 7 плита Пм-1 200 (0.000)
 slab = {}
-for z, st in ((Z0, 7), (Z1, 1), (Z2, 1)):
+for z, st in ((Z1, 1), (Z2, 1)):
     for i in range(len(X) - 1):
         for j in range(len(Y) - 1):
             cx, cy = (X[i] + X[i + 1]) / 2, (Y[j] + Y[j + 1]) / 2
@@ -254,7 +254,12 @@ def slab_edge(z, o, c, lo, hi):
                 if e: out.append((e, pr, Y[j + 1] - Y[j]))
     return out
 for o, c, lo, hi in (('H', 0.0, 0, 60), ('H', 12.0, 0, 60), ('V', 0.0, 0, 12), ('V', 60.0, 0, 12)):
-    for e, pr, ln in slab_edge(Z0, o, c, lo, hi): L(e, 19, 3, (pr[0], pr[1], EXT_00, EXT_00)); summ[3] += EXT_00 * ln
+    pass
+# наружная стена 1 этажа -> верх стенки См-1 (0.000), ребро 1-3 КЭ 44
+for e in wall:
+    p = [nodes[n - 1] for n in els[e - 1][2]]
+    if abs(p[0][2] - Z0) < 1e-6:
+        ln = math.dist(p[0], p[2]); L(e, 19, 3, (1, 3, EXT_00, EXT_00)); summ[3] += EXT_00 * ln
 for (z, y, i), e in beamx.items():
     if y in (0.0, 12.0):
         q = EXT_33 if z == Z1 else EXT_66_LONG; L(e, 16, 3, (q, 0, 0, 0)); summ[3] += q * blen(e)
@@ -280,7 +285,7 @@ for (z, o, c, ob), segs in grp.items():
             e, pr, _ = se[0]; L(e, 19, 3, (pr[0], pr[1], q, q))
         summ[3] += q * ln; plen[(z, 'beam' if ob else 'slab')] += ln; applied.append((z, o, c, mesh[k], mesh[k + 1], ob))
 # лестница: верхний марш -> край проёма +3.300, нижний марш -> плита 0.000 по той же линии
-for z, sx in ((Z1, STAIR_X2), (Z0, STAIR_X1)):
+for z, sx in ((Z1, STAIR_X2),):
     for e, pr, ln in slab_edge(z, 'H', OPEN[3], *sx):
         for case, q in ((1, STAIR_G1), (2, STAIR_G2), (8, STAIR_LIVE)):
             L(e, 19, case, (pr[0], pr[1], q, q)); summ[case] += q * ln
@@ -302,6 +307,9 @@ for sc in SEIS:
 an = io.open(AN, encoding='utf-8-sig').read()
 m15 = re.search(r'\( 15/\n(.*?)\n\s*\)', an, re.S).group(1)
 d15 = '\n'.join([l for l in m15.split('\n') if l.strip()][:6])
+AG = 4.709   # 9 баллов: ag = 0.480g (как Байтурсынова 50, участок II-А-1), грунт II
+assert d15.count(' 5.300 ') == 3
+d15 = d15.replace(' 5.300 ', ' %.3f ' % AG)
 hdr = re.search(r'\( 0/.*?\n\)', an, re.S).group(0)
 tail = {k: re.search(r'\n%s;[^/]*/' % k, hdr).group(0).strip() for k in ('42', '50', '51', '52', '53', '54', '55')}
 
