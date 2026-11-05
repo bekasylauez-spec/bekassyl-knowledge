@@ -15,7 +15,7 @@ si = pl_ob.sheetinfo(WIN)
 o = pl2.Ops('g21c_')
 o.add({'t': 'sysvar', 'n': 'TILEMODE', 'v': 1})
 CX0, CY0, CX1, CY1 = X1 - 1100, YA - 1600, XS[-1] + 1100, YS[-1] + 1600      # outer contour (подготовка)
-r1y, r1x, EB, EL, used = pl2.rows(o, si, XS, YS, CX0, CY0, True, True, ytop=CY1 + 600, xright=CX1 + 600)
+r1y, r1x, EB, EL, used = pl2.rows(o, si, XS, YS, CX0, CY0, True, True, ytop=CY1 + 300, xright=CX1 + 300)
 o.O.insert(1, {'t': 'eraseregion', 'win': WIN, 'keep': si['keep'] + [TITLE] + used})
 o.add({'t': 'import', 'file': ABK, 'h': ['3C428F', '3C3717', '344854', '344853', '3448BE', '3450DE'], 'base': [0, 0], 'to': [0, 0], 'pre': 'T21c:'})
 
@@ -52,7 +52,7 @@ o.add({'t': 'mtext', 'at': [-1482603, -1734872 + 250 + 2600], 'h': 250, 'w': 178
             '2. Под фундаментом - бетонная подготовка С8/10 t=100, подушка из уплотненного суглинка t=1000 и раскатные сваи, см. листы 1.3, 1.4.'})
 TTL = 'Схема расположения элементов на отм. -0.500'
 o.add({'t': 'settext', 'h': TITLE, 's': '{\\L' + TTL + '}'})
-o.add({'t': 'moveto', 'h': TITLE, 'idx': 0, 'to': [X1 - 1000, CY1 + 3200]})
+o.add({'t': 'moveto', 'h': TITLE, 'idx': 0, 'to': [X1 - 1000, CY1 + 1950]})
 if FIRST:
     o.add({'t': 'trows', 'h': TABLE, 'mode': 'del', 'at': 4, 'n': 4})
     o.add({'t': 'tset', 'h': TABLE, 'cells': [[3, 2, 'Фундамент Фм-1'], [3, 10, '1']]})

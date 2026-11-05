@@ -72,9 +72,9 @@ h = o.tag(); o.add({'t': 'clone', 'h': T_NOTE, 'tag': h}); o.add({'t': 'moveto',
 o.add({'t': 'mcset', 'h': h, 'set': {'FirstLine': 'Бм-14', 'Origin': list(P(16200, 9600)), 'Angle': 3.141592653589793, 'Arrow': 'Arrow'}})
 
 # outer chains: row 1 = slab edges / axes (bottom), slab edges + О-1 faces (left)
-o.chain2(T_DIM, [X1 + sx0, XS[0]], r1y, origin=YA + sy0, out=-1)
-o.chain2(T_DIM, [XS[-1], X1 + sx1], r1y, origin=YA + sy0, out=-1)
-o.chain2(T_DIM, [YA + v for v in (12000, sy1)], r1x, vertical=True, origin=X1 + sx0, out=-1)
+o.chain2(T_DIM, [X1 + sx0, XS[0]], r1y, origin=YA + sy0, out=-1, txo={0: (X1 + sx0 - 350, r1y - 450)})
+o.chain2(T_DIM, [XS[-1], X1 + sx1], r1y, origin=YA + sy0, out=-1, txo={0: (X1 + sx1 + 350, r1y - 450)})
+o.chain2(T_DIM, [YA + v for v in (12000, sy1)], r1x, vertical=True, origin=X1 + sx0, out=-1, txo={0: (r1x - 450, YA + sy1 + 350)})
 o.chain2(T_DIM, [YA + v for v in (sy0, 0, 2800, 5800, 6000)], r1x, vertical=True, origin=X1 + sx0, out=-1,
          origins={round(YA + 2800, 1): X1 + 250, round(YA + 5800, 1): X1 + 250})
 # О-1 width inside the opening (axis -> face -> size -> face -> axis), small values inside next to their faces
@@ -99,7 +99,7 @@ o.add({'t': 'tset', 'h': TABLE, 'cells': cnt})
 
 TTL = 'Схема расположения элементов на отм. +6.200'
 for h in si['title']:
-    o.add({'t': 'settext', 'h': h, 's': '{\\L' + TTL + '}'}); o.add({'t': 'moveto', 'h': h, 'idx': 0, 'to': [X1 - 1000, YA + sy1 + 2200]})
+    o.add({'t': 'settext', 'h': h, 's': '{\\L' + TTL + '}'}); o.add({'t': 'moveto', 'h': h, 'idx': 0, 'to': [X1 - 1000, YA + sy1 + 1500]})
 o.add({'t': 'mtext', 'at': [-1304403, -1728539 + 250 + 3400], 'h': 250, 'w': 17800, 'layer': 'Размеры',
        's': '1. Верх плиты Пм-2 в осях 1-6 - отм. +6.200; в осях 6-8 плита покрытия с уклоном 4% к оси 8 (+6.200 по оси 6, +5.700 по оси 8).\\P'
             '2. Балки Бм показаны пунктиром, верх балок - по верху плиты. Колонны - см. лист 2.1.\\P'

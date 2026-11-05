@@ -74,7 +74,7 @@ o.bind2(T_DIM, X1 + 20000, 225, YA + 3000, out=1)                         # Бм
 o.bind2(T_DIM, X1 + 3250, 300, YA + 12000 + 1300, out=1, org=YA + 12300)  # upper column 600
 o.bind2(T_DIM, YA + 6000, 300, X1 + 1300, vertical=True, out=1, org=X1 + 300)
 TTL = 'Схема расположения элементов на отм. +11.400'
-o.add({'t': 'settext', 'h': TITLE, 's': '{\\L' + TTL + '}'}); o.add({'t': 'moveto', 'h': TITLE, 'idx': 0, 'to': [X1 - 1000, YA + 12000 + 3000]})
+o.add({'t': 'settext', 'h': TITLE, 's': '{\\L' + TTL + '}'}); o.add({'t': 'moveto', 'h': TITLE, 'idx': 0, 'to': [X1 - 1000, YA + 12000 + 2650]})
 o.add({'t': 'settext', 'h': STAMP, 's': TTL})
 o.add({'t': 'mtext', 'at': [-1215303, -1736439 + 250 + 2600], 'h': 250, 'w': 17800, 'layer': 'Размеры',
        's': '1. Консоли КН-1 700х850 (вылет 600 от грани колонны) - в составе колонн Км-4. Колонны выше +11.400 - 600х600 по центру осей.\\P'

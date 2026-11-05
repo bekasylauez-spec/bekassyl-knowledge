@@ -7,6 +7,7 @@ import math
 import pl_ob
 
 PI = math.pi
+STEP = 750          # outer dim rows on A3 sheets (checklist #41)
 
 
 class Ops(pl_ob.Ops):
@@ -74,13 +75,13 @@ class Ops(pl_ob.Ops):
 
 def rows(o, si, XS, YS, xmin, ymin, has_x_el, has_y_el, ytop=None, xright=None):
     """axes + axis chains placed in Bekassyl rows; returns (y of row1 bottom, x of row1 left, used handles)"""
-    yb = [ymin - 1000 * k for k in (1, 2, 3)]
-    xl = [xmin - 1000 * k for k in (1, 2, 3)]
+    yb = [ymin - STEP * k for k in (1, 2, 3)]
+    xl = [xmin - STEP * k for k in (1, 2, 3)]
     ax_row_y = yb[1] if has_x_el else yb[0]
     ov_row_y = yb[2] if has_x_el else yb[1]
     ax_row_x = xl[1] if has_y_el else xl[0]
     ov_row_x = xl[2] if has_y_el else xl[1]
-    EB = ov_row_y - 600
-    EL = ov_row_x - 600
+    EB = ov_row_y - 500
+    EL = ov_row_x - 500
     used = pl_ob.setup_axes(o, si, XS, YS, EB, EL, ax_row_y, ov_row_y, (ax_row_x, ov_row_x), ytop, xright)
     return yb[0], xl[0], EB, EL, used

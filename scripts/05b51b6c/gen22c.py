@@ -27,14 +27,14 @@ for i, x in enumerate(XS):
         o.bind2(T_DIM, x, COLX / 2, y + COLY / 2 + 700, out=1, org=y + COLY / 2)
         sx = 1 if x < CXm else -1
         o.bind2(T_DIM, y, COLY / 2, x + sx * (COLX / 2 + 700), vertical=True, out=sx, org=x + sx * COLX / 2)
-o.chain2(T_DIM, [X1 + sx0, XS[0]], r1y, origin=YA + sy0, out=-1)
-o.chain2(T_DIM, [XS[-1], X1 + sx1], r1y, origin=YA + sy0, out=-1)
-o.chain2(T_DIM, [YA + sy0, YS[0]], r1x, vertical=True, origin=X1 + sx0, out=-1)
-o.chain2(T_DIM, [YS[-1], YA + sy1], r1x, vertical=True, origin=X1 + sx0, out=-1)
+o.chain2(T_DIM, [X1 + sx0, XS[0]], r1y, origin=YA + sy0, out=-1, txo={0: (X1 + sx0 - 350, r1y - 450)})
+o.chain2(T_DIM, [XS[-1], X1 + sx1], r1y, origin=YA + sy0, out=-1, txo={0: (X1 + sx1 + 350, r1y - 450)})
+o.chain2(T_DIM, [YA + sy0, YS[0]], r1x, vertical=True, origin=X1 + sx0, out=-1, txo={0: (r1x - 450, YA + sy0 - 350)})
+o.chain2(T_DIM, [YS[-1], YA + sy1], r1x, vertical=True, origin=X1 + sx0, out=-1, txo={0: (r1x - 450, YA + sy1 + 350)})
 o.mark(T_NOTE, 'Пм-1', P(23500, 9000), 1, 1, 600)
 TTL = 'Схема расположения элементов на отм. 0.000'
 for h in ['349ED9']:
-    o.add({'t': 'settext', 'h': h, 's': '{\\L' + TTL + '}'}); o.add({'t': 'moveto', 'h': h, 'idx': 0, 'to': [X1 - 1000, YA + sy1 + 2500]})
+    o.add({'t': 'settext', 'h': h, 's': '{\\L' + TTL + '}'}); o.add({'t': 'moveto', 'h': h, 'idx': 0, 'to': [X1 - 1000, YA + sy1 + 2100]})
 o.add({'t': 'mtext', 'at': [-1393603, -1736439 + 250 + 1400], 'h': 250, 'w': 17800, 'layer': 'Размеры',
        's': '1. Плита по грунту Пм-1 t=120, верх 0.000, см. лист 7.1. Колонны - см. лист 2.1.'})
 o.add({'t': 'erase', 'h': ['T22c:' + h for h in IMP]})
