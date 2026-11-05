@@ -852,6 +852,11 @@ namespace GX
                 string mode = S(m, "mode", "del"); int at = Convert.ToInt32(m["at"]), n = Convert.ToInt32(m["n"]);
                 if (mode == "del") tb.DeleteRows(at, n); else tb.InsertRowsAndInherit(at, Convert.ToInt32(m["from"]), n);
             }
+            else if (t == "tcols")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
+            }
             else if (t == "theight")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);

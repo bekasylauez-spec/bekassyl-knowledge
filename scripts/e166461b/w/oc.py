@@ -25,7 +25,9 @@ def tbox(x, y, h, rot, s, halign=0, valign=0):
 def mtext_box(e, ox=0, oy=0):
     txt = e.plain_text().split('\n'); h = e.dxf.char_height
     w = max(TW(t) for t in txt) * h; H = len(txt) * h * 1.6
-    if e.dxf.hasattr('width') and e.dxf.width > 0 and len(txt) == 1: w = min(w, e.dxf.width) if e.dxf.width > w else w
+    if e.dxf.hasattr('width') and e.dxf.width > 0 and w > e.dxf.width * 1.02:      # MTEXT wraps at its width
+        W0 = e.dxf.width; n = sum(max(1, math.ceil(TW(t) * h / W0)) for t in txt)
+        w = W0; H = n * h * 1.6
     ap = e.dxf.get('attachment_point', 1)
     ix, iy = e.dxf.insert[0], e.dxf.insert[1]
     dx = {1: 0, 2: -w / 2, 3: -w}[(ap - 1) % 3 + 1]; dy = {0: -H, 1: -H / 2, 2: 0}[(ap - 1) // 3]

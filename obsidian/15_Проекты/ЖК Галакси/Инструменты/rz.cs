@@ -568,7 +568,7 @@ namespace GX
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
-                d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]);
+                d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]); d.RecomputeDimensionBlock(true);
             }
             else if (t == "scalegrp")
             {
@@ -851,6 +851,11 @@ namespace GX
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 string mode = S(m, "mode", "del"); int at = Convert.ToInt32(m["at"]), n = Convert.ToInt32(m["n"]);
                 if (mode == "del") tb.DeleteRows(at, n); else tb.InsertRowsAndInherit(at, Convert.ToInt32(m["from"]), n);
+            }
+            else if (t == "tcols")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
             }
             else if (t == "theight")
             {

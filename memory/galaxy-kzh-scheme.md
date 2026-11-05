@@ -25,3 +25,5 @@ metadata:
 **Columns (04.11 decision):** sizes per LIRA — Км-1 500×500, Км-2 600×600 («Лирада дұрыс»). Row centres stay per the scheme 23350/28850 (LIRA 23275/28825); the user said «Жоқ, солай қалсын».
 
 Related: [[kzh-scheme-karkasa]], [[no-repeat-check-pipeline]], [[kzh-dim-text-and-shelves]]
+
+**State 05.11 10:00:** column sheet 4.1 Км-1 done in «(Фм с выносками 19-21).dwg» (my AutoCAD instance, saved), frame at x 706779 (after a gap; 3.9 ends 644829). LIRA bar table exported (tbl02.31_1.csv; results unzipped into LIRA work). Км-1 4Ø32+4Ø20, 449.6 kg. Next: Км-2.1/2.2/2.3 sheets with the same generators, then walls 5.x from analog 4.1–4.3 (wall As from tbl01.32_2.csv). Details: Obsidian «КЖ — ход работ» 05.11.
