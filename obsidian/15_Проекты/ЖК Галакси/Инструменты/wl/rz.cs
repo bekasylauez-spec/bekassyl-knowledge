@@ -129,6 +129,14 @@ namespace GX
                 Props(pl, m, db, tr);
                 MS(db, tr).AppendEntity(pl); tr.AddNewlyCreatedDBObject(pl, true); Tag(m, pl);
             }
+            else if (t == "sysvar")
+            {
+                foreach (var kv in (Dictionary<string, object>)m["set"])
+                {
+                    try { Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable(kv.Key, Convert.ToInt16(kv.Value)); log.AppendLine("sysvar " + kv.Key + "=" + Autodesk.AutoCAD.ApplicationServices.Core.Application.GetSystemVariable(kv.Key)); }
+                    catch (System.Exception ex) { log.AppendLine("sysvar fail " + kv.Key + " " + ex.Message); }
+                }
+            }
             else if (t == "hatchfit")
             {
                 // new hatch with the pattern / scale / angle / layer / color / lw of hatch h on the given loops; h erased

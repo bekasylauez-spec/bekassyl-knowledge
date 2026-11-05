@@ -206,7 +206,7 @@ for name, (x0, y0, x1, y1) in sheets.items():
             if st.crosses(ls) or (st.intersects(ls) and st.intersection(ls).length > 1):
                 found.append(('ЗНАК РАЗРЕЗА/ЛИНИЯ', '|'.join(ptexts.get(ps, []))+'#'+ps, pl, st.centroid))
     # every text inside the inner frame (20 mm left, 5 mm elsewhere) and off the stamp (185 x 55 mm, bottom right)
-    SC = {'2.3': 50, '3.7': 25, '1.3': 100}.get(name, max(1, round((x1 - x0) / 594))); m5, m20 = 5 * SC, 20 * SC
+    SC = {'2.3': 50, '3.7': 25, '1.3': 100, '2.1': 100, '2.2': 100, '2.3': 100, '2.4': 100, '2.5': 100}.get(name, max(1, round((x1 - x0) / 594))); m5, m20 = 5 * SC, 20 * SC
     inner = box(x0 + m20, y0 + m5, x1 - m5, y1 - m5); stamp = box(x1 - m5 - 185 * SC, y0 + m5, x1 - m5, y0 + m5 + 55 * SC)
     for p_, poly, s_ in T:
         if ptype.get(p_, '') in ('SPDSFORMAT',): continue
