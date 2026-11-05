@@ -669,6 +669,7 @@ else if (t == "sysvar")
                 foreach (var id in ids)
                 {
                     var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    if (Has(m, "only")) { bool ok = false; foreach (var q in L(m["only"])) { var qs = q.ToString(); var pp = qs.Split(':'); if (id.ObjectClass.DxfName == pp[0] && (pp.Length < 2 || e.Layer == pp[1])) ok = true; } if (!ok) continue; }
                     Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
                     if (x.MaxPoint.X < D(sw[0]) || x.MinPoint.X > D(sw[2]) || x.MaxPoint.Y < D(sw[1]) || x.MinPoint.Y > D(sw[3])) continue;
                     if (e is Hatch) { if (inb(x.MinPoint, w) && inb(x.MaxPoint, w)) { e.UpgradeOpen(); e.TransformBy(Matrix3d.Displacement(vec)); nm++; } continue; }
