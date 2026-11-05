@@ -59,7 +59,7 @@ H1, V1 = plan1()
 
 # ---------------- loads, t/m2 / t/m / t ----------------
 G_SLAB = 0.2 * 2.5; G_WALL = 0.2 * 2.5; G_PAD = 0.3 * 2.5
-RO_COL = 0.5 * 0.5 * 2.5; RO_STRIP = 0.5 * 0.3 * 2.5
+RO_COL = 0.4 * 0.4 * 2.5; RO_STRIP = 0.5 * 0.3 * 2.5
 RO_BEAM_DOWN = 0.3 * 0.3 * 2.5                # Рм 300x500: часть ниже плиты
 PIR_FLOOR = 0.243                             # пол 0.000 и +3.300 — как в аналоге
 PIR_ATTIC = 0.025 + 0.002 + 0.010 + 0.015
@@ -158,25 +158,25 @@ for x in AX_X:
         for za, zb in segs: el(10, 2, [node(x, y, za), node(x, y, zb)], 'col')
 # Бф-1 300x500 на 0.000 (усиление по Y, 05.11): по осям 2-10 (А-Б-В) и по оси Б (1-11); на осях 1, 11 — стенка См-1
 fbeam = []
-for x in AX_X[1:-1]:
+for x in ([] if True else AX_X[1:-1]):   # Бф-1 отменены (v6)
     for j in range(len(Y) - 1): fbeam.append(el(10, 7, [node(x, Y[j], Z0), node(x, Y[j + 1], Z0)], 'fbeam'))
-for i in range(len(X) - 1): fbeam.append(el(10, 7, [node(X[i], 6.0, Z0), node(X[i + 1], 6.0, Z0)], 'fbeam'))
+pass
 # стенка См-1 по периметру
 wall = []
 for y in (0.0, 12.0):
     for i in range(len(X) - 1):
         for k in range(len(ZW) - 1):
-            wall.append(el(44, 4, [node(X[i], y, ZW[k + 1]), node(X[i], y, ZW[k]), node(X[i + 1], y, ZW[k + 1]), node(X[i + 1], y, ZW[k])], 'wall'))
+            wall.append(el(41, 4, [node(X[i], y, ZW[k + 1]), node(X[i], y, ZW[k]), node(X[i + 1], y, ZW[k + 1]), node(X[i + 1], y, ZW[k])], 'wall'))
 for x in (0.0, 60.0):
     for j in range(len(Y) - 1):
         for k in range(len(ZW) - 1):
-            wall.append(el(44, 4, [node(x, Y[j], ZW[k + 1]), node(x, Y[j], ZW[k]), node(x, Y[j + 1], ZW[k + 1]), node(x, Y[j + 1], ZW[k])], 'wall'))
+            wall.append(el(41, 4, [node(x, Y[j], ZW[k + 1]), node(x, Y[j], ZW[k]), node(x, Y[j + 1], ZW[k + 1]), node(x, Y[j + 1], ZW[k])], 'wall'))
 # диафрагмы Дм-1 200 мм по осям 1 и 11 (А-В, 0.000...+6.600) — усиление по Y (пользователь 05.11)
 diaph = []
 for x in (0.0, 60.0):
     for j in range(len(Y) - 1):
         for k in range(len(ZD) - 1):
-            diaph.append(el(44, 4, [node(x, Y[j], ZD[k + 1]), node(x, Y[j], ZD[k]), node(x, Y[j + 1], ZD[k + 1]), node(x, Y[j + 1], ZD[k])], 'diaph'))
+            diaph.append(el(41, 4, [node(x, Y[j], ZD[k + 1]), node(x, Y[j], ZD[k]), node(x, Y[j + 1], ZD[k + 1]), node(x, Y[j + 1], ZD[k])], 'diaph'))
 # Фм-1: подушки 2000x2000 + ленты 500 под стенкой
 def padcoords(c, mesh, lo, hi):
     """узлы подушки: точно c±1.0 (габарит 2000), внутри — узлы общей сетки (стыковка со стенкой), шаг >= 0.15"""
@@ -337,8 +337,8 @@ o.append(')')
 o.append('( 1/\n' + recs(['%d %d %s /' % (t, s, ' '.join(map(str, ns))) for t, s, ns, _ in els]) + '\n )')
 o.append('''( 3/
 1 GEI 3.06e+006 0.2 0.2 RO 2.5 /
-2 S0 3.06e+006 50 50/
- 0 RO 0.625/
+2 S0 3.06e+006 40 40/
+ 0 RO 0.4/
  0 Mu 0.2/
 3 S0 3.06e+006 30 50/
  0 RO 0.375/
@@ -348,9 +348,7 @@ o.append('''( 3/
 6 S0 3.06e+006 50 30/
  0 RO 0.375/
  0 Mu 0.2/
-7 S0 3.06e+006 30 50/
- 0 RO 0.375/
- 0 Mu 0.2/
+7 GEI 3.06e+006 0.2 0.2 RO 2.5 /
  )''')
 o.append('( 4/\n' + recs(['%.3f %.3f %.3f /' % n for n in nodes], 3) + '\n )')
 o.append('( 5/\n' + recs(['%d 1 2 6 /' % n for n in fnodes]) + '\n )')
