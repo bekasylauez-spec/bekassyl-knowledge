@@ -299,7 +299,7 @@ namespace AB
                     if (++n > 400) break;
                 }
             }
-            else if (t == "mcrep")
+else if (t == "mcrep")
             {
                 // replace substrings in FirstLine/SecondLine of SPDS notes/combs/knots inside win; optional "only": handles
                 var w = L(m["win"]); var prs = L(m["pairs"]); int n = 0;
@@ -325,6 +325,12 @@ namespace AB
                     if (ch) { var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity; dbe.Update(); n++; log.AppendLine("mcrep " + e.Handle); }
                 }
                 log.AppendLine("mcrep total " + n);
+            }
+else if (t == "sysvar")
+            {
+                string nm = S(m, "n", "");
+                if (Has(m, "v")) Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable(nm, Convert.ToInt16(m["v"]));
+                log.AppendLine("sysvar " + nm + " = " + Autodesk.AutoCAD.ApplicationServices.Core.Application.GetSystemVariable(nm));
             }
             else if (t == "reflect")
             {
@@ -423,7 +429,37 @@ namespace AB
                     side.ReadDwgFile(S(m, "file", ""), FileOpenMode.OpenForReadAndAllShare, true, "");
                     side.CloseInput(true);
                     var ids = new ObjectIdCollection(); var olds = new List<string>();
-                    foreach (var h in L(m["h"])) { ObjectId id; if (side.TryGetObjectId(new Handle(Convert.ToInt64(h.ToString(), 16)), out id)) { ids.Add(id); olds.Add(h.ToString().ToUpper()); } else log.AppendLine("import: no " + h); }
+                    if (Has(m, "h")) foreach (var h in L(m["h"])) { ObjectId id; if (side.TryGetObjectId(new Handle(Convert.ToInt64(h.ToString(), 16)), out id)) { ids.Add(id); olds.Add(h.ToString().ToUpper()); } else log.AppendLine("import: no " + h); }
+                    if (Has(m, "wins"))
+                    {
+                        HashSet<string> skip = new HashSet<string>(); if (Has(m, "skip")) foreach (var q in L(m["skip"])) skip.Add(q.ToString().ToUpper());
+                        using (var str = side.TransactionManager.StartTransaction())
+                        {
+                            var sms = (BlockTableRecord)str.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(side), OpenMode.ForRead);
+                            foreach (ObjectId id in sms)
+                            {
+                                var e = str.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                                if (skip.Contains(e.Handle.ToString().ToUpper())) continue;
+                                Extents3d x; bool okx = true; try { x = e.GeometricExtents; } catch { okx = false; x = new Extents3d(); }
+                                if (id.ObjectClass.DxfName == "OLE2FRAME") continue;
+                                if (!okx)
+                                {
+
+                                    var pc = new Point3dCollection(); try { e.GetStretchPoints(pc); } catch { }
+                                    if (pc.Count == 0) { try { e.GetGripPoints(pc, new IntegerCollection(), new IntegerCollection()); } catch { } }
+                                    if (pc.Count == 0) { log.AppendLine("noext " + e.Handle + " " + id.ObjectClass.DxfName); continue; }
+                                    x = new Extents3d(pc[0], pc[0]); foreach (Point3d q in pc) x.AddPoint(q);
+                                }
+                                foreach (var wq in L(m["wins"]))
+                                {
+                                    var w = L(wq);
+                                    if (x.MinPoint.X >= D(w[0]) && x.MaxPoint.X <= D(w[2]) && x.MinPoint.Y >= D(w[1]) && x.MaxPoint.Y <= D(w[3])) { ids.Add(id); olds.Add(e.Handle.ToString().ToUpper()); log.AppendLine("sel " + e.Handle + " " + id.ObjectClass.DxfName + " " + x.MinPoint.X.ToString("0", IC) + "," + x.MinPoint.Y.ToString("0", IC) + "," + x.MaxPoint.X.ToString("0", IC) + "," + x.MaxPoint.Y.ToString("0", IC)); break; }
+                                }
+                            }
+                            str.Commit();
+                        }
+                    }
+                    if (Has(m, "dry")) { log.AppendLine("dry " + ids.Count); return; }
                     var im = new IdMapping();
                     side.WblockCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, DuplicateRecordCloning.Ignore, false);
                     int n = 0;
@@ -633,6 +669,28 @@ namespace AB
             {
                 foreach (var hh in L(m["h"])) { try { var d = (Dimension)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite); d.UsingDefaultTextPosition = true; d.RecomputeDimensionBlock(true); } catch { } }
             }
+            else if (t == "blkerase")
+            {
+                // erase entities inside a block definition: texts whose plain text starts with any of 'texts', inserts whose block name starts with any of 'blocks'
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var btr = (BlockTableRecord)tr.GetObject(bt[S(m, "name", "")], OpenMode.ForRead);
+                var txs = new List<string>(); if (Has(m, "texts")) foreach (var q in L(m["texts"])) txs.Add(q.ToString());
+                var bls = new List<string>(); if (Has(m, "blocks")) foreach (var q in L(m["blocks"])) bls.Add(q.ToString());
+                int n = 0;
+                foreach (ObjectId id in btr)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    string s = null;
+                    if (e is MText) s = ((MText)e).Text; else if (e is DBText) s = ((DBText)e).TextString;
+                    bool hit = false;
+                    if (s != null) { s = s.Trim(); foreach (var a in txs) if (s.StartsWith(a)) hit = true; }
+                    if (e is BlockReference) { var nm = ((BlockReference)e).Name; foreach (var a in bls) if (nm.StartsWith(a)) hit = true; }
+                    if (hit) { e.UpgradeOpen(); e.Erase(); n++; }
+                }
+                log.AppendLine("blkerase " + n);
+                // regen all references
+                foreach (ObjectId rid in btr.GetBlockReferenceIds(true, false)) { var br = (BlockReference)tr.GetObject(rid, OpenMode.ForWrite); br.RecordGraphicsModified(true); }
+            }
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
@@ -652,6 +710,7 @@ namespace AB
                     var d = tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite) as Dimension; if (d == null) continue;
                     if (Has(m, "lfac")) d.Dimlfac = D(m["lfac"]);
                     if (Has(m, "dscale")) d.Dimscale = D(m["dscale"]);
+                    if (Has(m, "tmove")) d.Dimtmove = Convert.ToInt32(m["tmove"]);
                 }
             }
             else if (t == "movegrp")
@@ -1230,6 +1289,7 @@ namespace AB
                         for (int i = 0; i < pl.Count; i++) pc.Add(MP(pl[i]));
                         sv.Points = pc;
                     }
+                    if (Has(m, "get")) { var sb2 = new StringBuilder("SECPTS " + S(m, "h", "")); foreach (var q in sv.Points) sb2.Append("	" + q.X.ToString("0.0", IC) + "," + q.Y.ToString("0.0", IC)); log.AppendLine(sb2.ToString()); return; }
                     if (Has(m, "word")) sv.Word = S(m, "word", "1");
                     if (Has(m, "dir")) sv.Dir = Convert.ToInt32(m["dir"]);
                     sv.DbEntity.Update();
@@ -1555,12 +1615,6 @@ namespace AB
                 while (pl.NumberOfVertices > pts.Count) pl.RemoveVertexAt(pl.NumberOfVertices - 1);
                 if (Has(m, "closed")) pl.Closed = (bool)m["closed"];
             }
-            else if (t == "sysvar")
-            {
-                string nm = S(m, "n", "");
-                if (Has(m, "v")) Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable(nm, Convert.ToInt16(m["v"]));
-                log.AppendLine("sysvar " + nm + " = " + Autodesk.AutoCAD.ApplicationServices.Core.Application.GetSystemVariable(nm));
-            }
             else if (t == "cmd")
             {
                 Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute(S(m, "s", ""), true, false, false);
@@ -1622,6 +1676,60 @@ namespace AB
                 vp.CustomScale = 1.0 / sc;
                 vp.Locked = true;
                 log.AppendLine("vpset " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " " + lo.CanonicalMediaName);
+            }
+            else if (t == "vplist")
+            {
+                var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                foreach (DBDictionaryEntry en in ld)
+                {
+                    var lo = (Layout)tr.GetObject(en.Value, OpenMode.ForRead);
+                    var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                    int k = 0;
+                    foreach (ObjectId id in btr)
+                    {
+                        var vp = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (vp == null) continue;
+                        log.AppendLine("VPL	" + lo.LayoutName + "	" + (k++) + "	" + vp.Handle + "	n" + vp.Number + "	c" + vp.CenterPoint.X.ToString("0", IC) + "," + vp.CenterPoint.Y.ToString("0", IC) + "	w" + vp.Width.ToString("0", IC) + "	h" + vp.Height.ToString("0", IC) + "	vc" + vp.ViewCenter.X.ToString("0", IC) + "," + vp.ViewCenter.Y.ToString("0", IC) + "	vh" + vp.ViewHeight.ToString("0", IC) + "	t" + vp.ViewTarget.X.ToString("0", IC) + "," + vp.ViewTarget.Y.ToString("0", IC) + "	on" + vp.On);
+                    }
+                }
+            }
+            else if (t == "vpset2")
+            {
+                var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                var lo = (Layout)tr.GetObject(ld.GetAt(S(m, "layout", "")), OpenMode.ForWrite);
+                var psv = PlotSettingsValidator.Current;
+                Action<string, Action> stp = (nm, a) => { try { a(); } catch (System.Exception ex) { log.AppendLine("vpset2 step " + nm + ": " + ex.Message); } };
+                stp("cfg", () => psv.SetPlotConfigurationName(lo, "DWG To PDF.pc3", S(m, "media", "")));
+                stp("refresh", () => psv.RefreshLists(lo));
+                stp("units", () => psv.SetPlotPaperUnits(lo, PlotPaperUnit.Millimeters));
+                stp("rot", () => psv.SetPlotRotation(lo, PlotRotation.Degrees000));
+                stp("type", () => psv.SetPlotType(lo, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout));
+                stp("std", () => psv.SetUseStandardScale(lo, true));
+                stp("scale", () => psv.SetStdScaleType(lo, StdScaleType.StdScale1To1));
+                stp("origin", () => psv.SetPlotOrigin(lo, new Point2d(0, 0)));
+                stp("ctb", () => psv.SetCurrentStyleSheet(lo, "monochrome.ctb"));
+                var w = L(m["win"]); double sc = D(m["scale"]);
+                double W = (D(w[2]) - D(w[0])) / sc, Hh = (D(w[3]) - D(w[1])) / sc;
+                var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                var vps = new List<Viewport>();
+                foreach (ObjectId id in btr) { var v = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (v != null) vps.Add(v); }
+                if (vps.Count < 2) { log.AppendLine("vpset2: viewports " + vps.Count + " in " + lo.LayoutName); return; }
+                var ov = vps[0]; ov.UpgradeOpen();
+                ov.ViewDirection = Vector3d.ZAxis; ov.TwistAngle = 0; ov.ViewTarget = Point3d.Origin;
+                ov.CenterPoint = new Point3d(W / 2, Hh / 2, 0); ov.Width = W * 1.4; ov.Height = Hh * 1.4;
+                ov.ViewCenter = new Point2d(W / 2, Hh / 2); ov.ViewHeight = Hh * 1.4;
+                var vp = vps[1]; vp.UpgradeOpen();
+                vp.ViewDirection = Vector3d.ZAxis; vp.TwistAngle = 0; vp.ViewTarget = Point3d.Origin;
+                vp.CenterPoint = new Point3d(W / 2, Hh / 2, 0); vp.Width = W; vp.Height = Hh;
+                vp.ViewCenter = new Point2d((D(w[0]) + D(w[2])) / 2, (D(w[1]) + D(w[3])) / 2);
+                vp.ViewHeight = D(w[3]) - D(w[1]);
+                vp.CustomScale = 1.0 / sc; vp.Locked = true; stp("on", () => { ov.On = true; vp.On = true; });
+                for (int i = 2; i < vps.Count; i++) { var x = vps[i]; x.UpgradeOpen(); x.Erase(); }
+                log.AppendLine("vpset2 " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " extra " + (vps.Count - 2));
+            }
+            else if (t == "laycopy")
+            {
+                LayoutManager.Current.CopyLayout(S(m, "src", ""), S(m, "dst", ""));
+                log.AppendLine("laycopy " + S(m, "src", "") + " -> " + S(m, "dst", ""));
             }
             else if (t == "layouts")
             {

@@ -14,6 +14,7 @@ AX_X = [6.0 * i for i in range(11)]          # оси 1..11
 AX_Y = [0.0, 6.0, 12.0]                       # оси А, Б, В
 ZF, Z0, Z1, Z2 = -2.00, 0.00, 3.30, 6.60      # верх Фм-1 / низ См-1, Пм-1, перекрытия
 ZW = [-2.0, -1.5, -1.0, -0.5, 0.0]            # сетка стенки См-1 по высоте
+ZD = [round(Z0 + (Z1 - Z0) * k / 7, 3) for k in range(7)] + [round(Z1 + (Z2 - Z1) * k / 7, 3) for k in range(8)]   # диафрагмы осей 1, 11
 OPEN = (48.0, 50.75, 0.0, 4.05)               # лестничный проём на +3.300 (оси 9-10, А-Б)
 STAIR_X1, STAIR_X2 = (48.0, 49.45), (49.45, 50.75)   # нижний / верхний марш
 PAD = 1.0                                     # Фм-1: подушка 2000x2000 (полуширина)
@@ -153,7 +154,8 @@ for z in (Z1, Z2):
         for j in range(len(Y) - 1): beamy[(z, x, j)] = el(10, 3, [node(x, Y[j], z), node(x, Y[j + 1], z)], 'beam')
 for x in AX_X:
     for y in AX_Y:
-        for za, zb in ((ZF, Z0), (Z0, Z1), (Z1, Z2)): el(10, 2, [node(x, y, za), node(x, y, zb)], 'col')
+        segs = ((ZF, Z0), (Z0, Z1), (Z1, Z2)) if x not in (0.0, 60.0) else [(ZF, Z0)] + list(zip(ZD, ZD[1:]))
+        for za, zb in segs: el(10, 2, [node(x, y, za), node(x, y, zb)], 'col')
 # Бф-1 300x500 на 0.000 (усиление по Y, 05.11): по осям 2-10 (А-Б-В) и по оси Б (1-11); на осях 1, 11 — стенка См-1
 fbeam = []
 for x in AX_X[1:-1]:
@@ -169,6 +171,12 @@ for x in (0.0, 60.0):
     for j in range(len(Y) - 1):
         for k in range(len(ZW) - 1):
             wall.append(el(44, 4, [node(x, Y[j], ZW[k + 1]), node(x, Y[j], ZW[k]), node(x, Y[j + 1], ZW[k + 1]), node(x, Y[j + 1], ZW[k])], 'wall'))
+# диафрагмы Дм-1 200 мм по осям 1 и 11 (А-В, 0.000...+6.600) — усиление по Y (пользователь 05.11)
+diaph = []
+for x in (0.0, 60.0):
+    for j in range(len(Y) - 1):
+        for k in range(len(ZD) - 1):
+            diaph.append(el(44, 4, [node(x, Y[j], ZD[k + 1]), node(x, Y[j], ZD[k]), node(x, Y[j + 1], ZD[k + 1]), node(x, Y[j + 1], ZD[k])], 'diaph'))
 # Фм-1: подушки 2000x2000 + ленты 500 под стенкой
 def padcoords(c, mesh, lo, hi):
     """узлы подушки: точно c±1.0 (габарит 2000), внутри — узлы общей сетки (стыковка со стенкой), шаг >= 0.15"""
