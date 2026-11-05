@@ -237,7 +237,9 @@ namespace BK
                 Func<Point3d, bool> inW = q => q.X >= wx0 && q.X <= wx1 && q.Y >= wy0 && q.Y <= wy1;
                 IList sel = Has(m, "sel") ? L(m["sel"]) : null;
                 int nm = 0, ns = 0, nf = 0;
-                var ids = new List<ObjectId>(); foreach (ObjectId id in MS(db, tr)) ids.Add(id);
+                var ids = new List<ObjectId>();
+                if (Has(m, "hs")) { foreach (var hh in L(m["hs"])) { try { ids.Add(H(db, hh.ToString())); } catch { } } }
+                else foreach (ObjectId id in MS(db, tr)) ids.Add(id);
                 foreach (var id in ids)
                 {
                     var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;

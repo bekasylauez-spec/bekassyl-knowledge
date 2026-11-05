@@ -17,7 +17,7 @@ def holes_from_lira(z):
     lab,n=ndimage.label(~g); res=[]
     for k in range(1,n+1):
         jj,ii=np.where(lab==k); a=len(jj)*h*h/1e6
-        if a<0.1: continue
+        if a<1.0 and not (0.70<a*1e6/((ii.max()-ii.min()+1)*(jj.max()-jj.min()+1)*h*h)<0.86): continue
         if jj.min()==0 or ii.min()==0 or jj.max()==g.shape[0]-1 or ii.max()==g.shape[1]-1: continue
         bx=(x0+ii.min()*h,y0+jj.min()*h,x0+(ii.max()+1)*h,y0+(jj.max()+1)*h)
         fill=a*1e6/((bx[2]-bx[0])*(bx[3]-bx[1]))

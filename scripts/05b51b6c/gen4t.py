@@ -7,7 +7,7 @@ POS = sch['pos']; Np = len(POS)
 SP, ST = PRE + '18D93', PRE + '18DCA'
 m = ab.tagmap(); sph = m[SP]
 O = []
-if Np > 9: O.append({'t': 'trows', 'h': SP, 'mode': 'ins', 'at': 8, 'from': 7, 'n': Np - 9})
+if Np > 9: O += [{'t': 'trows', 'h': SP, 'mode': 'del', 'at': 8, 'n': 1}, {'t': 'trows', 'h': SP, 'mode': 'ins', 'at': 8, 'from': 7, 'n': Np - 8}]
 if Np < 9: O.append({'t': 'trows', 'h': SP, 'mode': 'del', 'at': 8, 'n': 9 - Np})
 rC1, rMesh = Np + 1, Np + 5
 O.append({'t': 'trows', 'h': SP, 'mode': 'ins', 'at': rMesh + 1, 'from': rMesh, 'n': 1})
@@ -23,7 +23,7 @@ for r, (pos, d, L, n) in zip((rMesh, rMesh + 1), sch['mesh']):
     form += [[r, 10, '%d' % n, None, '%lu2%pr0'], [r, 11, unit(r)], [r, 12, 'L%d*K%d' % (r + 1, r + 1)]]
 form += [[rC1, 10, '%d' % sch['n_mesh'], None, '%lu2%pr0'], [rC1, 11, 'M%d+M%d' % (rMesh + 1, rMesh + 2)], [rC1, 12, 'L%d*K%d' % (rC1 + 1, rC1 + 1)],
          [0, 12, 'Sum(M2:M%d)' % (rC1 + 1)], [Np + 3, 12, '%.3f' % sch['conc']]]
-O += [{'t': 'move', 'h': [ST], 'd': [0, -400 * (Np - 9 + 1)]}, {'t': 'tset', 'h': SP, 'cells': cells}, {'t': 'tformula', 'h': SP, 'cells': form, 'fmt': '%lu2%pr2'}]
+O += [{'t': 'move', 'h': [ST], 'd': [0, -400 * (Np - 9 + 1) - 900]}, {'t': 'tset', 'h': SP, 'cells': cells}, {'t': 'tformula', 'h': SP, 'cells': form, 'fmt': '%lu2%pr2'}]
 TT = 'Table({T:%s})' % sph
 grp = {10: [], 16: [], 28: []}
 for r, p in zip(range(1, Np + 1), POS): grp[p[1]].append('%s.M%d' % (TT, r + 1))
