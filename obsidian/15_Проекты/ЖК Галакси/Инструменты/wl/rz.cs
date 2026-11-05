@@ -129,6 +129,26 @@ namespace GX
                 Props(pl, m, db, tr);
                 MS(db, tr).AppendEntity(pl); tr.AddNewlyCreatedDBObject(pl, true); Tag(m, pl);
             }
+            else if (t == "hatchfit")
+            {
+                // new hatch with the pattern / scale / angle / layer / color / lw of hatch h on the given loops; h erased
+                var o = (Hatch)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var h = new Hatch(); h.SetDatabaseDefaults(db);
+                h.Layer = o.Layer; h.Color = o.Color; h.LineWeight = o.LineWeight; h.Transparency = o.Transparency;
+                MS(db, tr).AppendEntity(h); tr.AddNewlyCreatedDBObject(h, true);
+                h.SetHatchPattern(o.PatternType, o.PatternName);
+                if (o.PatternName != "SOLID") { h.PatternAngle = o.PatternAngle; h.PatternScale = o.PatternScale; h.SetHatchPattern(o.PatternType, o.PatternName); }
+                foreach (var lp in L(m["loops"]))
+                {
+                    var pc = new Point2dCollection(); var bc = new DoubleCollection();
+                    var pts = L(lp);
+                    for (int i = 0; i < pts.Count; i++) { pc.Add(P2(pts[i])); bc.Add(0); }
+                    pc.Add(P2(pts[0])); bc.Add(0);
+                    h.AppendLoop(HatchLoopTypes.Polyline, pc, bc);
+                }
+                h.EvaluateHatch(true); o.Erase(); Tag(m, h);
+                log.AppendLine("hatchfit " + h.Handle + " " + h.PatternName + " sc=" + h.PatternScale);
+            }
             else if (t == "circle")
             {
                 var c = new Circle(P(m["c"]), Vector3d.ZAxis, D(m["r"]));
@@ -374,6 +394,36 @@ namespace GX
                     log.AppendLine("import " + n + " of " + ids.Count);
                 }
             }
+            else if (t == "listfile")
+            {
+                // like "list" but from a side database (file not open): L lines with extents, N lines for no-extent objects
+                var w = L(m["win"]);
+                using (var side = new Database(false, true))
+                {
+                    side.ReadDwgFile(S(m, "file", ""), FileOpenMode.OpenForReadAndAllShare, true, "");
+                    side.CloseInput(true);
+                    using (var st = side.TransactionManager.StartTransaction())
+                    {
+                        var ms = (BlockTableRecord)st.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(side), OpenMode.ForRead);
+                        foreach (ObjectId id in ms)
+                        {
+                            var e = st.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                            Extents3d x;
+                            try { x = e.GeometricExtents; }
+                            catch
+                            {
+                                var pn = new Point3dCollection(); try { e.GetStretchPoints(pn); } catch { }
+                                if (pn.Count > 0 && pn[0].X >= D(w[0]) && pn[0].X <= D(w[2]) && pn[0].Y >= D(w[1]) && pn[0].Y <= D(w[3]))
+                                    log.AppendLine("N\t" + id.ObjectClass.DxfName + "\t" + e.Handle + "\t" + e.Layer + "\t" + pn[0].X.ToString("0", IC) + "," + pn[0].Y.ToString("0", IC));
+                                continue;
+                            }
+                            if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
+                            log.AppendLine("L\t" + id.ObjectClass.DxfName + "\t" + e.Handle + "\t" + e.Layer + "\tE" + x.MinPoint.X.ToString("0", IC) + "," + x.MinPoint.Y.ToString("0", IC) + "," + x.MaxPoint.X.ToString("0", IC) + "," + x.MaxPoint.Y.ToString("0", IC));
+                        }
+                        st.Commit();
+                    }
+                }
+            }
             else if (t == "frames")
             {
                 var ms = MS(db, tr);
@@ -565,6 +615,10 @@ namespace GX
                     try { e.UpgradeOpen(); e.TransformBy(mx); n++; } catch (System.Exception ex) { nf++; log.AppendLine("movewin fail " + e.Handle + " " + ex.Message); }
                 }
                 log.AppendLine("movewin " + n + " fail " + nf);
+            }
+            else if (t == "dimdef")
+            {
+                foreach (var hh in L(m["h"])) { var d = (Dimension)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite); d.UsingDefaultTextPosition = true; d.RecomputeDimensionBlock(true); }
             }
             else if (t == "dimtx")
             {
@@ -893,7 +947,7 @@ namespace GX
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 foreach (var q in L(m["cols"])) { var a = L(q); tb.Columns[Convert.ToInt32(a[0])].Width = D(a[1]); }
-                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width);
+                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width); for (int i = 0; i < tb.Columns.Count; i++) log.AppendLine("col " + i + " " + tb.Columns[i].Width);
             }
             else if (t == "theight")
             {
@@ -1014,6 +1068,62 @@ namespace GX
                 var nid = new ObjectId(ne.ID.ToOldIdPtr());
                 string tg = S(m, "tag", null);
                 if (tg != null) { var ee = tr.GetObject(nid, OpenMode.ForRead) as Entity; if (ee != null) map[tg] = ee.Handle.ToString(); }
+            }
+            else if (t == "plotpdf")
+            {
+                // plot a model-space window to PDF from this (live) AutoCAD: SPDS objects drawn by their own enabler
+                var w = L(m["win"]); string media = S(m, "media", "ISO_full_bleed_A2_(594.00_x_420.00_MM)");
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable("BACKGROUNDPLOT", 0);
+                var btr = (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
+                var lo = (Layout)tr.GetObject(btr.LayoutId, OpenMode.ForRead);
+                var ps = new Autodesk.AutoCAD.DatabaseServices.PlotSettings(lo.ModelType); ps.CopyFrom(lo);
+                var v = Autodesk.AutoCAD.DatabaseServices.PlotSettingsValidator.Current;
+                v.SetPlotConfigurationName(ps, "DWG To PDF.pc3", null); v.RefreshLists(ps);
+                string found = null;
+                foreach (string mn in v.GetCanonicalMediaNameList(ps)) { if (mn == media || v.GetLocaleMediaName(ps, mn) == media) { found = mn; break; } }
+                if (found == null) { var sbm = new StringBuilder(); foreach (string mn in v.GetCanonicalMediaNameList(ps)) sbm.Append(mn + " | "); log.AppendLine("media? " + sbm); return; }
+                v.SetPlotConfigurationName(ps, "DWG To PDF.pc3", found);
+                v.SetPlotWindowArea(ps, new Extents2d(D(w[0]), D(w[1]), D(w[2]), D(w[3])));
+                v.SetPlotType(ps, Autodesk.AutoCAD.DatabaseServices.PlotType.Window);
+                v.SetUseStandardScale(ps, true); v.SetStdScaleType(ps, StdScaleType.ScaleToFit);
+                v.SetPlotCentered(ps, true);
+                v.SetPlotRotation(ps, S(m, "rot", "0") == "90" ? PlotRotation.Degrees090 : PlotRotation.Degrees000);
+                v.SetCurrentStyleSheet(ps, "monochrome.ctb");
+                ps.ShowPlotStyles = true; ps.PrintLineweights = true;
+                var pi = new Autodesk.AutoCAD.PlottingServices.PlotInfo(); pi.Layout = btr.LayoutId; pi.OverrideSettings = ps;
+                var piv = new Autodesk.AutoCAD.PlottingServices.PlotInfoValidator(); piv.MediaMatchingPolicy = Autodesk.AutoCAD.PlottingServices.MatchingPolicy.MatchEnabled; piv.Validate(pi);
+                using (var pe = Autodesk.AutoCAD.PlottingServices.PlotFactory.CreatePublishEngine())
+                {
+                    var ppi = new Autodesk.AutoCAD.PlottingServices.PlotPageInfo();
+                    pe.BeginPlot(null, null);
+                    pe.BeginDocument(pi, "doc", null, 1, true, S(m, "file", ""));
+                    pe.BeginPage(ppi, pi, true, null); pe.BeginGenerateGraphics(null); pe.EndGenerateGraphics(null);
+                    pe.EndPage(null); pe.EndDocument(null); pe.EndPlot(null);
+                }
+                log.AppendLine("plotpdf " + S(m, "file", "") + " " + found);
+            }
+            else if (t == "mcprops")
+            {
+                // reflection dump of an SPDS object's DbEntity properties
+                var mo = MGet(H(db, S(m, "h", "")));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null);
+                foreach (var o in new object[] { mo, dbe })
+                    foreach (var p in o.GetType().GetProperties())
+                    {
+                        if (p.GetIndexParameters().Length > 0) continue;
+                        string val; try { var x = p.GetValue(o, null); val = x == null ? "null" : x.ToString(); } catch (System.Exception ex) { val = "!" + ex.GetType().Name; }
+                        log.AppendLine("P " + o.GetType().Name + "." + p.Name + " = " + val);
+                    }
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "mcdump")
+            {
+                // write the SPDS serialization of h to file
+                var mo = MGet(H(db, S(m, "h", "")));
+                var dbe = mo.GetType().GetProperty("DbEntity").GetValue(mo, null) as McDbEntity;
+                System.IO.File.WriteAllBytes(S(m, "file", ""), dbe.SerializeToBytes());
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+                log.AppendLine("mcdump " + S(m, "h", ""));
             }
             else if (t == "dimfix")
             {

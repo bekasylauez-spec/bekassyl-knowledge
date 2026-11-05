@@ -129,6 +129,26 @@ namespace GX
                 Props(pl, m, db, tr);
                 MS(db, tr).AppendEntity(pl); tr.AddNewlyCreatedDBObject(pl, true); Tag(m, pl);
             }
+            else if (t == "hatchfit")
+            {
+                // new hatch with the pattern / scale / angle / layer / color / lw of hatch h on the given loops; h erased
+                var o = (Hatch)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var h = new Hatch(); h.SetDatabaseDefaults(db);
+                h.Layer = o.Layer; h.Color = o.Color; h.LineWeight = o.LineWeight; h.Transparency = o.Transparency;
+                MS(db, tr).AppendEntity(h); tr.AddNewlyCreatedDBObject(h, true);
+                h.SetHatchPattern(o.PatternType, o.PatternName);
+                if (o.PatternName != "SOLID") { h.PatternAngle = o.PatternAngle; h.PatternScale = o.PatternScale; h.SetHatchPattern(o.PatternType, o.PatternName); }
+                foreach (var lp in L(m["loops"]))
+                {
+                    var pc = new Point2dCollection(); var bc = new DoubleCollection();
+                    var pts = L(lp);
+                    for (int i = 0; i < pts.Count; i++) { pc.Add(P2(pts[i])); bc.Add(0); }
+                    pc.Add(P2(pts[0])); bc.Add(0);
+                    h.AppendLoop(HatchLoopTypes.Polyline, pc, bc);
+                }
+                h.EvaluateHatch(true); o.Erase(); Tag(m, h);
+                log.AppendLine("hatchfit " + h.Handle + " " + h.PatternName + " sc=" + h.PatternScale);
+            }
             else if (t == "circle")
             {
                 var c = new Circle(P(m["c"]), Vector3d.ZAxis, D(m["r"]));
@@ -596,6 +616,10 @@ namespace GX
                 }
                 log.AppendLine("movewin " + n + " fail " + nf);
             }
+            else if (t == "dimdef")
+            {
+                foreach (var hh in L(m["h"])) { var d = (Dimension)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite); d.UsingDefaultTextPosition = true; d.RecomputeDimensionBlock(true); }
+            }
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
@@ -923,7 +947,7 @@ namespace GX
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 foreach (var q in L(m["cols"])) { var a = L(q); tb.Columns[Convert.ToInt32(a[0])].Width = D(a[1]); }
-                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width);
+                log.AppendLine("twidth cols=" + tb.Columns.Count + " w=" + tb.Width); for (int i = 0; i < tb.Columns.Count; i++) log.AppendLine("col " + i + " " + tb.Columns[i].Width);
             }
             else if (t == "theight")
             {
