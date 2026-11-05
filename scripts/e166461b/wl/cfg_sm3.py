@@ -7,3 +7,5 @@ VERT = dict(SX=1368200.0, AX1=10944.0, L=L,
             ZMIN=-4.2, ANALOG_NOTES=True, OUT='wl/sm3_vert.json')
 HOR = dict(SX=1368200.0, L=L, PLANE=['y', 13875], LIRA=[(0, 3275)], AXES=[40944, 54144],
            P0=0, CK0=0, VJSON='wl/sm3_vert.json', STRAIGHT=3310, NPAIR=2, XE=54239.0, XD=55404.0, OUT='wl/sm3_hor.json')
+SPEC = dict(SP='17E05E', ST='17E1ED', JSONS=['wl/sm3_vert.json', 'wl/sm3_hor.json'], TOTAL_ROW=1, CONC_OFF=1, CONC=35.0325,
+            HOOPS=[('Шп1*', 8, 370, 1170), ('Х1*', 8, 980, 936)])

@@ -30,7 +30,7 @@ if need > have: ops.append(dict(t='trows', h=SP, mode='ins', at=b1, **{'from': b
 cells = []
 for j, (p, d, L, n) in enumerate(rows):
     r = first + j
-    cells += [[r, 0, p], [r, 1, 'ГОСТ 34028-2016 (%s)' % GOST[d]], [r, 3, str(d)], [r, 5, '240' if d < 10 else '500С'], [r, 9, str(L)]]
+    cells += [[r, 0, p], [r, 1, 'ГОСТ 34028-2016 (%s)' % GOST[d]], [r, 2, '%%C'], [r, 3, str(d)], [r, 4, 'A'], [r, 5, '240' if d < 10 else '500С'], [r, 8, 'L='], [r, 9, str(L)]]
 ops.append(dict(t='tset', h=SP, cells=cells))
 last = b0 + need
 fm = []

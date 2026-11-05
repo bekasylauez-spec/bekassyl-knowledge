@@ -73,7 +73,7 @@ def run(go=False):
     EL = lambda r: AX1 - 800 < r['x0'] and r['x1'] < CFG['AXES'][-1] + 1700 and r['y0'] > L[0] - 3600
     er = [r['h'] for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and EL(r) and r['lay'].lower().startswith('диам')]
     er += [r['h'] for r in R if r['t'] == 'DIMENSION' and EL(r) and not (r['sp'][0][1] < 13200 and r['sp'][1][1] < 13200)]
-    er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 1100 and len(r['sp']) > 2 and r['sp'][2][0] > AX1 - 1300 and r['x1'] < CFG['AXES'][-1] + 2000 and r['h'] not in er]
+    er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 2900 and r['sp'][0][1] > L[0] - 5 and r['sp'][0][1] < L[0] + 5 and abs(r['sp'][0][1] - r['sp'][1][1]) < 1 and len(r['sp']) > 2 and r['sp'][2][0] > AX1 - 1300 and r['x1'] < CFG['AXES'][-1] + 2000 and r['h'] not in er]
     AN = CFG.get('ANALOG_NOTES')
     if not AN:
         er += [n['h'] for n in N if AX1 - 2300 < n['pts'][0][0] < CFG['AXES'][-1] + 3200 and n['pts'][0][1] > L[0] - 1600]

@@ -43,6 +43,10 @@ for i in range(4):
         left = cx <= pc if not lev2 else True                  # Bekassyl's sample: text outward (left zone -> left, right zone -> right)
         if left: shelf = [lf - w, rf]; org = lf
         else: shelf = [lf, rf + w]; org = rf + w
+        for ax_ in AX:                                          # the text never lies on an axis line
+            if org - w - 60 < ax_ < org + 60:
+                if left: org = ax_ - 120; shelf[0] = org - w
+                else: org = ax_ + 120 + w; shelf[1] = org
         ops.append(dict(t='pl', p=[W(xa, 16914), W(lf, ys), W(shelf[0], ys)] if False else [W(xa, 16914), W(lf, ys), W(rf, ys), W(xb, 16914)], layer='Размеры'))
         ops.append(dict(t='pl', p=[W(shelf[0], ys), W(shelf[1], ys)], layer='Размеры'))
         tag = 'S54N%d_%d' % (i, j)
