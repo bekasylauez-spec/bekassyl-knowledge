@@ -1,6 +1,6 @@
 import json, subprocess, os, sys
 S = r"C:\Users\beka\AppData\Local\Temp\claude\61d567fc0ab17a45\ba968b5b-1d4b-478a-a5fc-898fa1c252b5\scratchpad\dw"
-NET = r"C:\Users\beka\AppData\Local\Temp\claude\61d567fc0ab17a45\92892291-7735-4e20-9a30-a83b0b257986\scratchpad\net"
+NET = r"C:\Users\beka\AppData\Local\Temp\claude\61d567fc0ab17a45\ba968b5b-1d4b-478a-a5fc-898fa1c252b5\scratchpad\dw\net"
 def run(ops, name='ops', wait=900):
     p = os.path.join(S, 'ops', name + '.json')
     json.dump(ops, open(p, 'w', encoding='utf-8'), ensure_ascii=False)

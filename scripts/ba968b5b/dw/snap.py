@@ -4,9 +4,12 @@ EXE = r"C:\Program Files\Autodesk\AutoCAD 2021\accoreconsole.exe"
 import time
 SNAP = None
 def take():
+    """сақталған DWG-ның көшірмесі (wblock AutoCAD-ты құлатты)"""
     global SNAP
+    import shutil
     SNAP = os.path.join(S, 'w', 'snap_%d.dwg' % int(time.time()))
-    return ab.run([{'t': 'wblock', 'file': SNAP}], 'wb', 300)
+    shutil.copyfile(r"D:\РАБОЧКА\От Маке\Завод\АБК\КЖ Чертеж АБК ВАРИАНТ 2.dwg", SNAP)
+    return SNAP
 def plot(name, win, paper='ISO без полей A1 (841.00 x 594.00 мм)', orient='_L'):
     w = os.path.join(S, 'w'); pdf = os.path.join(w, name + '.pdf')
     if os.path.exists(pdf): os.remove(pdf)

@@ -893,6 +893,7 @@ else if (t == "sysvar")
                         if (cell.Contents.Count == 0) cell.Contents.Add();
                         cell.DataType = new DataTypeParameter(DataType.Double, UnitType.Unitless);
                         cell.Contents[0].Formula = "=" + f;
+                        if (Has(m, "fmt")) fmt = S(m, "fmt", null);
                         if (fmt != null) try { cell.DataFormat = fmt; } catch { }
                     }
                     if (th > 0) try { cell.Contents[0].TextHeight = th; } catch { }
@@ -987,6 +988,17 @@ else if (t == "sysvar")
                 var ms = MS(db, tr); int n = 0; string pre = S(m, "pre", null);
                 foreach (DBObject o in col) { var en = o as Entity; if (en == null) continue; ms.AppendEntity(en); tr.AddNewlyCreatedDBObject(en, true); if (pre != null) map[pre + n] = en.Handle.ToString(); n++; }
                 br.Erase(); log.AppendLine("explode " + n);
+            }
+            else if (t == "tcolins")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                tb.InsertColumnsAndInherit(Convert.ToInt32(m["at"]), Convert.ToInt32(m["from"]), Convert.ToInt32(m["n"]));
+                if (Has(m, "w")) for (int i = 0; i < Convert.ToInt32(m["n"]); i++) tb.Columns[Convert.ToInt32(m["at"]) + i].Width = D(m["w"]);
+            }
+            else if (t == "tcolw")
+            {
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                foreach (var q in L(m["cols"])) { var a2 = L(q); tb.Columns[Convert.ToInt32(a2[0])].Width = D(a2[1]); }
             }
             else if (t == "tcols")
             {
