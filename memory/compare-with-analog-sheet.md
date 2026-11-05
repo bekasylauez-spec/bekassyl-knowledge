@@ -10,3 +10,5 @@ metadata:
 **Why:** 05.11 ЖК Галакси См-4: oc.py аналог-стиль белгілерімен толы болды, ал нақты қателер (ығысқан рамка, қиғаш выноскалар, жоғалған атаулар, обрыв сызықтары) өтіп кетті; пайдаланушы «қателер өте көп» деді.
 
 **How to apply:** әр стена/парақ бітсе — аналог PDF кесінділері мен біздің кесінділерді қатар қара; автотүзету скрипттері (tickfix т.б.) аналог объектісінің пішінін өзгертпесін. Байланысты: [[no-repeat-check-pipeline]], [[check-callouts-honestly]], [[cad-clone-analog-stretch]].
+
+Also (05.11): if a wall part does not reach the top storey, that storey gets its own section 2-2 (marks «2», separate opalubka and armirovanie plans copied from the analog, without the missing part); every wall piece on the formwork elevation gets the thick per-storey contour like the main piece.

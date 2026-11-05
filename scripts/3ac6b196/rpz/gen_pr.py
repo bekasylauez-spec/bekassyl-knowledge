@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Проверка АБК.xlsx — по аналогу «Проверка Онкологический цетр Б1 С1.xlsx» (те же листы и формулы).
+"""Проверка АБК.xlsx (v3: уровни -2.000, 0.000 Бф-1, +3.300, +6.600) — по аналогу «Проверка Онкологический цетр Б1 С1.xlsx» (те же листы и формулы).
 Исходные числа: chk.json (CSV ЛИРА). Этажи: -2.000 (верх Фм-1), +3.300, +6.600 — уровни дисков перекрытий
 (на 0.000 плиты нет — плита по грунту в расчетной схеме не моделируется)."""
 import sys, json
@@ -8,10 +8,9 @@ from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 
 d = json.load(open('chk.json', encoding='utf-8'))
 out = sys.argv[1]
-LV = ['-2.0', '3.3', '6.6']
+LV = ['-2.0', '0.0', '3.3', '6.6']; N = len(LV)   # 0.000 — уровень фундаментных балок Бф-1 (v3)
 X, Y = d['dir13'], d['dir14']
-Wb = d['W']['-2.0'] + d['W']['0.0']        # масса стен и фундаментов ниже 0.000 -> к уровню -2.000
-W = {'-2.0': Wb, '3.3': d['W']['3.3'], '6.6': d['W']['6.6']}
+W = {L: d['W'][L] for L in LV}
 F = lambda b=False: Font(name='ISOCPEUR', size=11, bold=b, italic=True)
 th = Side(style='thin'); BR = Border(left=th, right=th, top=th, bottom=th)
 HL = PatternFill('solid', fgColor='FFF2CC')
@@ -69,34 +68,34 @@ for i, L in enumerate(LV):
     if i:
         put(wh, 'E%d' % (r + 1), '=A%d' % r, fmt='0.000'); put(wh, 'F%d' % (r + 1), round(W[L], 2), fmt='0.00')
         put(wh, 'H%d' % (r + 1), '=A%d' % r, fmt='0.000')
-        put(wh, 'I%d' % (r + 1), round(X['F'][L] + (X['F']['0.0'] if L == '3.3' else 0), 2), fmt='0.00')
-        put(wh, 'J%d' % (r + 1), round(Y['F'][L] + (Y['F']['0.0'] if L == '3.3' else 0), 2), fmt='0.00')
+        put(wh, 'I%d' % (r + 1), round(X['F'][L], 2), fmt='0.00')
+        put(wh, 'J%d' % (r + 1), round(Y['F'][L], 2), fmt='0.00')
 hdr = ['отметка', 'высота этажа, м', 'Перемещение по Х, мм', 'Разность этажа по Х, мм', 'Регулярность по Х условие Ж1',
        'Перемещение по Y, мм', 'Разность этажа по Y, мм', 'Регулярность по Y условие Ж1']
 for col, t in zip('ABCDEFGH', hdr): put(wh, col + '12', t, True, wrap=True)
 for col, t in zip('KLMNOPQR', ['отметка', 'высота этажа, м', 'Масса j', 'Горизонтальная жесткость cj', 'Регулярность по Х условие Ж2',
                                'Масса j', 'Горизонтальная жесткость cj', 'Регулярность по Y условие Ж2']): put(wh, col + '12', t, True, wrap=True)
 wh.row_dimensions[12].height = 60
-# этажи: строка 13 = -2.000 (низ), 14 = +3.300, 15 = +6.600
-for i in range(3):
+for i in range(N):
     r = 13 + i; s = 2 + i
     put(wh, 'A%d' % r, '=A%d' % s, fmt='0.000'); put(wh, 'K%d' % r, '=A%d' % s, fmt='0.000')
     put(wh, 'C%d' % r, '=B%d' % s, fmt='0.00'); put(wh, 'F%d' % r, '=C%d' % s, fmt='0.00')
-    if i < 2:
+    if i < N - 1:
         put(wh, 'B%d' % r, '=A%d-A%d' % (r + 1, r), fmt='0.00'); put(wh, 'L%d' % r, '=K%d-K%d' % (r + 1, r), fmt='0.00')
         put(wh, 'D%d' % r, '=C%d-C%d' % (r + 1, r), fmt='0.00'); put(wh, 'G%d' % r, '=F%d-F%d' % (r + 1, r), fmt='0.00')
         put(wh, 'M%d' % r, '=F%d' % (s + 2), fmt='0.00'); put(wh, 'P%d' % r, '=M%d' % r, fmt='0.00')
         put(wh, 'N%d' % r, '=I%d/D%d' % (s + 2, r), fmt='0.00'); put(wh, 'Q%d' % r, '=J%d/G%d' % (s + 2, r), fmt='0.00')
-put(wh, 'E13', '=(D13*B14)/(D14*B13)', fmt='0.00'); put(wh, 'H13', '=(G13*B14)/(G14*B13)', fmt='0.00')
-put(wh, 'O13', '=((M14*N13)/(M13*N14))^0.5', fmt='0.00'); put(wh, 'R13', '=((P14*Q13)/(P13*Q14))^0.5', fmt='0.00')
-put(wh, 'E19', '=MAX(E13:E14)', True, '0.00'); put(wh, 'H19', '=MAX(H13:H14)', True, '0.00')
-put(wh, 'O19', '=MAX(O13:O14)', True, '0.00'); put(wh, 'R19', '=MAX(R13:R14)', True, '0.00')
+last = 13 + N - 3
+for r in range(13, last + 1):
+    put(wh, 'E%d' % r, '=(D%d*B%d)/(D%d*B%d)' % (r, r + 1, r + 1, r), fmt='0.00'); put(wh, 'H%d' % r, '=(G%d*B%d)/(G%d*B%d)' % (r, r + 1, r + 1, r), fmt='0.00')
+    put(wh, 'O%d' % r, '=((M%d*N%d)/(M%d*N%d))^0.5' % (r + 1, r, r, r + 1), fmt='0.00'); put(wh, 'R%d' % r, '=((P%d*Q%d)/(P%d*Q%d))^0.5' % (r + 1, r, r, r + 1), fmt='0.00')
+for c in 'EHOR': put(wh, '%s19' % c, '=MAX(%s13:%s%d)' % (c, c, last), True, '0.00')
 put(wh, 'E20', '=MAX(E19:R19)', True, '0.00')
 for k, (t, f) in enumerate((('Регулярное по высоте ', '<=1.25'), ('Умеренно нерегулярное', '<=1.5'))):
     put(wh, 'A%d' % (21 + k), t); put(wh, 'E%d' % (21 + k), '=IF(E20%s,"OK","NO")' % f, True)
 put(wh, 'A23', 'Чрезмерно нерегулярное '); put(wh, 'E23', '=IF(E20>1.5,"NO","OK")', True)
 wh['A25'] = ('Массы и сейсмические силы — суммы по узлам уровня (CSV ЛИРА: «Распределение весов масс», «Инерционные силы», '
-             'SRSS по значимым формам). Масса стен и фундаментов ниже 0.000 отнесена к уровню -2.000.'); wh['A25'].font = F()
+             'SRSS по значимым формам).'); wh['A25'].font = F()
 
 # ---------------- Перекос этажа ----------------
 wp = sheet('Перекос этажа')
@@ -115,10 +114,10 @@ for col, t in zip('ABCDEFGHIJ', ['отметка', 'высота этажа, м'
                                  'Разность этажа по Y, мм', 'Нормативный перекос этажа h·ε/q, мм', 'Проверка Y']):
     put(wp, col + '9', t, True, wrap=True)
 wp.row_dimensions[9].height = 60
-for i in range(3):
+for i in range(N):
     r = 10 + i; s = 2 + i
     put(wp, 'A%d' % r, '=A%d' % s, fmt='0.000'); put(wp, 'C%d' % r, '=B%d' % s, fmt='0.00'); put(wp, 'G%d' % r, '=C%d' % s, fmt='0.00')
-    if i < 2:
+    if i < N - 1:
         put(wp, 'B%d' % r, '=A%d-A%d' % (r + 1, r), fmt='0.00')
         put(wp, 'D%d' % r, '=C%d-C%d' % (r + 1, r), fmt='0.00'); put(wp, 'H%d' % r, '=G%d-G%d' % (r + 1, r), fmt='0.00')
         put(wp, 'E%d' % r, '=((B%d*1000)*F$2)/G$2' % r, fmt='0.00'); put(wp, 'I%d' % r, '=((B%d*1000)*F$2)/G$2' % r, fmt='0.00')
@@ -130,8 +129,8 @@ w2 = sheet('Учет эффектов 2го рода')
 put(w2, 'D2', 'Средние', True); put(w2, 'E2', 'Х', True); put(w2, 'F2', 'У', True)
 put(w2, 'H2', 'P tot, т', True); put(w2, 'I2', 'Х', True); put(w2, 'J2', 'У', True)
 put(w2, 'L2', 'V tot, т', True); put(w2, 'M2', 'Х', True); put(w2, 'N2', 'У', True)
-Ptot = {'-2.0': W['3.3'] + W['6.6'], '3.3': W['6.6'], '6.6': 0.0}
-Vt = {'-2.0': (X['V']['-2.0'], Y['V']['-2.0']), '3.3': (X['V']['3.3'], Y['V']['3.3']), '6.6': (0.0, 0.0)}
+Ptot = {L: sum(W[LL] for LL in LV[i + 1:]) for i, L in enumerate(LV)}
+Vt = {L: (X['V'][L], Y['V'][L]) for L in LV}
 for i, L in enumerate(LV):
     r = 3 + i
     put(w2, 'D%d' % r, "='Перекос этажа'!A%d" % (2 + i), fmt='0.000')
@@ -148,12 +147,12 @@ for col, t in zip('MNOPQRSTUV', ['Отметки', 'Высота этажа, м'
                                  'dr = q·Δ, мм', 'Ptot, т', 'Vtot, т', 'Коэффициент θ', 'Проверка']):
     put(w2, col + '15', t, True, wrap=True)
 w2.row_dimensions[15].height = 45
-for i in range(3):
+for i in range(N):
     r = 16 + i; s = 3 + i
     put(w2, 'A%d' % r, '=D%d' % s, fmt='0.000'); put(w2, 'M%d' % r, '=A%d' % r, fmt='0.000')
     put(w2, 'C%d' % r, 'Сейсмическая по Х'); put(w2, 'O%d' % r, 'Сейсмическая по У')
     put(w2, 'D%d' % r, '=E%d' % s, fmt='0.00'); put(w2, 'P%d' % r, '=F%d' % s, fmt='0.00')
-    if i < 2:
+    if i < N - 1:
         put(w2, 'B%d' % r, '=A%d-A%d' % (r + 1, r), fmt='0.00'); put(w2, 'N%d' % r, '=M%d-M%d' % (r + 1, r), fmt='0.00')
         put(w2, 'E%d' % r, '=D%d' % (r + 1), fmt='0.00'); put(w2, 'Q%d' % r, '=P%d' % (r + 1), fmt='0.00')
         put(w2, 'F%d' % r, '=$P$3*(E%d-D%d)' % (r, r), fmt='0.00'); put(w2, 'R%d' % r, '=$P$3*(Q%d-P%d)' % (r, r), fmt='0.00')
@@ -172,8 +171,8 @@ for j, t in enumerate(H):
     put(wt, '%s2' % 'BCDEFGHIJKLM'[j], t, True, wrap=True)
     put(wt, '%s2' % ['P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA'][j], t, True, wrap=True)
 wt.row_dimensions[2].height = 45
-for i in range(2):
-    r = 3 + i; s = 3 + i   # уровни +3.300, +6.600
+for i in range(N - 1):
+    r = 3 + i; s = 3 + i   # уровни выше -2.000
     put(wt, 'B%d' % r, "='Регулярность в плане'!A%d" % s, fmt='0.000')
     put(wt, 'C%d' % r, "='Регулярность по высоте'!I%d" % (r + 1), fmt='0.00')
     put(wt, 'D%d' % r, 12.0); put(wt, 'E%d' % r, 60.0); put(wt, 'F%d' % r, '=D%d/4' % r, fmt='0.00')

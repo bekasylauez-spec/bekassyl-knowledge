@@ -1555,6 +1555,12 @@ namespace AB
                 while (pl.NumberOfVertices > pts.Count) pl.RemoveVertexAt(pl.NumberOfVertices - 1);
                 if (Has(m, "closed")) pl.Closed = (bool)m["closed"];
             }
+            else if (t == "sysvar")
+            {
+                string nm = S(m, "n", "");
+                if (Has(m, "v")) Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable(nm, Convert.ToInt16(m["v"]));
+                log.AppendLine("sysvar " + nm + " = " + Autodesk.AutoCAD.ApplicationServices.Core.Application.GetSystemVariable(nm));
+            }
             else if (t == "cmd")
             {
                 Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute(S(m, "s", ""), true, false, false);
