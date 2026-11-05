@@ -11,5 +11,7 @@ metadata:
 - График: `python D:\РАБОЧКА\.claude\usage_report.py 30` → usage_report.html (модель/күн бойынша $, негізгі vs субагент).
 - Бастапқы өлшем (30 күн дейін): 100% Opus, ~$4700 шамалы API бағасы, субагенттер 1%.
 
+05.11.2026 BEKA-2-де орнатылды: 5 агент + statusline.py → `C:\Users\beka\.claude\`; settings.json-ға model/env/statusLine (hooks сақталды, бэкап `backups\settings.json.bak-2026-11-05`); CLAUDE.md блогы `claude-shared.ps1 -Work R:\` арқылы. Агент жолдары өзгертілмеді — BEKA-2-де `D:\РАБОЧКА` = симлинк `\\192.168.0.107\РАБОЧКА`. Есеп: `D:\Бекасыл КЖ КМ\_Стандарт_КЖ\usage_report_BEKA-2.html` (30 күн: тек Opus ≈$2589, оның субагенттер ≈$672; sonnet/haiku 0 — жаңа чаттан бастап өзгереді).
+
 **Why:** пайдаланушы Opus тек басқаратын, ұсақ жұмыс арзан модельдерде, бірақ сапа сақталсын деді.
 **How to apply:** BEKA-2-де агенттерді `D:\РАБОЧКА\.claude\agents\` → `~/.claude/agents\` көшір және settings.json-ға model/env қос (автосинхрон жоқ). Бір аптадан соң usage_report-пен салыстыр. [[feedback-full-autonomy]]
