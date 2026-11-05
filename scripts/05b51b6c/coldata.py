@@ -31,7 +31,7 @@ SK1 = (round(YS[-1] - YS[0]), LAP_N)
 SK2 = (round(XS[-1] - XS[0]), LAP_N)
 SK3 = (round(2 * UO), LAP_N)
 MESH = (BX - 40, BY - 40)                # С1 660 x 860, Ø10 @100
-CONS = dict(l=800, h=850)                # КН-1 (Км-4), towards the crane line
+CONS = dict(l=600, h=850)                # КН-1 (Км-4, Км-5): 600 from the column face, towards the crane line
 
 COLS = {
     # nodes: (slab/beam top, max beam height, stubs: -1 / 1 / both 0 / none None)

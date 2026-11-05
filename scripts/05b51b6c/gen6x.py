@@ -75,7 +75,7 @@ def level(x, y, z):
 
 
 # ---------------- elevation (1:100): s = coordinate along the beam, z = level
-XS0, YT, KE = 6500.0, 24500.0, 2.0
+XS0, YT, KE = 8000.0, 24500.0, 2.0
 e0, e1 = LN['e0'], LN['e1']
 def ztop(s):
     if slope and alongX and s > 20000: return lvl - (s - 20000) / 12000 * 500
@@ -126,9 +126,9 @@ alt = 0
 for (p, q, st, n) in runs_all:
     txt = ('%dх%d' % (st, n)) if n > 1 else None
     tx = None
-    if q - p < 450:
+    if q - p < 450 or (n > 1 and q - p < 700):
         mid_ = 0 < runs_all.index((p, q, st, n)) and (p, q, st, n) != runs_all[-1] and not any(abs(p - sa_) < 1 or abs(q - sc2_) < 1 for sa_, sc2_ in LN['spans'])
-        tx = [X0 + XS0 + KE * ((p + q) / 2 - e0) - (520 if mid_ else 0), Y0 + ych - 480]
+        tx = [X0 + XS0 + KE * ((p + q) / 2 - e0) - (520 if mid_ else 0), Y0 + ych - (480 if alt == 0 else 760)]; alt = 1 - alt
     dim(P(p, lowest), P(q, lowest), Y0 + ych, False, txt, tx, 1 / KE)
 # axes chain + overall + SPDS axes
 axpos = [(sp, kind) for sp, w, kind in LN['S']]
@@ -138,25 +138,30 @@ ya1, ya2 = ych - 800, ych - 1600
 pts_ax = [sp for sp, kind in axpos]
 for p, q in zip(pts_ax, pts_ax[1:]):
     dim(P(p, lowest), P(q, lowest), Y0 + ya1, lfac=1 / KE)
-dim(P(e0, lowest), P(e1, lowest), Y0 + ya2, lfac=1 / KE)
+axx = [P(sp_, 0)[0] for sp_, w_, k_ in LN['S']]
+cxx = P((e0 + e1) / 2, 0)[0]
+for kk in [0] + [s_ * j * 700 for j in range(1, 15) for s_ in (1, -1)]:
+    if all(abs(cxx + kk - a_) > 1300 for a_ in axx): cxx += kk; break
+dim(P(e0, lowest), P(e1, lowest), Y0 + ya2, lfac=1 / KE, tx=[cxx, Y0 + ya2 + 170])
 for sp, kind in axpos:
     if any(abs(sp - g) < 1 for g in grid):
         nm = names[[abs(sp - g) < 1 for g in grid].index(True)]
         t = tag(); O.append({'t': 'clone', 'h': AXT, 'tag': t})
         O.append({'t': 'axis', 'h': t, 's': P(sp, ztop(sp) + 900), 'e': [P(sp, 0)[0], Y0 + ych - 1600 - 1700], 'val': nm})
 # level marks, notes, section mark, title
-level(X0 + XS0 - 700, Y0 + YT + KE * (top0 - lvl), top0)
+level(X0 + XS0 - 300, Y0 + YT + KE * (top0 - lvl), top0)
 if slope and abs(top1 - top0) > 1: level(X0 + XS0 + KE * (e1 - e0) + 700 + 3900, Y0 + YT + KE * (top1 - lvl), top1)
 (sa, sc_) = LN['spans'][0] if LN['spans'][0][1] - LN['spans'][0][0] > 1 else LN['spans'][1]
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
-spL = max(sp2, key=lambda q: q[1] - q[0]) if len(sp2) < 3 else sp2[2]
-sm = (spL[0] + spL[1]) / 2
+spL = sp2[-1]
+sm = spL[0] + (spL[1] - spL[0]) * (0.8 if len(sp2) == 1 else 0.42)
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
 s2a, s2c = sp2[1] if len(sp2) > 1 else sp2[0]
 hz2 = LN['hz'][LN['spans'].index((s2a, s2c))]
 note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(e0 + 400, ztop(e0) - h + cov), [X0 + XS0 - 900, Y0 + YT + KE * (ztop(e0) - lvl - h) - 500])
-note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(sa + (sc_ - sa) * 0.4, ztop(sa) - cov), [P(sa + (sc_ - sa) * 0.4, 0)[0] + 700, Y0 + YT + KE * (ztop(sa) - lvl) + 1300])
-note('Х1(%%C10)', 'см. цепочку', P(hz2[len(hz2) // 3], ztop(s2a) - h / 2), [P(hz2[len(hz2) // 3], 0)[0] + 700, Y0 + YT + KE * (ztop(s2a) - lvl) + 1300])
+note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(sa + (sc_ - sa) * 0.25, ztop(sa) - cov), [P(sa + (sc_ - sa) * 0.25, 0)[0] + 700, Y0 + YT + KE * (ztop(sa) - lvl) + 1800])
+hxx = hz2[len(hz2) // 3] if len(sp2) > 1 else hz2[int(len(hz2) * 0.55)]
+note('Х1(%%C10)', 'см. цепочку', P(hxx, ztop(s2a) - h / 2), [max(P(hxx, 0)[0] + 700, P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 2600), Y0 + YT + KE * (ztop(s2a) - lvl) + 1800])
 note('Ск1(%%C16)', '', P(e1 - 55, ztop(e1) - h / 2), [P(e1, 0)[0] + 900, Y0 + YT + KE * (ztop(e1) - lvl) + 900])
 t = tag(); O.append({'t': 'clone', 'h': SECT, 'tag': t})
 O.append({'t': 'spmove', 'h': t, 'items': [[0] + P(sm, ztop(sm) - h - 120), [1] + P(sm, ztop(sm) + 350)]})
@@ -164,11 +169,11 @@ O.append({'t': 'secset', 'h': t, 'word': '1'})
 t = tag(); O.append({'t': 'clone', 'h': T_TTL, 'tag': t})
 ttl = 'Балка %s (%s)' % (MARK, ', '.join('%s шт.' % len(sch['segs']) for _ in [0]))
 O.append({'t': 'settext', 'h': t, 's': '{\\L%s}' % ttl})
-O.append({'t': 'moveto', 'h': t, 'idx': 0, 'to': W(XS0 + KE * (e1 - e0) / 2 - len(ttl) * 120, YT + 2600)})
+O.append({'t': 'moveto', 'h': t, 'idx': 0, 'to': W(XS0 + KE * (e1 - e0) / 2 - len(ttl) * 120, YT + KE * (max(top0, top1) - lvl) + 3600)})
 
 # ---------------- section 1-1 (1:20 = x5)
 KS = 5.0
-SX, SY = 9000.0, 8500.0
+SX, SY = 11000.0, 8500.0
 def Q(x, z): return W(SX + KS * x, SY + KS * z)
 pl([Q(-b / 2, 0), Q(b / 2, 0), Q(b / 2, h), Q(-b / 2, h)], closed=True)
 xs = [-b / 2 + cov + k * (b - 2 * cov) / (A['n'] - 1) for k in range(A['n'])]
@@ -186,10 +191,10 @@ for k, (a, c) in enumerate(hs):
     o_ = 0 if k == 0 else 10
     pl([Q(a, cov - hw - o_ / 2), Q(c, cov - hw - o_ / 2), Q(c, h - cov + hw + o_ / 2), Q(a, h - cov + hw + o_ / 2)], 'диам10', 30, True)
     pl([Q(a, h - cov + hw), Q(a + 40, h - cov + hw - 40)], 'диам10', 30)
-dim(Q(-b / 2, 0), Q(b / 2, 0), Y0 + SY - 1100, lfac=1 / KS)
+dim(Q(-b / 2, 0), Q(b / 2, 0), Y0 + SY - 1200, lfac=1 / KS)
 dim(Q(-b / 2, 0), Q(xs[0], 0), Y0 + SY - 600, lfac=1 / KS, tx=Q(-b / 2 - 90, -150))
 dim(Q(xs[-1], 0), Q(b / 2, 0), Y0 + SY - 600, lfac=1 / KS, tx=Q(b / 2 + 90, -150))
-dim(Q(xs[0], 0), Q(xs[-1], 0), Y0 + SY - 600, lfac=1 / KS, txt='%dх%d=%d' % (round((b - 2 * cov) / (A['n'] - 1)), A['n'] - 1, b - 2 * cov) if A['n'] > 2 else None)
+dim(Q(xs[0], 0), Q(xs[-1], 0), Y0 + SY - 600, lfac=1 / KS, tx=[X0 + SX, Y0 + SY - 600 - 300], txt='%dх%d=%d' % (round((b - 2 * cov) / (A['n'] - 1)), A['n'] - 1, b - 2 * cov) if A['n'] > 2 else None)
 dim(Q(-b / 2, 0), Q(-b / 2, h), X0 + SX - KS * b / 2 - 600, True, lfac=1 / KS)
 ox = b / 2 + 120
 note('2(%%%%C%d)' % A['d'], '', Q(xs[-1], h - cov), Q(ox, h + 60), 'None')
@@ -199,7 +204,7 @@ note('Х1(%%C10)', '%d шт. в сеч.' % A['hoops'], Q(hs[-1][1], h * 0.6), Q(
 level(X0 + SX - KS * b / 2 - 1300, Y0 + SY + KS * h, top0)
 t = tag(); O.append({'t': 'clone', 'h': T_TTL, 'tag': t})
 O.append({'t': 'settext', 'h': t, 's': '{\\LРазрез 1 - 1}'})
-O.append({'t': 'moveto', 'h': t, 'idx': 0, 'to': Q(-b / 2, h + 140)})
+O.append({'t': 'moveto', 'h': t, 'idx': 0, 'to': Q(-b / 2 - 150, h + 300)})
 
 # ---------------- ведомость деталей
 TX0, TY1, CW0, CW, RH = X0 + 20500, Y0 + 14500, 1300, 5000, 2000

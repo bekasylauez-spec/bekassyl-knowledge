@@ -149,18 +149,28 @@ def plan_common(sh, kind):
 
 def chainH(sh, xs, yref, ydl):
     ops = []
-    for a, b in zip(xs[:-1], xs[1:]):
-        if b - a < 1: continue
-        ops.append({'t': 'dim', 'h': tp('dimH'), 'p1': sh.T(a, yref), 'p2': sh.T(b, yref), 'dl': sh.T(b, ydl), 'rot': 0})
+    segs = [(a, b) for a, b in zip(xs[:-1], xs[1:]) if b - a >= 1]
+    for i, (a, b) in enumerate(segs):
+        op = {'t': 'dim', 'h': tp('dimH'), 'p1': sh.T(a, yref), 'p2': sh.T(b, yref), 'dl': sh.T(b, ydl), 'rot': 0}
+        if b - a < 700:
+            w = 0.85 * 250 * len(str(int(round(b - a)))) / 2 + 120
+            if i == len(segs) - 1 or (i > 0 and segs[i - 1][1] - segs[i - 1][0] < 700): op['tx'] = sh.T(b + w, ydl + 90)
+            elif i == 0: op['tx'] = sh.T(a - w, ydl + 90)
+        ops.append(op)
     y = sh.T(0, ydl)[1]
     occupy(sh, (sh.T(xs[0], 0)[0], y - 50, sh.T(xs[-1], 0)[0], y + 450))
     return ops
 
 def chainV(sh, ys, xref, xdl):
     ops = []
-    for a, b in zip(ys[:-1], ys[1:]):
-        if b - a < 1: continue
-        ops.append({'t': 'dim', 'h': tp('dimV'), 'p1': sh.T(xref, a), 'p2': sh.T(xref, b), 'dl': sh.T(xdl, b), 'rot': math.pi / 2})
+    segs = [(a, b) for a, b in zip(ys[:-1], ys[1:]) if b - a >= 1]
+    for i, (a, b) in enumerate(segs):
+        op = {'t': 'dim', 'h': tp('dimV'), 'p1': sh.T(xref, a), 'p2': sh.T(xref, b), 'dl': sh.T(xdl, b), 'rot': math.pi / 2}
+        if b - a < 700:
+            w = 0.85 * 250 * len(str(int(round(b - a)))) / 2 + 120
+            if i == len(segs) - 1 or (i > 0 and segs[i - 1][1] - segs[i - 1][0] < 700): op['tx'] = sh.T(xdl - 90, b + w)
+            elif i == 0: op['tx'] = sh.T(xdl - 90, a - w)
+        ops.append(op)
     x = sh.T(xdl, 0)[0]
     occupy(sh, (x - 450, sh.T(0, ys[0])[1], x + 50, sh.T(0, ys[-1])[1]))
     return ops
@@ -188,9 +198,9 @@ def main_bars(sh):
             for s, e in D0.segs_on_slab(z, 'Y', c, sl, cover=30):
                 ops.append({'t': 'lineset', 'h': tp('barMain'), 's': sh.T(c, s), 'e': sh.T(c, e)})
         yd = y_b - 1100
-        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(a, y_b), 'p2': sh.T(f, y_b), 'dl': sh.T(f, yd), 'rot': 0})
+        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(a, y_b), 'p2': sh.T(f, y_b), 'dl': sh.T(f, yd), 'rot': 0, 'tx': sh.T(f + 330, yd + 90)})
         ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(f, y_b), 'p2': sh.T(l, y_b), 'dl': sh.T(l, yd), 'rot': 0, 'txt': '200х%d=<>' % n})
-        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(l, y_b), 'p2': sh.T(b, y_b), 'dl': sh.T(b, yd), 'rot': 0})
+        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(l, y_b), 'p2': sh.T(b, y_b), 'dl': sh.T(b, yd), 'rot': 0, 'tx': sh.T(l - 330, yd + 90)})
         if not ml_done['Y']:
             ym = (AXY['В'] + AXY['Г']) / 2 if z == '7.0' else 4500
             ops.append({'t': 'ml', 'h': tp('ml1Y'), 'base': anchor('ml1Y'), 'to': sh.T((f + l) / 2, ym), 'text': '1', 'arrows': [sh.T(f, ym), sh.T(l, ym)]})
@@ -203,9 +213,9 @@ def main_bars(sh):
             for s, e in D0.segs_on_slab(z, 'X', c, sl, cover=30):
                 ops.append({'t': 'lineset', 'h': tp('barMain'), 's': sh.T(s, c), 'e': sh.T(e, c)})
         xd = x_l - 1100
-        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, a), 'p2': sh.T(x_l, f), 'dl': sh.T(xd, f), 'rot': math.pi / 2})
+        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, a), 'p2': sh.T(x_l, f), 'dl': sh.T(xd, f), 'rot': math.pi / 2, 'tx': sh.T(xd - 90, f + 330)})
         ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, f), 'p2': sh.T(x_l, l), 'dl': sh.T(xd, l), 'rot': math.pi / 2, 'txt': '200х%d=<>' % n})
-        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, l), 'p2': sh.T(x_l, b), 'dl': sh.T(xd, b), 'rot': math.pi / 2})
+        ops.append({'t': 'dim', 'h': tp('chain'), 'p1': sh.T(x_l, l), 'p2': sh.T(x_l, b), 'dl': sh.T(xd, b), 'rot': math.pi / 2, 'tx': sh.T(xd - 90, l - 330)})
         if not ml_done['X']:
             xm = (xa[1] + xa[2]) / 2 + 1000
             ops.append({'t': 'ml', 'h': tp('ml1X'), 'base': anchor('ml1X'), 'to': sh.T(xm, (f + l) / 2), 'text': '1', 'arrows': [sh.T(xm, f), sh.T(xm, l)]})
@@ -240,12 +250,12 @@ def sk_marks(sh):
             a, b = sorted((p[0], q[0])); pts = [a] + [x for x in sorted(AXX.values()) if a + 300 < x < b - 300] + [b]
             for u, v in zip(pts[:-1], pts[1:]):
                 if v - u < 900: continue
-                m = u + 0.25 * (v - u); ops += sk_one(sh, m, p[1], side_of(m, p[1], True))
+                m = u + 0.78 * (v - u); ops += sk_one(sh, m, p[1], side_of(m, p[1], True))
         else:
             a, b = sorted((p[1], q[1])); pts = [a] + [y for y in sorted(AXY.values()) if a + 300 < y < b - 300] + [b]
             for u, v in zip(pts[:-1], pts[1:]):
                 if v - u < 900: continue
-                m = u + 0.3 * (v - u); ops += sk_one(sh, p[0], m, side_of(p[0], m, False))
+                m = u + 0.78 * (v - u); ops += sk_one(sh, p[0], m, side_of(p[0], m, False))
     for H in sl['holes']:
         g = H['geom']; total += g.length
         if H['kind'] != 'rect': continue
@@ -324,7 +334,7 @@ def place_zone(sh, dirn, c0, c1, s, e, n, p):
     fr = (0.5, 0.3, 0.7, 0.15, 0.85)
     if dirn == 'X':
         cands = []
-        for off in (350, 700, 1050):
+        for off in (350, 700, 1050, 1400):
             for cb, cd in ((c1, c1 + off), (c0, c0 - off)):
                 for f in fr:
                     tx = s + f * L; ty = cd + (180 if cd > cb else -180)
@@ -336,7 +346,7 @@ def place_zone(sh, dirn, c0, c1, s, e, n, p):
         occupy(sh, tuple(sh.T(s, min(cb, cd)) + sh.T(e, max(cb, cd))))
         if n > 2:
             txt = '200х%d' % (n - 1); W = c1 - c0; cands = []
-            for off in (350, 700, 1050):
+            for off in (350, 700, 1050, 1400):
                 for xb, xd in ((e, e + off), (s, s - off)):
                     for f in fr:
                         ty = c0 + f * W; tx = xd + (180 if xd > xb else -180)
@@ -351,13 +361,15 @@ def place_zone(sh, dirn, c0, c1, s, e, n, p):
             ty = ym if c1 - c0 >= 900 else c0 - 500
             cands.append((text_rect(*sh.T(xl - 200, ty), str(p)), xl, ty))
             if c1 - c0 >= 900: cands.append((text_rect(*sh.T(xl - 200, c0 - 500), str(p)), xl, c0 - 500))
-            cands.append((text_rect(*sh.T(xl - 200, c1 + 500), str(p)), xl, c1 + 500))
+            for dd in (500, 1000, 1500):
+                cands.append((text_rect(*sh.T(xl - 200, c1 + dd), str(p)), xl, c1 + dd))
+                cands.append((text_rect(*sh.T(xl - 200, c0 - dd), str(p)), xl, c0 - dd))
         r, xl, ty = pick(sh, cands)
         arr = [sh.T(xl, c0)] + ([sh.T(xl, c1)] if n > 1 else [])
         ops.append({'t': 'ml', 'h': tp('mlX'), 'base': anchor('mlX'), 'to': sh.T(xl, ty), 'text': str(p), 'arrows': arr}); occupy(sh, r)
     else:
         cands = []
-        for off in (350, 700, 1050):
+        for off in (350, 700, 1050, 1400):
             for cb, cd in ((c0, c0 - off), (c1, c1 + off)):
                 for f in fr:
                     ty = s + f * L; tx = cd + (180 if cd > cb else -180)
@@ -369,7 +381,7 @@ def place_zone(sh, dirn, c0, c1, s, e, n, p):
         occupy(sh, tuple(sh.T(min(cb, cd), s) + sh.T(max(cb, cd), e)))
         if n > 2:
             txt = '200х%d' % (n - 1); W = c1 - c0; cands = []
-            for off in (350, 700, 1050):
+            for off in (350, 700, 1050, 1400):
                 for yb, yd in ((e, e + off), (s, s - off)):
                     for f in fr:
                         tx = c0 + f * W; ty = yd + (180 if yd > yb else -180)
@@ -384,7 +396,9 @@ def place_zone(sh, dirn, c0, c1, s, e, n, p):
             tx = xm if c1 - c0 >= 900 else c0 - 550
             cands.append((text_rect(*sh.T(tx, yl + 300), str(p)), tx, yl))
             if c1 - c0 >= 900: cands.append((text_rect(*sh.T(c0 - 550, yl + 300), str(p)), c0 - 550, yl))
-            cands.append((text_rect(*sh.T(c1 + 550, yl + 300), str(p)), c1 + 550, yl))
+            for dd in (550, 1100, 1650):
+                cands.append((text_rect(*sh.T(c1 + dd, yl + 300), str(p)), c1 + dd, yl))
+                cands.append((text_rect(*sh.T(c0 - dd, yl + 300), str(p)), c0 - dd, yl))
         r, tx, yl = pick(sh, cands)
         arr = [sh.T(c0, yl)] + ([sh.T(c1, yl)] if n > 1 else [])
         ops.append({'t': 'ml', 'h': tp('mlY'), 'base': anchor('mlY'), 'to': sh.T(tx, yl), 'text': str(p), 'arrows': arr}); occupy(sh, r)
