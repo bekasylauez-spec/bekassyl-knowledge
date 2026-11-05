@@ -181,8 +181,13 @@ def run(go=False):
         elif gi == 0 and CFG.get('PIECES0'): EDGES = [v_ for ab in CFG['PIECES0'] if ab for v_ in ab]
         else: EDGES = [v_ for ab in PIECES for v_ in ab]
         VL = EDGES + CFG.get('VLINES', [])
+        OPR = [(a_, b_, L[s_] + z0_, L[s_] + z1_) for s_, a_, b_, z0_, z1_ in CFG.get('OPENINGS', [])]
         XLIM = CFG.get('XLIM', (-1e9, 1e9))
         def search(q, PT, low):
+            for a0_, a1_, b0_, b1_ in OPR:                         # an opening inside the zone (same storeys): the note on the larger side of it
+                if q['x0'] < a0_ and a1_ < q['x1'] and any(ys_ < b1_ and b0_ < ye_ for ys_, ye_ in q['bands']):
+                    if a0_ - q['x0'] >= q['x1'] - a1_: q = dict(q, x1=a0_ - 50)
+                    else: q = dict(q, x0=a1_ + 50)
             t1 = q['l1'].replace('%%C', 'D'); w = max(1305 + 158 * (len(t1) - 6) - 52 * t1.count('1'), 1100)     # measured SPDS note widths (h 2.5, 1:100)
             cands = [(q['x0'], 'R')] + [(q['x0'] + 50 * k, 'R') for k in range(1, int((q['x1'] - q['x0']) / 50) + 61)] + [(q['x0'] - 40 - 10 * k, 'L') for k in range(0, 300)]
             best = None
@@ -199,6 +204,8 @@ def run(go=False):
                         if box_hits_diag(tx0 - 50, by0 - 30, tx1 + 50, by1 + 30) or box_hits_diag(sx0, y - 5, sx1, y + 5): continue
                         if any(a0 < tx1 and tx0 < a1 and b0 < by1 and by0 < b1 for a0, b0, a1, b1 in CHB): continue          # lap chains
                         if any(a0 < sx1 and sx0 < a1 and b0 < y < b1 for a0, b0, a1, b1 in CHB): continue
+                        if any(a0 - 100 < tx1 and tx0 < a1 + 100 and b0 - 100 < by1 and by0 < b1 + 100 for a0, a1, b0, b1 in OPR): continue   # openings (text)
+                        if any(a0 - 60 < sx1 and sx0 < a1 + 60 and b0 - 80 < y < b1 + 80 for a0, a1, b0, b1 in OPR): continue                   # openings (shelf)
                         bad = False
                         for (a0, b0, a1, b1, sy0, sy1, yy0) in PT:
                             if a0 < tx1 + 120 and tx0 - 120 < a1 and b0 < by1 + 120 and by0 - 120 < b1: bad = True; break     # text / text
