@@ -19,6 +19,8 @@ switch ($act) {
  'rclick' { [U]::SetCursorPos($x, $y); Start-Sleep -Milliseconds 150; [U]::mouse_event(8,0,0,0,0); [U]::mouse_event(16,0,0,0,0) }
  'keys'   { [System.Windows.Forms.SendKeys]::SendWait($text) }
  'move'   { [U]::SetCursorPos($x, $y) }
+ 'wheel'  { [U]::SetCursorPos($x, $y); Start-Sleep -Milliseconds 100; [U]::mouse_event(0x0800,0,0,[int]$text,0) }
+ 'hwheel' { [U]::SetCursorPos($x, $y); Start-Sleep -Milliseconds 100; [U]::mouse_event(0x01000,0,0,[int]$text,0) }
 }
 Start-Sleep -Milliseconds 1200
 $c = $crop.Split(',') | % { [int]$_ }

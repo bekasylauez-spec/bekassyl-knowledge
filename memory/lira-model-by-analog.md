@@ -32,3 +32,5 @@ LIRA text gotchas (2026-11-05, АБК):
 - No computer-use tools on BEKA-2: drive LIRA with PowerShell (SetCursorPos/mouse_event + SendKeys + CopyFromScreen), script `D:\РАБОЧКА\От Маке\Завод\АБК\Расчет\ui.ps1` (click/keys/screenshot).
 - Mass conversion in text = doc 6 rows with kind 4: element field = static case, row value = coefficient, case = seismic case.
 - Line load on a plate edge = kind 19, doc-7 row `i j q1 q2` (local node pair). Rect КЭ 41 nodes are in Z order (1-2, 3-4 opposite; 1-3, 2-4).
+- «Нормативная нагрузка» rule = Описание схемы (Ctrl+Shift+P) → «Значения нагрузок: нормативные». It is not in the text export. Send the hotkey with keybd_event; SendKeys does not reach it. The РСН dialog only shows this flag (greyed).
+- РСН dropdown cells: a mouse click on a list item does not register. Open ▼, press Down (index+1) times, then Enter. For the EN «Вид» order see the АБК Obsidian note.

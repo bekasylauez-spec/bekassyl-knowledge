@@ -2,6 +2,7 @@
 # step chain on the right recomputed. U-bars wrap the free end: long leg + 170 + return leg (61d).
 import sys, os, json, math; sys.path.insert(0, 'wl'); from common import *
 from notes import notes
+from rowsplit import rows as ROWS
 SX, SY = 948800.0, 455939.0
 def W(x, y): return [SX + x, SY + y]
 L = [v - 347 for v in (15147, 19697, 23747, 26897, 30047, 33197, 36347, 39497)]
@@ -20,7 +21,7 @@ def storey(y):
         if L[s] - 10 <= y <= L[s + 1] - 10: return s
 def grid(s):
     yb, yt = L[s], L[s + 1]; d, st = HD[s]; y0 = yb + 50
-    n = int((yt - SLAB - 50 - y0) // st); return y0, y0 + n * st, n
+    pos, segs = ROWS(yb, yt, st, SLAB); return pos[0], pos[-1], len(pos) - 1
 R = listwin(SX, SY, 59400, 42000, None)
 N = notes(SX, SY, 59400, 42000)
 ops = []; BARS = []
@@ -44,14 +45,13 @@ ops.insert(0, dict(t='erase', h=er))
 XE, XD = 29965.0, 31130.0
 for s in range(7):
     yb, yt = L[s], L[s + 1]; d, st = HD[s]
-    y0, ytop, n = grid(s); rem = 0
-    rows = n + 1
+    pos_, segs_ = ROWS(yb, yt, st, SLAB); y0, ytop, n = pos_[0], pos_[-1], len(pos_) - 1
+    rows = len(pos_)
     for kind, cnt in (('end', 2), ('mid', 2)):
         BARS.append(dict(pos=pos_of(kind, d), d=d, L=LONG[kind] + 170 + LAP(d), n=2 * rows * cnt, storey=s))
     ch = []
     if s == 0: ch.append((yb, y0, ''))
-    ch.append((y0, y0 + n * st, '%dх%d' % (st, n)))
-    if rem > 1: ch.append((y0 + n * st, ytop, ''))
+    for a_, b_, v_, k_ in segs_: ch.append((a_, b_, ('%dх%d' % (v_, k_)) if k_ > 1 else ''))
     ch.append((ytop, (L[s + 1] + 50) if s < 6 else L[7], ''))
     for a, b, txt in ch:
         kw = dict(t='dim', h='WT_DV', p1=W(XE, a), p2=W(XE, b), dl=W(XD, (a + b) / 2), rot=math.pi / 2, txt=txt)

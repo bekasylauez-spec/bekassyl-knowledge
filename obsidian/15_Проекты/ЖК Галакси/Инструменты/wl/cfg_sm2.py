@@ -5,7 +5,7 @@ VERT = dict(SX=1160300.0, AX1=8845.0, L=[13584, 18134, 22184, 25334, 28484, 3163
             ENDS=[(True, False), (False, True), (True, False), (False, True)],
             PLANE=['y', 8000], AXES=[8845, 15645, 22095, 28895],
             CHAIN_X=[5375, 8225 + 1400, 11825, 14675 + 1400], CHAIN_DIAG=[True, True, True, True],
-            CHAIN_SIDE='LRLR', CHAIN_SKIP=[1, 2], NOTE_LOW=[2], ZMIN=-4.2,              # the foundation-joint cell row is covered by the Фм выпуски
+            ZMIN=-4.2, ANALOG_NOTES=True, CHAIN_OFF_R=[1050] * 4, CHAIN_SKIP=[1, 2], CHAIN_SAME=[0, 3],              # the foundation-joint cell row is covered by the Фм выпуски
             OUT='wl/sm2_vert.json')
 HOR = dict(SX=1219700.0, L=[13584, 18134, 22184, 25334, 28484, 31634, 34784, 37934],
            PLANE=['y', 8000], LIRA=[(5375, 8225), (11700, 15375)], AXES=[8845, 15645, 22095, 28895],

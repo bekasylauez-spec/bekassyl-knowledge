@@ -24,6 +24,9 @@ User decisions/corrections:
 
 - 05.11 «Спецификацияны менің жасағанымдай етіп А3-ке сыйдыр»: every wall's specification sheet copies the user's A3 layout (См-1 sheet at x 1071200): «Ведомость деталей» one column on the left, spec table right, steel summary at the bottom, A3 stamp — not the analog's A2 sheet.
 
+- 05.11 «Стена сызғанда арматура шагын жасағанда ең шеткі 2 жағынан 50 мм тастап сосын ішін бөлесің»: bars 50 from both faces, inner span divided by the step, leftover one space in the middle (rows over the height the same: 50 above slab, 50 below the next slab). «Выноскаларды размерден басқа жағында болсын, аналогтыкын қолдан»: keep the analog's notes in place (change text/leader points, clone for extra zones), lap dims on the other side of the piece (or same side, other storey when the other side is a cross wall).
+  **Why:** my generated layout left odd gaps and my own notes clashed with the dims. **How to apply:** every wall; wl/wall_vert.py ANALOG_NOTES=True, wl/rowsplit.py.
+
 Scripts: Obsidian `15_Проекты/ЖК Галакси/Инструменты/` gen_wall_geom.py, gen_wall_opal.py, gen_wall_vert.py, arm/wall_zones.py.
 
 Related: [[galaxy-kzh-scheme]], [[column-rules-template]], [[obsidian-first]]
