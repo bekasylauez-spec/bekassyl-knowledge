@@ -1726,6 +1726,31 @@ else if (t == "sysvar")
                 for (int i = 2; i < vps.Count; i++) { var x = vps[i]; x.UpgradeOpen(); x.Erase(); }
                 log.AppendLine("vpset2 " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " extra " + (vps.Count - 2));
             }
+            else if (t == "blkrename")
+            {
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                string a = S(m, "from", ""), b = S(m, "to", "");
+                if (!bt.Has(a)) { log.AppendLine("blkrename: no " + a); return; }
+                var r = (BlockTableRecord)tr.GetObject(bt[a], OpenMode.ForWrite); r.Name = b;
+                log.AppendLine("blkrename " + a + " -> " + b);
+            }
+            else if (t == "mkblock")
+            {
+                // new block definition from model entities (cloned, base -> origin), originals erased
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForWrite);
+                string nm = S(m, "name", "");
+                if (bt.Has(nm)) { log.AppendLine("mkblock: exists " + nm); return; }
+                var btr = new BlockTableRecord(); btr.Name = nm; btr.Origin = Point3d.Origin;
+                bt.Add(btr); tr.AddNewlyCreatedDBObject(btr, true);
+                var xf = Matrix3d.Displacement(Point3d.Origin - P(m["base"]));
+                int n = 0;
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite) as Entity; if (e == null) continue;
+                    var c = (Entity)e.Clone(); c.TransformBy(xf); btr.AppendEntity(c); tr.AddNewlyCreatedDBObject(c, true); e.Erase(); n++;
+                }
+                log.AppendLine("mkblock " + nm + " " + n);
+            }
             else if (t == "laydel")
             {
                 LayoutManager.Current.DeleteLayout(S(m, "name", ""));
