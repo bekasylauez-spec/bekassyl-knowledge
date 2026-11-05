@@ -54,6 +54,20 @@ for g in range(4):
     D[0][g] = [('M',) + zr['M'][1:3] + (dM, sM), ('R',) + zr['R'][1:3] + (dR, 100)]
     D[3][g] = [('L',) + zl['L'][1:3] + (dR, 100), ('M',) + zl['M'][1:3] + (dM, sM)]
 
+# one Ø per group for all edge zones and one (Ø, step) for all middle zones (fewer positions, as in the analog)
+for g in range(4):
+    de = max(z[3] for i in range(4) for z in D[i][g] if z[0] != 'M')
+    mids = [(z[3], z[4]) for i in range(4) for z in D[i][g] if z[0] == 'M']
+    dm, sm = max(mids, key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
+    for i in range(4):
+        new = []
+        for z in D[i][g]:
+            if z[0] == 'M':
+                lo = z[1]; hi = max(zz[2] for zz in D[i][0] if zz[0] == 'M') if False else z[2]
+                n = max(1, int(round((z[2] - z[1]) / sm)))
+                new.append(('M', z[1], z[1] + n * sm, dm, sm))
+            else: new.append((z[0], z[1], z[2], de, 100))
+        D[i][g] = new
 def run(go=False):
     R = listwin(SX, SY, 59400, 42000, None)
     N = notes(SX, SY, 59400, 42000)
@@ -67,7 +81,7 @@ def run(go=False):
     DIAG = {(round(r['sp'][0][0]), round(r['sp'][0][1])): (r['sp'][1], r['sp'][2]) for r in R if r['t'] == 'LWPOLYLINE' and len(r['sp']) == 3 and r['y0'] > 14000}
     ops = [dict(t='clone', h=tN, base=[0, 0], to=[0, -200000], tag='S1N'), dict(t='clone', h=tC, base=[0, 0], to=[0, -200000], tag='S1C'),
            dict(t='erase', h=er)]
-    POS = {}; BARS = []; k = [0]
+    POS = {}; BARS = []; k = [0]; LABELS = {}
     def pos_of(key):
         if key not in POS: POS[key] = len(POS) + 1
         return POS[key]
@@ -111,7 +125,7 @@ def run(go=False):
                 sp_ = max(800, min(1000, (U - Lo) / max(1, n_ - 1))) if n_ > 1 else 0
                 top = max(U, Lo + (n_ - 1) * sp_)
                 ym = (top - ks.index(kind) * sp_) if n_ > 1 else (U + Lo) / 2
-                lab = ('%d' % pA) if pA == pB else ('%d;%d' % (pA, pB))
+                lab = ('%d' % pA) if pA == pB else ('%d;%d' % (pA, pB)); LABELS['%d|%d|%s' % (i, gi, kind)] = lab
                 note('S1N', '%s(%%%%C%d)' % (lab, d), 'ш.%d' % st, [SX + ox, SY + ym], [[SX + AX1 + x0 + DX, SY + ym], [SX + AX1 + x1 + DX, SY + ym]])
             if gi < 3:
                 lp = max(lap_at(i, gi, z[0]) for z in D[i][gi]); gp = GAP(lp)
@@ -120,10 +134,17 @@ def run(go=False):
                 for kk in range(3):
                     kw = dict(t='dim', h='WT_DV', p1=W(xa, yy[kk]), p2=W(xa, yy[kk + 1]), dl=W(xd, (yy[kk] + yy[kk + 1]) / 2), rot=math.pi / 2, txt='')
                     ym_ = (yy[kk] + yy[kk + 1]) / 2
-                    for sl in L:                                  # text never on a slab: slide it along the line
-                        if sl - SLAB - 350 < ym_ < sl + 350: ym_ = sl + 400 if yy[kk + 1] - sl > sl - SLAB - yy[kk] else sl - SLAB - 400
+                    band = 950 if i else 350                      # left of pieces 2-4 the opening diagonal comes down to the slab
+                    for sl in L:                                  # text never on a slab / the diagonal: slide it along the line
+                        if sl - SLAB - band < ym_ < sl + 350:
+                            below = sl - SLAB - band - 50
+                            ym_ = below if below - 450 > yy[kk] else sl + 450   # below the slab first (the storey above holds notes)
                     if kk == 1: kw['tx'] = W(xd - 260, ym_)
-                    elif ym_ != (yy[kk] + yy[kk + 1]) / 2: kw['tx'] = W(xd - 130, ym_)
+                    elif ym_ != (yy[kk] + yy[kk + 1]) / 2:
+                        nxt = min([sl for sl in L if sl > yy[kk]] or [L[-1]])
+                        if i and ym_ > nxt and nxt - SLAB - yy[kk] > 870:   # the storey above holds the next piece's notes: inside, right of the chain
+                            kw['tx'] = W(xd + 175, (yy[kk] + nxt - SLAB) / 2 + 25)
+                        else: kw['tx'] = W(xd - 130, ym_)
                     ops.append(kw)
     # П caps Ск at the wall top: vertical legs at the zone extremes (Ø = top bar Ø), one note per piece
     CAPS = {}
@@ -155,7 +176,7 @@ def run(go=False):
             ty = 13334 if kind != 'M' else 12634
             ops.append(dict(t='dim', h='WT_DH', p1=W(AX1 + x0, L[0]), p2=W(AX1 + x1, L[0]), dl=W(AX1 + (x0 + x1) / 2, ty), rot=0, txt=txt, tx=W(tx, ty + 60)))
     ops += [dict(t='erase', h=['S1N', 'S1C']), dict(t='dimtx', h='13FA81', at=W(5461, 28700)), dict(t='save')]
-    json.dump(dict(D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open('wl/sm1_vert.json', 'w'), ensure_ascii=False)
+    json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open('wl/sm1_vert.json', 'w'), ensure_ascii=False)
     print('erase', len(er), 'ops', len(ops), 'positions', len(POS))
     for i in range(4):
         for g in range(4): print('P%d G%d' % (i + 1, g), [(z[0], z[3], z[4]) for z in D[i][g]])

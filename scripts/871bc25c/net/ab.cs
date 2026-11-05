@@ -75,6 +75,16 @@ namespace AB
             try { var js0 = new JavaScriptSerializer(); var mm = (Dictionary<string, object>)js0.DeserializeObject(File.ReadAllText(mapFile, Encoding.UTF8)); foreach (var kv in mm) map[kv.Key] = kv.Value.ToString(); } catch { }
             var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
             var db = doc.Database;
+            if (!db.Filename.EndsWith("КЖ Чертеж АБК.dwg", StringComparison.OrdinalIgnoreCase) && !db.Filename.Contains("_abwork"))
+            {
+                // guard: never run ops on any other drawing; close stray documents this instance opened by itself
+                var dmx = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;
+                Autodesk.AutoCAD.ApplicationServices.Document tgt = null;
+                foreach (Autodesk.AutoCAD.ApplicationServices.Document dd in dmx) if (dd.Database.Filename.EndsWith("КЖ Чертеж АБК.dwg", StringComparison.OrdinalIgnoreCase)) tgt = dd;
+                log.AppendLine("GUARD: active db is " + db.Filename + "; nothing done");
+                File.WriteAllText(Path.Combine(tmp, "ab_log.txt"), log.ToString(), Encoding.UTF8);
+                return;
+            }
             var js = new JavaScriptSerializer(); js.MaxJsonLength = int.MaxValue;
             var ops = (IList)js.DeserializeObject(File.ReadAllText(Path.Combine(tmp, "ab_ops.json"), Encoding.UTF8));
             int nerr = 0;
@@ -1297,6 +1307,154 @@ namespace AB
                     catch (System.Exception ex) { nf++; log.AppendLine("stretch fail " + e.Handle + " " + e.GetType().Name + " " + ex.Message); }
                 }
                 log.AppendLine("stretch moved " + nm + " stretched " + ns + " failed " + nf);
+            }
+            else if (t == "closeother")
+            {
+                // close (discard, nothing was edited there) every other document opened in THIS instance
+                var dmx = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;
+                var lst = new List<Autodesk.AutoCAD.ApplicationServices.Document>();
+                foreach (Autodesk.AutoCAD.ApplicationServices.Document dd in dmx) if (dd.Database != db) lst.Add(dd);
+                foreach (var dd in lst) { string nm = dd.Name; if (dd.CommandInProgress != "") { log.AppendLine("busy " + nm); continue; } Autodesk.AutoCAD.ApplicationServices.DocumentExtension.CloseAndDiscard(dd); log.AppendLine("closed " + nm); }
+            }
+            else if (t == "docs")
+            {
+                foreach (Autodesk.AutoCAD.ApplicationServices.Document dd in Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager)
+                    log.AppendLine("DOC " + dd.Name + (dd == Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument ? " *active" : ""));
+                log.AppendLine("db " + db.Filename);
+            }
+            else if (t == "extdump")
+            {
+                // every model entity (optionally inside win): H|dxf|layer|minx|miny|maxx|maxy|kind-specific|pts
+                IList w = Has(m, "win") ? L(m["win"]) : null;
+                var sb = new StringBuilder();
+                var ms = (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
+                Func<Point3d, string> fp = q => q.X.ToString("0.###", IC) + "," + q.Y.ToString("0.###", IC);
+                foreach (ObjectId oid in ms)
+                {
+                    var e = tr.GetObject(oid, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    string ext = "||||";
+                    try
+                    {
+                        var x = e.GeometricExtents;
+                        if (w != null && (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3]))) continue;
+                        ext = x.MinPoint.X.ToString("0.#", IC) + "|" + x.MinPoint.Y.ToString("0.#", IC) + "|" + x.MaxPoint.X.ToString("0.#", IC) + "|" + x.MaxPoint.Y.ToString("0.#", IC);
+                    }
+                    catch { if (w != null) continue; }
+                    string info = "";
+                    try
+                    {
+                        if (e is Dimension)
+                        {
+                            var dd = (Dimension)e;
+                            string dp = "";
+                            if (e is RotatedDimension) { var r = (RotatedDimension)e; dp = fp(r.XLine1Point) + ";" + fp(r.XLine2Point) + ";" + fp(r.DimLinePoint) + ";rot=" + r.Rotation.ToString("0.####", IC); }
+                            else if (e is AlignedDimension) { var r = (AlignedDimension)e; dp = fp(r.XLine1Point) + ";" + fp(r.XLine2Point) + ";" + fp(r.DimLinePoint) + ";al"; }
+                            info = "meas=" + dd.Measurement.ToString("0.###", IC) + ";txt=" + (dd.DimensionText ?? "").Replace("|", "/") + ";sty=" + dd.DimensionStyleName + ";lfac=" + dd.Dimlfac.ToString("0.###", IC) + ";dsc=" + dd.Dimscale.ToString("0.###", IC) + ";udt=" + (dd.UsingDefaultTextPosition ? "1" : "0") + ";tp=" + fp(dd.TextPosition).Replace(",", "_") + ";" + dp;
+                        }
+                        else if (e is MText) info = "txt=" + ((MText)e).Contents.Replace("|", "/").Replace("\n", "\\n") + ";ins=" + fp(((MText)e).Location) + ";h=" + ((MText)e).TextHeight.ToString("0.##", IC);
+                        else if (e is DBText) info = "txt=" + ((DBText)e).TextString.Replace("|", "/") + ";ins=" + fp(((DBText)e).Position) + ";h=" + ((DBText)e).Height.ToString("0.##", IC);
+                        else if (e is BlockReference) { var br = (BlockReference)e; string bn = br.IsDynamicBlock ? ((BlockTableRecord)tr.GetObject(br.DynamicBlockTableRecord, OpenMode.ForRead)).Name : br.Name; info = "blk=" + bn + ";ins=" + fp(br.Position) + ";rot=" + br.Rotation.ToString("0.####", IC) + ";sx=" + br.ScaleFactors.X.ToString("0.###", IC) + ";sy=" + br.ScaleFactors.Y.ToString("0.###", IC); }
+                        else if (e is Polyline) { var pl = (Polyline)e; var pb = new StringBuilder("pl" + (pl.Closed ? "c" : "") + "="); for (int i = 0; i < pl.NumberOfVertices; i++) { var q = pl.GetPoint2dAt(i); pb.Append(q.X.ToString("0.###", IC) + "," + q.Y.ToString("0.###", IC) + "," + pl.GetBulgeAt(i).ToString("0.###", IC) + ";"); } info = pb.ToString() + "cw=" + pl.ConstantWidth.ToString("0.##", IC); }
+                        else if (e is Line) info = "ln=" + fp(((Line)e).StartPoint) + ";" + fp(((Line)e).EndPoint);
+                        else if (e is Circle) info = "ci=" + fp(((Circle)e).Center) + ";r=" + ((Circle)e).Radius.ToString("0.###", IC);
+                        else if (e is Hatch)
+                        {
+                            var hh = (Hatch)e; var hb = new StringBuilder("hl=");
+                            for (int li = 0; li < hh.NumberOfLoops; li++)
+                            {
+                                var lp = hh.GetLoopAt(li);
+                                if (li > 0) hb.Append("#");
+                                if (lp.IsPolyline) { foreach (BulgeVertex bv in lp.Polyline) hb.Append(bv.Vertex.X.ToString("0.###", IC) + "," + bv.Vertex.Y.ToString("0.###", IC) + "," + bv.Bulge.ToString("0.####", IC) + ";"); }
+                                else foreach (Curve2d c in lp.Curves)
+                                {
+                                    double b = 0;
+                                    var ca = c as CircularArc2d;
+                                    if (ca != null) { double sw = ca.EndAngle - ca.StartAngle; if (sw < 0) sw += 2 * Math.PI; b = Math.Tan(sw / 4) * (ca.IsClockWise ? -1 : 1); }
+                                    var q = c.StartPoint; hb.Append(q.X.ToString("0.###", IC) + "," + q.Y.ToString("0.###", IC) + "," + b.ToString("0.####", IC) + ";");
+                                }
+                            }
+                            info = hb.ToString() + "|pat=" + hh.PatternName + ";sc=" + hh.PatternScale.ToString("0.###", IC);
+                        }
+                    }
+                    catch (System.Exception ex) { info = "!" + ex.Message; }
+                    string sp = "";
+                    if (!(e is Polyline) && !(e is Line) && !(e is Hatch))
+                    {
+                        try { var pc = new Point3dCollection(); e.GetStretchPoints(pc); var pb = new StringBuilder(); foreach (Point3d q in pc) pb.Append(fp(q) + ";"); sp = pb.ToString(); } catch { }
+                    }
+                    sb.AppendLine(e.Handle + "|" + (oid.ObjectClass.DxfName ?? "") + "|" + e.Layer + "|" + ext + "|" + info.Replace("\r", "").Replace("\n", "\\n") + "|" + sp);
+                }
+                File.WriteAllText(S(m, "file", ""), sb.ToString(), Encoding.UTF8);
+                log.AppendLine("extdump ok");
+            }
+            else if (t == "clonexf")
+            {
+                // deep-clone a set of entities together (keeps their mutual SPDS links), displace by d; log old>new
+                var ids = new ObjectIdCollection();
+                foreach (var h in L(m["hs"])) ids.Add(H(db, h.ToString()));
+                var im = new IdMapping();
+                db.DeepCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, false);
+                var dv = L(m["d"]); var vec = new Vector3d(D(dv[0]), D(dv[1]), 0);
+                string pre = S(m, "pre", null);
+                var sbm = new StringBuilder();
+                foreach (IdPair p in im)
+                {
+                    if (!p.IsCloned || !p.IsPrimary) continue;
+                    bool top = false; foreach (ObjectId q in ids) if (q == p.Key) { top = true; break; }
+                    if (!top) continue;
+                    var e = (Entity)tr.GetObject(p.Value, OpenMode.ForWrite);
+                    e.TransformBy(Matrix3d.Displacement(vec));
+                    var ke = (Entity)tr.GetObject(p.Key, OpenMode.ForRead);
+                    if (pre != null) map[pre + ke.Handle] = e.Handle.ToString();
+                    sbm.Append(ke.Handle + ">" + e.Handle + " ");
+                }
+                log.AppendLine("clonexf " + S(m, "pre", "") + " " + sbm);
+            }
+            else if (t == "lnset")
+            {
+                var l = (Line)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                l.StartPoint = P(m["p1"]); l.EndPoint = P(m["p2"]);
+            }
+            else if (t == "hatchset")
+            {
+                // replace all loops of a hatch with polyline loops [[x,y,bulge],...]
+                var hh = (Hatch)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                hh.Associative = false;
+                while (hh.NumberOfLoops > 0) hh.RemoveLoopAt(0);
+                int li = 0;
+                foreach (var lp in L(m["loops"]))
+                {
+                    var pc = new Point2dCollection(); var bc = new DoubleCollection();
+                    var pts = L(lp);
+                    for (int i = 0; i < pts.Count; i++) { var q = L(pts[i]); pc.Add(new Point2d(D(q[0]), D(q[1]))); bc.Add(q.Count > 2 ? D(q[2]) : 0); }
+                    if (pc[0].GetDistanceTo(pc[pc.Count - 1]) > 1e-6) { pc.Add(pc[0]); bc.Add(0); }
+                    hh.AppendLoop(li == 0 ? HatchLoopTypes.External | HatchLoopTypes.Polyline : HatchLoopTypes.Polyline, pc, bc);
+                    li++;
+                }
+                hh.EvaluateHatch(true);
+            }
+            else if (t == "dimset2")
+            {
+                // rotated/aligned dim: xline points, dim line point, optional custom text position
+                var e = tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite) as Dimension;
+                var ad = e as AlignedDimension; var rd = e as RotatedDimension;
+                if (ad != null) { ad.XLine1Point = P(m["p1"]); ad.XLine2Point = P(m["p2"]); ad.DimLinePoint = P(m["dl"]); }
+                if (rd != null) { rd.XLine1Point = P(m["p1"]); rd.XLine2Point = P(m["p2"]); rd.DimLinePoint = P(m["dl"]); }
+                if (Has(m, "tx")) { e.UsingDefaultTextPosition = false; e.TextPosition = P(m["tx"]); }
+                e.RecomputeDimensionBlock(true);
+            }
+            else if (t == "plset")
+            {
+                var pl = (Polyline)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var pts = L(m["p"]); IList bl = Has(m, "b") ? L(m["b"]) : null;
+                while (pl.NumberOfVertices > 2) pl.RemoveVertexAt(pl.NumberOfVertices - 1);
+                for (int i = 0; i < pts.Count; i++)
+                {
+                    if (i < pl.NumberOfVertices) { pl.SetPointAt(i, P2(pts[i])); pl.SetBulgeAt(i, bl != null ? D(bl[i]) : 0); }
+                    else pl.AddVertexAt(i, P2(pts[i]), bl != null ? D(bl[i]) : 0, pl.GetStartWidthAt(0), pl.GetEndWidthAt(0));
+                }
+                while (pl.NumberOfVertices > pts.Count) pl.RemoveVertexAt(pl.NumberOfVertices - 1);
+                if (Has(m, "closed")) pl.Closed = (bool)m["closed"];
             }
             else if (t == "cmd")
             {

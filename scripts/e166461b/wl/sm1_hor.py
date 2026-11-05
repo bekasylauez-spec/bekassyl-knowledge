@@ -55,7 +55,7 @@ for s in range(7):
     ch.append((ytop, (L[s + 1] + 50) if s < 6 else L[7], ''))
     for a, b, txt in ch:
         kw = dict(t='dim', h='WT_DV', p1=W(XE, a), p2=W(XE, b), dl=W(XD, (a + b) / 2), rot=math.pi / 2, txt=txt)
-        if b - a < 450: kw['tx'] = W(XD + 400, (a + b) / 2)
+        if b - a < 450: kw['tx'] = W(XD + 620, (a + b) / 2)
         ops.append(kw)
 ops.append(dict(t='dimtx', h='140B97', at=W(5461, 28700)))
 ops.append(dict(t='save'))
