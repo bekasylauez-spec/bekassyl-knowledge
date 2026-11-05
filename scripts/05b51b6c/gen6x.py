@@ -129,8 +129,8 @@ for (p, q, st, n) in runs_all:
     tx = None
     if q - p < 450:
         xm = X0 + XS0 + KE * ((p + q) / 2 - e0)
-        if round(p) in span_ends: tx = [X0 + XS0 + KE * (p - e0) - 330, Y0 + ych + 170]
-        elif round(q) in span_ends: tx = [X0 + XS0 + KE * (q - e0) + 330, Y0 + ych - 300]
+        if round(p) in span_ends: tx = [X0 + XS0 + KE * (q - e0) + 330, Y0 + ych - 300]
+        elif round(q) in span_ends: tx = [X0 + XS0 + KE * (p - e0) - 330, Y0 + ych - 300]
         else: tx = [xm - 600, Y0 + ych - 300]
     dim(P(p, lowest), P(q, lowest), Y0 + ych, False, txt, tx, 1 / KE)
 # axes chain + overall + SPDS axes
@@ -159,14 +159,14 @@ sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
 spL = sp2[-1]
 bnd = sorted(set([spL[0], spL[1]] + [r[0] for r in runs_all if spL[0] <= r[0] <= spL[1]] + [r[1] for r in runs_all if spL[0] <= r[1] <= spL[1]]))
 gaps = [(q_ - p_, (p_ + q_) / 2) for p_, q_ in zip(bnd, bnd[1:])]
-if len(sp2) == 1: gaps = [g for g in gaps if g[1] > spL[0] + (spL[1] - spL[0]) * 0.55] or gaps
+if len(sp2) == 1: gaps = [g for g in gaps if spL[0] + (spL[1] - spL[0]) * 0.75 < g[1] < spL[0] + (spL[1] - spL[0]) * 0.9] or gaps
 sm = max(gaps)[1]
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
-s2a, s2c = sp2[1] if len(sp2) > 1 else sp2[0]
+s2a, s2c = sp2[1] if len(sp2) > 2 else sp2[0]
 hz2 = LN['hz'][LN['spans'].index((s2a, s2c))]
 note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(e0 + 400, ztop(e0) - h + cov), [X0 + XS0 - 900, Y0 + YT + KE * (ztop(e0) - lvl - h) - 500])
 note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(sa + (sc_ - sa) * 0.25, ztop(sa) - cov), [P(sa + (sc_ - sa) * 0.25, 0)[0] + 700, Y0 + YT + KE * (ztop(sa) - lvl) + 1800])
-hxx = hz2[len(hz2) // 3] if len(sp2) > 1 else hz2[int(len(hz2) * 0.55)]
+hxx = hz2[len(hz2) // 3] if len(sp2) > 2 else hz2[int(len(hz2) * 0.6)]
 note('Х1(%%C10)', 'см. цепочку', P(hxx, ztop(s2a) - h / 2), [max(P(hxx, 0)[0] + 700, P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 2600), Y0 + YT + KE * (ztop(s2a) - lvl) + 1800])
 note('Ск1(%%C16)', '', P(e1 - 55, ztop(e1) - h / 2), [P(e1, 0)[0] + 900, Y0 + YT + KE * (ztop(e1) - lvl) + 900])
 t = tag(); O.append({'t': 'clone', 'h': SECT, 'tag': t})
