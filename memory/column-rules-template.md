@@ -14,6 +14,7 @@ metadata:
 - Hoops per storey: from lower level +50 to beam bottom −50, split in 4 → end quarters step 100, middle step 200; the leftover (100…200) goes inside the 200 zone. No hoops inside the beam height (meshes there). Script `colgeo.py`.
 - Main bars break every storey, joined with накладки (С21-Рн, 10d), staggered: corners +600, mids +1200 above the slab; выпуски from Фм dashed.
 - Main-bar Ø (user, 05.11, «Основнойды неге 32 жасадың»): take the column's MAX total required area over all its sections from LIRA (AU1…AU4 + AS1…AS4), divide by the number of bars, choose the Ø whose area covers that per-bar value. Not the corner AU alone. Then try to keep one Ø for all columns/beams. ЖК Галакси: Км-1 27.32/8 → 8Ø22; Км-2.1 37.40/8 → Ø25; Км-2.2 57.04/12 → Ø25; Км-2.3 93.96/20 → Ø25. Script `arm/col_tot.py`.
+- Every rebar line sits on its own diameter layer (hoops Ø8 → «диам8», lw 0.30; mains «диамNN» 0.40) — never on «Размеры» (05.11: «Хамуттарды 8 дік арматурамен жаса, толщина сызық аты 8 дікке ауыстыр размерден»).
 - In sections the position callout leader goes straight to the bar centre — no oblique tick. Section dims 40 | 210 | 210 | 40 + 250 | 250; short «40» outside along the line, clear of the ticks.
 - Spec tables: re-import the template's tables and change only input cells (Ø, L, qty) by text — editing formula cells makes AutoCAD drop neighbouring formulas.
 
