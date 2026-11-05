@@ -14,6 +14,9 @@ User decisions/corrections:
 - «Біткен жеріне скоба қой» — П-скобы: at the wall top over the vertical bars (Ск, ш.200, legs = lap 61d of that Ø, width 170) and on free ends for the horizontal bars (U / П, Ø = horizontal Ø); edge zones get closed hoops X ш.200 + Шп, as in the analog's plan 1-1 and Ведомость деталей.
 - «Мынаны жақсылап қарап шық — саған арналған аналог, сенікіне қатты ұқсас»: read the analog sheets fully before drawing (positions with two numbers «6;7» = staggered laps, lap dims «730 | 220 / 730 | 140»).
 
+- 05.11 «Вертикальный арматура 2 шт тұр неге… Скобаны да қате қойдың»: (1) a zone on the elevation = its TWO extreme bars only, never duplicates — before redrawing erase every LINE/LWPOLYLINE on диам* layers (old analog bars + earlier runs stacked up to 7×); (2) staggered laps as in the analog: positions «pA;pB», A lap from the slab top, B after a 0.3·L gap, chain «L | 0.3L | L»; same numbers → one number; note only where positions change; (3) П-скоба wraps the wall thickness → on the elevation it is a VERTICAL leg (L = lap) at the extreme bars at the top, not a horizontal line.
+  **Why:** I copied the analog without reading its bar convention; duplicates were invisible until zoomed. **How to apply:** for every wall elevation, zoom the analog at 400 dpi first and count lines per bar on my plot.
+
 Scripts: Obsidian `15_Проекты/ЖК Галакси/Инструменты/` gen_wall_geom.py, gen_wall_opal.py, gen_wall_vert.py, arm/wall_zones.py.
 
 Related: [[galaxy-kzh-scheme]], [[column-rules-template]], [[obsidian-first]]
