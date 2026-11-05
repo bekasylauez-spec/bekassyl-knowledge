@@ -121,7 +121,7 @@ for (a, c), hz in zip(LN['spans'], LN['hz']):
         zt = ztop(z_)
         pl([P(z_, zt - 30), P(z_, zt - h + 30)], 'диам10', 30)
 lowest = min(top0, top1) - h
-ych = YT + KE * (lowest - lvl) - 900
+ych = YT + KE * (lowest - lvl) - 1500
 span_ends = set()
 for a_, c_ in LN['spans']: span_ends.add(round(a_)); span_ends.add(round(c_))
 for (p, q, st, n) in runs_all:
@@ -130,7 +130,7 @@ for (p, q, st, n) in runs_all:
     if q - p < 450:
         xm = X0 + XS0 + KE * ((p + q) / 2 - e0)
         if round(p) in span_ends: tx = [X0 + XS0 + KE * (p - e0) - 330, Y0 + ych + 170]
-        elif round(q) in span_ends: tx = [X0 + XS0 + KE * (q - e0) + 330, Y0 + ych + 170]
+        elif round(q) in span_ends: tx = [X0 + XS0 + KE * (q - e0) + 330, Y0 + ych - 300]
         else: tx = [xm - 600, Y0 + ych - 300]
     dim(P(p, lowest), P(q, lowest), Y0 + ych, False, txt, tx, 1 / KE)
 # axes chain + overall + SPDS axes
@@ -170,7 +170,7 @@ hxx = hz2[len(hz2) // 3] if len(sp2) > 1 else hz2[int(len(hz2) * 0.55)]
 note('Х1(%%C10)', 'см. цепочку', P(hxx, ztop(s2a) - h / 2), [max(P(hxx, 0)[0] + 700, P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 2600), Y0 + YT + KE * (ztop(s2a) - lvl) + 1800])
 note('Ск1(%%C16)', '', P(e1 - 55, ztop(e1) - h / 2), [P(e1, 0)[0] + 900, Y0 + YT + KE * (ztop(e1) - lvl) + 900])
 t = tag(); O.append({'t': 'clone', 'h': SECT, 'tag': t})
-O.append({'t': 'spmove', 'h': t, 'items': [[0] + P(sm, ztop(sm) - h - 120), [1] + P(sm, ztop(sm) + 350)]})
+O.append({'t': 'spmove', 'h': t, 'items': [[0] + [P(sm, 0)[0], P(sm, ztop(sm) - h)[1] - 750], [1] + [P(sm, 0)[0], P(sm, ztop(sm))[1] + 750]]})
 O.append({'t': 'secset', 'h': t, 'word': '1'})
 t = tag(); O.append({'t': 'clone', 'h': T_TTL, 'tag': t})
 ttl = 'Балка %s (%s)' % (MARK, ', '.join('%s шт.' % len(sch['segs']) for _ in [0]))
