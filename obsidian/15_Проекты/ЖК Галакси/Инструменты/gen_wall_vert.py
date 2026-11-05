@@ -58,7 +58,7 @@ def pos_of(d, Lb):
     if k not in POS: POS[k] = len(POS) + 1
     return POS[k]
 NOTE = dict(scale=100, ts=2.5, style='ГОСТ 2.304', arrow='oblique', layer='Размеры')
-last = {}; CLAMP = set()
+last = {}; CLAMP = set(); NY = {}; CH = []
 DIAG = {(round(r['sp'][0][0]), round(r['sp'][0][1])): (r['sp'][1], r['sp'][2]) for r in R if r['t'] == 'LWPOLYLINE' and len(r['sp']) == 3 and r['y0'] > 14000}
 AXES = [9810, 16610, 23060, 29860]
 for s in range(7):
@@ -93,7 +93,7 @@ for s in range(7):
                 last[key] = (pA, pB, d, st)
                 # texts right of the steep part of the opening diagonal and below its flat part (diagonal: b,yb -> b+~950,yb+2180 -> a_next,yt-250)
                 ks = [z[0] for z in zs]
-                ox = AX1 + PIECES[i][1] + ((1700 if len(ks) == 3 else 1500) if i < 3 else 400)
+                ox = AX1 + PIECES[i][1] + (((1700 if i == 2 else 1600) if len(ks) == 3 else 1500) if i < 3 else 400)
                 dg = DIAG.get((round(AX1 + PIECES[i][1]), round(yb)))
                 if dg:                                                       # flat part of the diagonal above the texts
                     (mx, my), (ex, ey) = dg; U = my + (ox - mx) / (ex - mx) * (ey - my) - 400
@@ -103,18 +103,26 @@ for s in range(7):
                 top = max(U, Lo + (n_ - 1) * sp_)                             # never closer than 780 (two text lines + gap)
                 ymid = (top - ks.index(kind) * sp_) if n_ > 1 else (U + Lo) / 2
                 lab = ('%d' % pA) if pB in (None, pA) else ('%d;%d' % (pA, pB))
+                NY.setdefault(i, []).append((ymid, ox + 180 * (len(lab) + 5) + 150))      # shelf y, approx. shelf right end
                 add(t='note', l1='%s(%%%%C%d)' % (lab, d), l2='ш.%d' % st, origin=W(ox, ymid),
                     targets=[W(AX1 + x0 + DX, ymid), W(AX1 + x1 + DX, ymid)], **NOTE)
         # staggered lap chain on the left of the piece: lap | gap | lap
         if s < 6:
             lp = max(lap_at(i, s, z[0]) for z in zs); g = GAP(lp)
-            xa = AX1 + PIECES[i][0]; xd = xa - 150
+            xa = AX1 + min(z[1] for z in zones(i, 0)) + DX; xd = AX1 + (PIECES[i][0] if i else -125) - 350      # analog: chain ~700 outside the wall face, ext. lines from the bar
             ys = [yt, yt + lp, yt + lp + g, yt + 2 * lp + g]
             nk = 3 if ys[3] <= L[7] - TOPC else 1                       # B lap passes the wall top -> B bar runs to the top, only A lap
             for k in range(nk):
                 kw = dict(t='dim', h=TLAP, p1=W(xa, ys[k]), p2=W(xa, ys[k + 1]), dl=W(xd, (ys[k] + ys[k + 1]) / 2), rot=math.pi / 2, txt='')
-                if k == 1: kw['tx'] = W(xd - 330, (ys[k] + ys[k + 1]) / 2)     # short gap: text beside the chain (analog 220|730)
-                add(**kw)
+                if k == 1: kw['tx'] = (i, xd - 260, ys)                          # short gap: text beside the chain (analog 220|730), placed after the notes
+                CH.append(kw)
+for kw in CH:                                                       # gap text: clear of the neighbour piece's notes (their shelves end near this chain)
+    if 'tx' in kw:
+        i, x, ys = kw['tx']; ny = NY.get(i - 1, [])
+        for xx, y in ((x, (ys[1] + ys[2]) / 2), (x - 260, (ys[2] + ys[3]) / 2), (x - 260, max((ys[0] + ys[1]) / 2, ys[0] + 600))):   # beside a lap: one column further out than its text
+            if all(abs(y - v) > 650 or xe < xx - 200 for v, xe in ny): break
+        kw['tx'] = W(xx, y)
+    add(**kw)
 # ---- П caps (Ск) at the wall top: vertical legs at the extreme bars, drawn 20 mm off the top-storey bars ----
 CAPS = {}; CDX = 20 * ((6 + 1) % 2)
 for i in range(4):

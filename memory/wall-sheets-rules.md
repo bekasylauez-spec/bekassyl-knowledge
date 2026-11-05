@@ -17,6 +17,8 @@ User decisions/corrections:
 - 05.11 «Вертикальный арматура 2 шт тұр неге… Скобаны да қате қойдың»: (1) a zone on the elevation = its TWO extreme bars only, never duplicates — before redrawing erase every LINE/LWPOLYLINE on диам* layers (old analog bars + earlier runs stacked up to 7×); (2) staggered laps as in the analog: positions «pA;pB», A lap from the slab top, B after a 0.3·L gap, chain «L | 0.3L | L»; same numbers → one number; note only where positions change; (3) П-скоба wraps the wall thickness → on the elevation it is a VERTICAL leg (L = lap) at the extreme bars at the top, not a horizontal line.
   **Why:** I copied the analog without reading its bar convention; duplicates were invisible until zoomed. **How to apply:** for every wall elevation, zoom the analog at 400 dpi first and count lines per bar on my plot.
 
+- 05.11 «Размерлерді таптамай сыртқа шығар, аналогтағыдай»: lap dim chains go OUTSIDE the wall (dim line ~350 beyond the piece face / cross-wall face, ext. lines from the bar), never on the wall hatch; the short 0.3L text beside the chain, clear of neighbour notes.
+
 Scripts: Obsidian `15_Проекты/ЖК Галакси/Инструменты/` gen_wall_geom.py, gen_wall_opal.py, gen_wall_vert.py, arm/wall_zones.py.
 
 Related: [[galaxy-kzh-scheme]], [[column-rules-template]], [[obsidian-first]]
