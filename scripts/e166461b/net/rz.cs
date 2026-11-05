@@ -329,6 +329,7 @@ namespace GX
             else if (t == "settext")
             {
                 var e = tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                try { if (e.HasFields) e.RemoveField(); } catch { }        // a field (e.g. «= top leg») would overwrite the new text
                 if (e is MText) ((MText)e).Contents = S(m, "s", ""); else if (e is DBText) ((DBText)e).TextString = S(m, "s", "");
                 if (Has(m, "w") && e is MText) ((MText)e).Width = D(m["w"]);
             }

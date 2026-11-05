@@ -1410,6 +1410,47 @@ namespace AB
                 }
                 log.AppendLine("clonexf " + S(m, "pre", "") + " " + sbm);
             }
+            else if (t == "axisinfo")
+            {
+                IList w = L(m["win"]);
+                var ms = (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
+                var lst = new List<ObjectId>(); foreach (ObjectId oid in ms) if (oid.ObjectClass.DxfName == "SPDSCONSTRUCTIONLINE") lst.Add(oid);
+                foreach (var oid in lst)
+                {
+                    var e = (Entity)tr.GetObject(oid, OpenMode.ForRead);
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
+                    var a = MGet(oid) as McAxisEntity; if (a == null) continue;
+                    string vals = "";
+                    try { foreach (var mk in a.Axis.Methods.Markers) vals += mk.Value + ","; } catch (System.Exception ex) { vals = "!" + ex.Message; }
+                    log.AppendLine("AX " + e.Handle + " " + vals);
+                }
+            }
+            else if (t == "axisval")
+            {
+                var a = MGet(H(db, S(m, "h", ""))) as McAxisEntity;
+                foreach (var mk in a.Axis.Methods.Markers) mk.Value = S(m, "val", "");
+                a.DbEntity.Update();
+            }
+            else if (t == "disassoc")
+            {
+                // drop dimension associativity (ACAD_DIMASSOC) for dims inside win so later geometry edits do not drag them
+                IList w = L(m["win"]); int n = 0;
+                var ms = (BlockTableRecord)tr.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
+                foreach (ObjectId oid in ms)
+                {
+                    var d = tr.GetObject(oid, OpenMode.ForRead) as Dimension; if (d == null) continue;
+                    Extents3d x; try { x = d.GeometricExtents; } catch { continue; }
+                    if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
+                    if (d.ExtensionDictionary.IsNull) continue;
+                    var dic = (DBDictionary)tr.GetObject(d.ExtensionDictionary, OpenMode.ForRead);
+                    if (!dic.Contains("ACAD_DIMASSOC")) continue;
+                    var aid = dic.GetAt("ACAD_DIMASSOC"); dic.UpgradeOpen(); dic.Remove(aid);
+                    try { tr.GetObject(aid, OpenMode.ForWrite).Erase(); } catch { }
+                    n++;
+                }
+                log.AppendLine("disassoc " + n);
+            }
             else if (t == "lnset")
             {
                 var l = (Line)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);

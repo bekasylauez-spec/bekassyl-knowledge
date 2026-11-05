@@ -7,7 +7,12 @@ def run(ops, name='ops', wait=900):
     p = os.path.join(S, 'ops', name + '.json')
     json.dump(ops, open(p, 'w', encoding='utf-8'), ensure_ascii=False)
     r = subprocess.run(['powershell', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(S, 'net', 'job.ps1'), '-Ops', p, '-Wait', str(wait)], capture_output=True)
-    return r.stdout.decode('utf-8', 'replace') + r.stderr.decode('utf-8', 'replace')
+    out = r.stdout.decode('utf-8', 'replace') + r.stderr.decode('utf-8', 'replace')
+    try:
+        out += '\n' + open(os.path.join(os.environ['TEMP'], 'ab_log.txt'), encoding='utf-8').read()
+    except Exception:
+        pass
+    return out
 
 
 def tagmap():
