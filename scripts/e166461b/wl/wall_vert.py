@@ -45,10 +45,13 @@ def make_zones(a, b, el, er, dL, dR, dm, sm):
     inner = pos[(1 if el else 0):(len(pos) - 1 if er else len(pos))]
     zs.insert(1 if el else 0, ('M', inner[0], inner[-1], dm, sm, inner, segs))
     return zs
+TOP = lambda i: CFG.get('PTOP', {}).get(i, G[-1][1])                    # top level index of piece i
 REQ = []
 for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, CFG.get('LENDS', ENDS))):     # LENDS: free ends as seen in the LIRA cells (mirrored pieces)
     row = []
     for gi_, (g0, g1) in enumerate(G):
+        if gi_ == len(G) - 1: g1 = TOP(i)
+        if gi_ == 0 and CFG.get('PIECES0') and CFG['PIECES0'][i] is None: row.append(None); continue
         if gi_ == 0 and CFG.get('PIECES0'):                            # basement pieces differ (e.g. a full wall below the openings)
             (la, lb), (el, er) = CFG['LIRA0'][i], CFG['ENDS0'][i]
         else:
@@ -66,9 +69,10 @@ for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, CFG.get('LEND
 # one Ø per group for all edge zones and one (Ø, step) for all middle zones (fewer positions, as in the analog)
 D = [[None] * 4 for _ in range(NP)]
 for g in range(4):
-    de = max([x for i in range(NP) for x in REQ[i][g][:2] if x] or [12])
-    dm, sm = max([REQ[i][g][2:] for i in range(NP)], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
+    de = max([x for i in range(NP) if REQ[i][g] for x in REQ[i][g][:2] if x] or [12])
+    dm, sm = max([REQ[i][g][2:] for i in range(NP) if REQ[i][g]], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
     for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)):
+        if g == 0 and CFG.get('PIECES0') and CFG['PIECES0'][i] is None: D[i][g] = []; continue
         if g == 0 and CFG.get('PIECES0'): (a, b), (el, er) = CFG['PIECES0'][i], CFG['ENDS0'][i]
         D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
         if g == 0 and CFG.get('ONE0'): D[i][g] = make_zones(CFG['ONE0'][0], CFG['ONE0'][1], False, False, de, de, dm, sm) if i == 0 else []
@@ -128,12 +132,12 @@ def run(go=False):
         d = zone(i, g, kind)[3]; dn = zone(i, g + 1, kind)[3]
         return LAP(max(d, dn))
     CH = []
-    ZM = CFG.get('NOTE_MODE') == 'zone'; ZQ = []; VB = []; PT = []      # PT: placed text boxes / shelves (wall x, sheet-rel y)
+    ZM = CFG.get('NOTE_MODE') == 'zone'; ZQ = []; VB = []; PT = []; CHB = []      # PT: placed text boxes / shelves (wall x, sheet-rel y)
     DG = [[(p[0] - AX1, p[1]) for p in r['sp']] for r in R if r['t'] == 'LWPOLYLINE' and len(r['sp']) == 3 and r['y0'] > L[0] - 1100]
     AXR = [a_ - AX1 for a_ in CFG['AXES']]
     for i in range(NP):                                                  # Ск legs at the top (drawn later): obstacles for the notes
         for z in D[i][3]:
-            for x in (z[1] - 20, z[2] + 20): VB.append((x, L[-1] - TOPC - LAP(z[3]), L[-1] - TOPC))
+            for x in (z[1] - 20, z[2] + 20): VB.append((x, L[TOP(i)] - TOPC - LAP(z[3]), L[TOP(i)] - TOPC))
     def segx(p, q, y):                                                   # x where segment p-q crosses height y (or None)
         if (p[1] - y) * (q[1] - y) > 0 or p[1] == q[1]: return None
         return p[0] + (y - p[1]) / (q[1] - p[1]) * (q[0] - p[0])
@@ -149,44 +153,61 @@ def run(go=False):
         return False
     def place_zone_notes(gi, Q):
         if gi == 0 and CFG.get('ONE0'): EDGES = [CFG['ONE0'][0] - 50, CFG['ONE0'][1] + 50]
+        elif gi == 0 and CFG.get('PIECES0'): EDGES = [v_ for ab in CFG['PIECES0'] if ab for v_ in ab]
         else: EDGES = [v_ for ab in PIECES for v_ in ab]
         VL = EDGES + CFG.get('VLINES', [])
         XLIM = CFG.get('XLIM', (-1e9, 1e9))
-        for q in sorted(Q, key=lambda q: (q['kind'] == 'M', q['x0'])):
+        def search(q, PT, low):
             t1 = q['l1'].replace('%%C', 'D'); w = max(1305 + 158 * (len(t1) - 6) - 52 * t1.count('1'), 1100)     # measured SPDS note widths (h 2.5, 1:100)
-            ys, ye = q['ys'], q['ye']; ypref = ys + 0.55 * (ye - ys)
-            best = None
             cands = [(q['x0'], 'R')] + [(q['x0'] + 50 * k, 'R') for k in range(1, int((q['x1'] - q['x0']) / 50) + 61)] + [(q['x0'] - 40 - 10 * k, 'L') for k in range(0, 300)]
-            for ox, sd in cands:
-                tx0, tx1 = (ox + 40, ox + w) if sd == 'R' else (ox - w, ox)
-                if tx0 < XLIM[0] or tx1 > XLIM[1]: continue
-                sx0, sx1 = min(ox, q['x0']), max(ox, q['x1'])
-                for y in range(int(ys + 450), int(ye - 449), 50):
-                    by0, by1 = y - 350, y + 350
-                    if any(tx0 - 40 < x_ < tx1 + 40 and b0 < by1 and t0 > by0 and not (x_ == ox and sd == 'R') for x_, b0, t0 in VB): continue
-                    if any(tx0 - 40 < x_ < tx1 + 40 for x_ in VL + AXR): continue
-                    if box_hits_diag(tx0 - 50, by0 - 30, tx1 + 50, by1 + 30) or box_hits_diag(sx0, y - 5, sx1, y + 5): continue
-                    bad = False
-                    for (a0, b0, a1, b1, sy0, sy1, yy0) in PT:
-                        if a0 < tx1 + 120 and tx0 - 120 < a1 and b0 < by1 + 120 and by0 - 120 < b1: bad = True; break     # text / text
-                        if sy0 - 100 < tx1 and tx0 < sy1 + 100 and by0 - 120 < yy0 < by1 + 120: bad = True; break         # other shelf through my text
-                        if sx0 - 100 < a1 and a0 < sx1 + 100 and b0 - 120 < y < b1 + 120: bad = True; break               # my shelf through other text
-                    if bad: continue
-                    ext = max(0, q['x0'] - sx0) + max(0, sx1 - q['x1'])
-                    cr = sum(1 for x_ in AXR if sx0 < x_ < sx1) * 3000 + sum(1 for x_ in VL if sx0 + 1 < x_ < sx1 - 1) * 1500
-                    cr += sum(800 for x_, b0, t0 in VB if sx0 + 5 < x_ < sx1 - 5 and b0 < y < t0 and x_ not in (q['x0'], q['x1']))
-                    c = ext + cr + 0.3 * abs(y - ypref)
-                    if best is None or c < best[0]: best = (c, ox, sd, y, tx0, tx1, sx0, sx1)
-            if best is None:
-                print('NO PLACE', gi, q['i'], q['kind'], q['l1']); continue
-            c, ox, sd, y, tx0, tx1, sx0, sx1 = best
-            PT.append((tx0, y - 350, tx1, y + 350, sx0, sx1, y))
+            best = None
+            for ys, ye in sorted(q['bands'], key=lambda b: b != (q['ys'], q['ye'])):           # preferred storey first, then the others of the group
+                ypref = ys + (0.0 if low else 0.55) * (ye - ys); pen = 0 if (ys, ye) == (q['ys'], q['ye']) else 400
+                for ox, sd in cands:
+                    tx0, tx1 = (ox + 40, ox + w) if sd == 'R' else (ox - w, ox)
+                    if tx0 < XLIM[0] or tx1 > XLIM[1]: continue
+                    sx0, sx1 = min(ox, q['x0']), max(ox, q['x1'])
+                    for y in range(int(ys + 450), int(ye - 449), 50):
+                        by0, by1 = y - 350, y + 350
+                        if any(tx0 - 40 < x_ < tx1 + 40 and b0 < by1 and t0 > by0 and not (x_ == ox and sd == 'R') for x_, b0, t0 in VB): continue
+                        if any(tx0 - 40 < x_ < tx1 + 40 for x_ in VL + AXR): continue
+                        if box_hits_diag(tx0 - 50, by0 - 30, tx1 + 50, by1 + 30) or box_hits_diag(sx0, y - 5, sx1, y + 5): continue
+                        if any(a0 < tx1 and tx0 < a1 and b0 < by1 and by0 < b1 for a0, b0, a1, b1 in CHB): continue          # lap chains
+                        if any(a0 < sx1 and sx0 < a1 and b0 < y < b1 for a0, b0, a1, b1 in CHB): continue
+                        bad = False
+                        for (a0, b0, a1, b1, sy0, sy1, yy0) in PT:
+                            if a0 < tx1 + 120 and tx0 - 120 < a1 and b0 < by1 + 120 and by0 - 120 < b1: bad = True; break     # text / text
+                            if sy0 - 100 < tx1 and tx0 < sy1 + 100 and by0 - 120 < yy0 < by1 + 120: bad = True; break         # other shelf through my text
+                            if sx0 - 100 < a1 and a0 < sx1 + 100 and b0 - 120 < y < b1 + 120: bad = True; break               # my shelf through other text
+                        if bad: continue
+                        ext = max(0, q['x0'] - sx0) + max(0, sx1 - q['x1'])
+                        cr = sum(1 for x_ in AXR if sx0 < x_ < sx1) * 3000 + sum(1 for x_ in VL if sx0 + 1 < x_ < sx1 - 1) * 1500
+                        cr += sum(800 for x_, b0, t0 in VB if sx0 + 5 < x_ < sx1 - 5 and b0 < y < t0 and x_ not in (q['x0'], q['x1']))
+                        c = ext + cr + 0.3 * abs(y - ypref) + pen
+                        if best is None or c < best[0]: best = (c, ox, sd, y, tx0, tx1, sx0, sx1)
+            return best
+        QS = sorted(Q, key=lambda q: (q['kind'] == 'M', q['x0'])); LOW = set()
+        for attempt in range(3):
+            PT0 = list(PT); res = []; fail = set()
+            for q in QS:
+                b_ = search(q, PT0, q['i'] in LOW)
+                if b_ is None: fail.add(q['i']); continue
+                c, ox, sd, y, tx0, tx1, sx0, sx1 = b_
+                PT0.append((tx0, y - 350, tx1, y + 350, sx0, sx1, y)); res.append((q, b_))
+            if not fail or fail <= LOW: break
+            LOW |= fail
+        PT[:] = PT0
+        for q in QS:
+            if q['i'] in fail and not any(r_[0] is q for r_ in res): print('NO PLACE', gi, q['i'], q['kind'], q['l1'])
+        for q, (c, ox, sd, y, tx0, tx1, sx0, sx1) in res:
             note('S1N', q['l1'], q['l2'], [SX + AX1 + ox, SY + y], [[SX + AX1 + q['x0'], SY + y], [SX + AX1 + q['x1'], SY + y]])
             print('note', gi, q['i'], q['kind'], q['l1'], 'org', round(ox), sd, 'y', y, 'cost', round(c))
     for gi, (g0, g1) in enumerate(G):
-        yb, yt = L[g0], L[g1]
         DX = 20 * (gi % 2)
+        g1_ = g1
         for i in range(NP):
+            g1 = TOP(i) if gi == len(G) - 1 else g1_
+            yb, yt = L[g0], L[g1]
             for z in D[i][gi]:
                 kind, x0, x1, d, st = z[:5]
                 lpd = lap_at(i, gi - 1, kind) if gi > 0 else LAP(d)
@@ -206,6 +227,7 @@ def run(go=False):
                 # note in the upper storey of the group (analog), texts right of the zone
                 low = i in CFG.get('NOTE_LOW', [])          # shares the opening with the previous piece's notes: lower storey / lower half
                 ys = L[g0] if (low and g1 - g0 > 1) else L[g1 - 1]; ye = (L[g0 + 1] if (low and g1 - g0 > 1) else L[g1]) - SLAB
+                if ZM and ye - ys < 2400 and g1 - g0 > 1: ys, ye = L[g1 - 2], L[g1 - 1] - SLAB      # short top storey: notes one storey lower
                 if low and g1 - g0 == 1: ye = (ys + ye) / 2 - 100
                 ks = [z[0] for z in D[i][gi]]; n_ = len(ks)
                 side = CFG['NOTE_SIDE'][i] if CFG.get('NOTE_SIDE') else ('R' if ENDS[i][1] else 'L')
@@ -240,7 +262,8 @@ def run(go=False):
                         ops.append(dict(t='spmove', h=h_, items=[[0, SX + n0['pts'][0][0], SY + oy], [1, SX + AX1 + x0 + DX, SY + oy], [2, SX + AX1 + x1 + DX, SY + oy]]))
                         ops.append(dict(t='mcset', h=h_, set={'FirstLine': '%s(%%%%C%d)' % (lab, d), 'SecondLine': 'ш.%d' % st}))
                 elif ZM:
-                    ZQ.append(dict(i=i, kind=kind, x0=x0 + DX, x1=x1 + DX, l1='%s(%%%%C%d)' % (lab, d), l2='ш.%d' % st, ys=ys, ye=ye))
+                    ZQ.append(dict(i=i, kind=kind, x0=x0 + DX, x1=x1 + DX, l1='%s(%%%%C%d)' % (lab, d), l2='ш.%d' % st, ys=ys, ye=ye,
+                                   bands=[(L[s_], L[s_ + 1] - SLAB) for s_ in range(g0, g1)]))
                 else:
                     note('S1N', '%s(%%%%C%d)' % (lab, d), 'ш.%d' % st, [SX + ox, SY + ym], [[SX + AX1 + x0 + DX, SY + ym], [SX + AX1 + x1 + DX, SY + ym]])
             if ZM and i == NP - 1:
@@ -260,6 +283,7 @@ def run(go=False):
                     xa = AX1 + (max(z[2] for z in D[i][0]) if csd == 'R' else min(z[1] for z in D[i][0])) + DX
                     xd = AX1 + (PIECES[i][1] + CFG.get('CHAIN_OFF_R', [350] * NP)[i] if csd == 'R' else PIECES[i][0] - 350)
                 yy = [yt, yt + lp, yt + lp + gp, yt + 2 * lp + gp]
+                CHB.append((xd - AX1 - 750, yt, xd - AX1 + 60, yy[3] + 100) if csd == 'L' else (xd - AX1 - 60, yt, xd - AX1 + 750, yy[3] + 100))
                 for kk in range(3):
                     kw = dict(t='dim', h='WT_DV', p1=W(xa, yy[kk]), p2=W(xa, yy[kk + 1]), dl=W(xd, (yy[kk] + yy[kk + 1]) / 2), rot=math.pi / 2, txt='')
                     ym_ = (yy[kk] + yy[kk + 1]) / 2
@@ -283,24 +307,25 @@ def run(go=False):
         for z in D[i][3]:
             kind, x0, x1, d, st = z[:5]
             if d not in CAPS: CAPS[d] = len(CAPS) + 1 + CFG.get('CK0', 0)
-            yt = L[-1] - TOPC; leg = LAP(d)
+            yt = L[TOP(i)] - TOPC; leg = LAP(d)
             for x in (x0 - 20, x1 + 20):                                   # analog: legs 20 outside the zone's end bars
                 ops.append(dict(t='pl', p=[W(AX1 + x, yt), W(AX1 + x, yt - leg)], layer='диам%d' % d, lw=40))
             tg += [AX1 + x0 - 20, AX1 + x1 + 20]; nums.append(CAPS[d])
             BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=len(z[5])))
         ox = AX1 + PIECES[i][0] + (-300 if ENDS[i][0] else 400)
-        yy = SY + L[-1] - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
+        LT = L[TOP(i)]
+        yy = SY + LT - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
         lab_c = 'Ск' + ';'.join(str(n) for n in sorted(set(nums)))
         if CFG.get('CK_SPLIT') and PIECES[i][1] - PIECES[i][0] > CFG['CK_SPLIT']:      # wide piece: one Ск note at each end, to its two nearest legs
             lg = sorted(tg)
-            note('S1C', lab_c, '', [SX + AX1 + PIECES[i][0] + 400, SY + L[-1] + 450], [[SX + lg[0], yy], [SX + lg[2], yy]])
-            note('S1C', lab_c, '', [SX + AX1 + PIECES[i][1] - 1500, SY + L[-1] + 450], [[SX + lg[-3], yy], [SX + lg[-1], yy]])
+            note('S1C', lab_c, '', [SX + AX1 + PIECES[i][0] + 400, SY + LT + 450], [[SX + lg[0], yy], [SX + lg[2], yy]])
+            note('S1C', lab_c, '', [SX + AX1 + PIECES[i][1] - 1500, SY + LT + 450], [[SX + lg[-3], yy], [SX + lg[-1], yy]])
         elif AN and ANN.get((i, 'C')):
             n0 = ANN[(i, 'C')][0]
             ops.append(dict(t='spmove', h=n0['h'], items=[[1, SX + min(tg), yy], [2, SX + max(tg), yy]]))
             ops.append(dict(t='mcset', h=n0['h'], set={'FirstLine': lab_c, 'SecondLine': ''}))
         else:
-            note('S1C', lab_c, '', [SX + ox, SY + L[-1] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
+            note('S1C', lab_c, '', [SX + ox, SY + LT + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
     # bottom chain (basement): 50 | 100x4 | steps (leftover in the middle) | 100x4 | 50 — as in the analog;
     # texts: inside when they fit, else beside (outward, off the axes); rows chosen greedily so that no two texts overlap
     AXES = CFG['AXES']; CW = 140; TGAP = 120; RY = [L[0] - 1813, L[0] - 2313, L[0] - 2813]
@@ -309,7 +334,8 @@ def run(go=False):
         if CFG.get('ONE0'):
             if i: continue
             a, b = CFG['ONE0']
-        else: a, b = (CFG.get('PIECES0') or PIECES)[i]
+        else: a, b = (CFG.get('PIECES0') or PIECES)[i] or (None, None)
+        if a is None: continue
         segs = [(a, a + 50, 50, 1)] + [sg for z in D[i][0] for sg in z[6]] + [(b - 50, b, 50, 1)]
         for k_, (s0, s1, st, n_) in enumerate(segs):
             txt = ('%dх%d' % (st, n_)) if n_ > 1 else ''

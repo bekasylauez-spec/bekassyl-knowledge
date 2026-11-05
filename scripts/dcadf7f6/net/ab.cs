@@ -75,7 +75,7 @@ namespace AB
             try { var js0 = new JavaScriptSerializer(); var mm = (Dictionary<string, object>)js0.DeserializeObject(File.ReadAllText(mapFile, Encoding.UTF8)); foreach (var kv in mm) map[kv.Key] = kv.Value.ToString(); } catch { }
             var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
             var db = doc.Database;
-            if (!db.Filename.EndsWith("КЖ Аэротенк.dwg", StringComparison.OrdinalIgnoreCase) && !db.Filename.Contains("_abwork"))
+            if (!doc.Name.EndsWith("КЖ Аэротенк.dwg", StringComparison.OrdinalIgnoreCase) && !db.Filename.EndsWith("КЖ Аэротенк.dwg", StringComparison.OrdinalIgnoreCase))
             {
                 // guard: never run ops on any other drawing; close stray documents this instance opened by itself
                 var dmx = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;
@@ -992,6 +992,14 @@ else if (t == "sysvar")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 tb.DeleteColumns(Convert.ToInt32(m["at"]), Convert.ToInt32(m["n"]));
+            }
+            else if (t == "ttext")
+            {
+                // all cells text height = h; every row height = rh (except row 1 = rh1 if given)
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                double th = D(m["th"]);
+                for (int r = 0; r < tb.Rows.Count; r++) for (int c = 0; c < tb.Columns.Count; c++) { try { tb.Cells[r, c].TextHeight = th; } catch { } }
+                if (Has(m, "rh")) for (int r = 0; r < tb.Rows.Count; r++) { try { tb.Rows[r].Height = (r == 1 && Has(m, "rh1")) ? D(m["rh1"]) : D(m["rh"]); } catch { } }
             }
             else if (t == "theight")
             {

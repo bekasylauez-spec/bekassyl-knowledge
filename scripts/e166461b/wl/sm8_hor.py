@@ -1,0 +1,106 @@
+# См-8 horizontal sheet (analog См-9 4.34 hor, remapped by sm8_elev): per storey and piece two straight bars (bottom / top row),
+# Ск at the free ends and at the A/1 corner, Ø per storey from LIRA (plane x = 6800); positions after the vertical ones by (Ø, L);
+# analog notes cloned (pos: text left of its leader; Ск: text inward); step chains right of the wall and in each opening.
+import sys, os, json, math; sys.path.insert(0, 'wl'); from common import *
+from notes import notes
+from rowsplit import rows as ROWS
+SX, SY = 2352600.0, 455939.0; AX1 = 16952.0
+def W(x, y): return [SX + AX1 + x, SY + y]
+L = [27614, 32164, 36214, 39364, 42514, 45664, 48814, 51964, 53714]
+LEV = [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7, 21.45]
+SLAB = 250.0; NS = len(L) - 1
+LAP = lambda d: {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}.get(d, int(math.ceil(61 * d / 10.0) * 10))
+A = lambda d: math.pi * d * d / 400
+CELLS = [c for c in json.load(open('arm/wall_cells.json')) if c['pl'] == ['x', 6800]]
+# pieces per storey: (outline a, b, Ск left, Ск right); bars: free end cover 50, into a cross wall 20 from its far face
+FL = [(-125, 2775, True, True), (6175, 7675, True, False), (15225, 18025, True, False), (20575, 22875, True, False)]
+PCS = {0: [(-125, 7675, True, False), (15225, 18025, True, False), (20575, 22875, True, False)], 7: [(15225, 18025, True, False)]}
+FREE = {2775, 6175, 15225, 20575}
+LIRA = {0: [(0, 8000), (15225, 17600), (20875, 22750)], 7: [(15225, 17600)]}
+LIRAF = [(0, 2775), (6175, 8000), (15225, 17600), (20875, 22750)]
+def hd(s):
+    rng = LIRA.get(s, LIRAF)
+    cs = [c for c in CELLS if LEV[s] - 1e-3 <= c['z0'] < LEV[s + 1] - 1e-3 and any(c['y1'] > a + 1 and c['y0'] < b - 1 for a, b in rng)]
+    if s == 0: cs = [c for c in cs if c['z0'] >= -4.2] or cs
+    req = max(max(c['As'][0], c['As'][1]) for c in cs)
+    return next((d, st) for d, st in ((10, 200), (12, 200), (14, 200), (16, 200), (12, 100), (14, 100), (16, 100), (18, 100)) if A(d) * 1000 / st >= req - 1e-6)
+HD = [hd(s) for s in range(NS)]
+vj = json.load(open('wl/sm8_vert.json', encoding='utf-8'))
+P0 = max(vj['POS'].values()); CK0 = max(int(v) for v in vj['CAPS'].values())
+POS = {}; CKS = {}
+def pos_of(k):
+    if k not in POS: POS[k] = P0 + len(POS) + 1
+    return POS[k]
+def ck_of(d):
+    if d not in CKS: CKS[d] = CK0 + len(CKS) + 1
+    return CKS[d]
+R = listwin(SX, SY, 42000, 59400, None); N = notes(SX, SY, 42000, 59400)
+inE = lambda x: AX1 - 600 < x < AX1 + 23500
+NE = [n for n in N if n['pts'][0][1] > L[0] - 600 and inE(n['pts'][0][0]) and len(n['pts']) == 3]
+# templates: pos note with text left of its leader, Ск notes with text right / left of the leader
+Rh = {r['h']: r for r in R}
+def tside(n):
+    r = Rh.get(n['h']); return 'L' if r and (r['x0'] + r['x1']) / 2 < n['pts'][0][0] else 'R'
+TPL = {}
+for n in NE:
+    k = ('pos' if n['l2'].startswith('ш.') or not n['l1'].startswith('Ск') else 'ck') + tside(n)
+    TPL.setdefault(k, n['h'])
+print('templates', TPL)
+TP = {'pos': TPL.get('posL') or TPL.get('posR'), 'ckL': TPL.get('ckR') or TPL.get('posR'), 'ckR': TPL.get('ckL') or TPL.get('posL')}
+er = [r['h'] for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and r['lay'].lower().startswith('диам') and r['y0'] > L[0] - 100 and inE(r['x0']) and inE(r['x1'])]
+er += [r['h'] for r in R if r['t'] == 'DIMENSION' and r['y0'] > L[0] - 300 and r['x0'] > AX1 - 1500]
+er += [n['h'] for n in NE]
+ops = [dict(t='clone', h=v, base=[0, 0], to=[0, -300000], tag='H8' + k) for k, v in TP.items()]
+ops.append(dict(t='erase', h=sorted(set(er))))
+BARS = []
+def note(tpl, l1, l2, x, ym, y0, y1):
+    tg = 'H8n%d' % len(ops)
+    ops.append(dict(t='clone', h='H8' + tpl, base=[0, 0], to=[0, 0], tag=tg))
+    ops.append(dict(t='spmove', h=tg, items=[[0] + W(x, ym), [1] + W(x, y0), [2] + W(x, y1)]))
+    ops.append(dict(t='mcset', h=tg, set={'FirstLine': l1, 'SecondLine': l2}))
+for s in range(NS):
+    d, st = HD[s]; pos, segs = ROWS(L[s], L[s + 1], st, SLAB); y0, y1 = pos[0], pos[-1]; rows = len(pos)
+    lay = 'диам%d' % d; leg = LAP(d); ym = (y0 + y1) / 2; c = ck_of(d)
+    for k, (a, b, ckl, ckr) in enumerate(PCS.get(s, FL)):
+        fa = a + (50 if a in FREE else 20); fb = b - (50 if b in FREE else 20)
+        Lb = int(round(fb - fa, -1)); p = pos_of((d, Lb))
+        for y in (y0, y1): ops.append(dict(t='pl', p=[W(fa, y), W(fb, y)], layer=lay, lw=40))
+        BARS.append(dict(pos=p, d=d, L=Lb, n=2 * rows, storey=s))
+        xs_ck = []
+        for end, on in (('L', ckl), ('R', ckr)):
+            if not on: continue
+            xa, xb = (fa, fa + leg) if end == 'L' else (fb - leg, fb)
+            ops.append(dict(t='pl', p=[W(xa, y0 + 20), W(xb, y0 + 20)], layer=lay, lw=40))
+            ops.append(dict(t='pl', p=[W(xa, y1 - 20), W(xb, y1 - 20)], layer=lay, lw=40))
+            BARS.append(dict(pos='Ск%d' % c, d=d, L=2 * leg + 170, n=rows, storey=s))
+            xc = (xa + xb) / 2; xs_ck.append(xc)
+            note('ckL' if end == 'L' else 'ckR', 'Ск%d' % c, '(%%%%C%d)' % d, xc, ym + 550, y0 + 20, y1 - 20)
+        w_ = fb - fa                                         # pos note: leader inside the piece, text to its left
+        xp = (fa + fb) / 2 + 600 if w_ > 4000 else (fb - 450 if not ckr else (fa + fb) / 2 + 300)
+        if ckr and w_ <= 4000: xp = fb - leg - 100 - 40 if False else min(fb - leg - 140, fa + leg + 1300)
+        note('pos', str(p), 'ш.%d' % st, xp, ym - 550 if (y1 - y0) > 1500 else ym, y0, y1)
+    # chain right of the wall
+    ch = []
+    if s == 0: ch.append((L[0], y0, ''))
+    for a_, b_, v_, k_ in segs: ch.append((a_, b_, ('%dх%d' % (v_, k_)) if k_ > 1 else ''))
+    ch.append((y1, (L[s + 1] + 50) if s < NS - 1 else L[NS], ''))
+    xr = 22875
+    for a, b, txt in ch:
+        if s == NS - 1:
+            pass
+        kw = dict(t='dim', h='WT_DV', p1=W(xr, a), p2=W(xr, b), dl=W(xr + 2301, (a + b) / 2), rot=math.pi / 2, txt=txt)
+        if b - a < 450: kw['tx'] = W(xr + 2301 + 620, (a + b) / 2)
+        ops.append(kw)
+    if 1 <= s < NS - 1:                                     # chains in the openings at the free ends
+        for xf, dx in ((2775, 1675), (15225, -1200), (20575, -900)):
+            ch = [(L[s], y0, '')] + [(a_, b_, ('%dх%d' % (v_, k_)) if k_ > 1 else '') for a_, b_, v_, k_ in segs] + [(y1, L[s + 1] - SLAB, '')]
+            for a, b, txt in ch:
+                kw = dict(t='dim', h='WT_DV', p1=W(xf, a), p2=W(xf, b), dl=W(xf + dx, (a + b) / 2), rot=math.pi / 2, txt=txt)
+                if b - a < 450: kw['tx'] = W(xf + dx - 150, (a + 520) if a == L[s] else (b - 650))
+                ops.append(kw)
+ops.append(dict(t='erase', h=['H8' + k for k in TP]))
+ops.append(dict(t='save'))
+json.dump(dict(HD=HD, POS={'%d_%d' % k: v for k, v in POS.items()}, CKS={str(k): v for k, v in CKS.items()}, BARS=BARS), open('wl/sm8_hor.json', 'w', encoding='utf-8'), ensure_ascii=False)
+print('HD', HD, 'POS', POS, 'CK', CKS, 'erase', len(er), 'ops', len(ops))
+if '--run' in sys.argv:
+    out = gx.run(ops, 'sm8h'); print([l for l in out.splitlines() if 'ERR' in l or 'done' in l][-8:])

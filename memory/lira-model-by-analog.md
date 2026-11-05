@@ -37,3 +37,10 @@ LIRA text gotchas (2026-11-05, АБК):
 - User rule (2026-11-05): do NOT model the slab on grade (плита по грунту) in LIRA. Its floor, partition and live loads go to the ground; the ground-floor exterior wall load goes on top of the basement wall.
 - ЖБ materials (types/concrete/rebar) transfer between tasks through a *.lmcr file (Ж/Б → Редактировать → save/load icons). Assigning them needs element marking + ✓; plate and bar types are rejected for the wrong element type, so assign per group.
 - Before importing a .txt under an existing task name, move the old Work\<task>.ald away, otherwise its РСУ and other leftovers are offered for import.
+
+LIRA traps (2026-11-05 evening, АБК v3):
+- RSN does not travel with files: copying `Work\<old>.crsn1` to the new task name does nothing (import deletes it, open ignores it). Enter RSN by hand (EN 1990: Вид by keyboard ▼ + Down×(index+1) + Enter; «Доминирующее» * by mouse; «Добавить» for I…VI).
+- The import dialog toggles all «ald - …» items with one checkbox.
+- A selection window that starts on the edge of the «Жесткости и материалы» panel resizes the panel. Close the panel before selecting. Vertical bars: the «||» button in the bottom toolbar («Отметка вертикальных стержней»), then a window.
+- Results to CSV: Железобетон → Документация → Стандартные таблицы, format CSV → `Work\<task>.DOCS\.INV\tblNN.*.csv`. In «Перемещения» the X;Y;Z columns are displacements in mm and UX;UY;UZ are rotations. Bars: AU1..AU4 corner bars, AS1..AS4 intermediate. Plates: AS1/AS2 X bottom/top, AS3/AS4 Y bottom/top.
+- The table window replaces LiraSapr's MainWindowHandle. Close it with WM_CLOSE on that handle.
