@@ -57,7 +57,7 @@ for s in range(7):
         kw = dict(t='dim', h='WT_DV', p1=W(XE, a), p2=W(XE, b), dl=W(XD, (a + b) / 2), rot=math.pi / 2, txt=txt)
         if b - a < 450: kw['tx'] = W(XD + 620, (a + b) / 2)
         ops.append(kw)
-ops.append(dict(t='dimtx', h='140B97', at=W(5461, 28700)))
+# ops.append(dict(t='dimtx', h='140B97', at=W(5461, 28700)))
 ops.append(dict(t='save'))
 json.dump(dict(POS={'%s_%d' % k: v for k, v in POS.items()}, BARS=BARS, LONG=LONG), open('wl/sm1_hor.json', 'w'), ensure_ascii=False)
 print('ops', len(ops), 'erase dims', len(er), POS)

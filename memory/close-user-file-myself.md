@@ -28,3 +28,6 @@ When a rebuilt DWG must replace a file the user has open in AutoCAD, do the clos
 - Never kill the user's AutoCAD process.
 
 Related: [[cad-dedicated-instance]], [[galaxy-kzh-scheme]], [[project-zavod-b109-km]], [[feedback-full-autonomy]]
+
+05.11.2026 (Ақтау «для клауда»): user again: «өзің жапса сұрамай өзің жасай бер» — never ask them to close; do it.
+When COM can't reach the doc (second acad.exe instance: GetActiveObject/ROT give only the other instance, the file moniker flickers in ROT), close it at window level: EnumChildWindows of that acad's main window → MDI child whose title is the dwg name (class Afx:…:b:…) → PostMessage WM_CLOSE → dialog «AutoCAD» «Сохранить изменения в …?» → PostMessage BM_CLICK on «&Да». The file is saved with the user's edits and only that drawing closes. Then rebuild my sheets on the saved file, keep .bak, replace.

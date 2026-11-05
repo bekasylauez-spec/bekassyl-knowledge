@@ -224,23 +224,36 @@ def run(go=False):
             ops.append(dict(t='mcset', h=n0['h'], set={'FirstLine': lab_c, 'SecondLine': ''}))
         else:
             note('S1C', lab_c, '', [SX + ox, SY + L[7] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
-    # bottom chain (basement): 50 | 100x4 | steps (leftover in the middle) | 100x4 | 50 — as in the analog
-    AXES = CFG['AXES']
+    # bottom chain (basement): 50 | 100x4 | steps (leftover in the middle) | 100x4 | 50 — as in the analog;
+    # texts: inside when they fit, else beside (outward, off the axes); rows chosen greedily so that no two texts overlap
+    AXES = CFG['AXES']; CW = 140; TGAP = 120; RY = [L[0] - 1813, L[0] - 2313, L[0] - 2813]
+    items = []
     for i in range(NP):
         a, b = PIECES[i]
         segs = [(a, a + 50, 50, 1)] + [sg for z in D[i][0] for sg in z[6]] + [(b - 50, b, 50, 1)]
         for k_, (s0, s1, st, n_) in enumerate(segs):
             txt = ('%dх%d' % (st, n_)) if n_ > 1 else ''
-            row = k_ % 2
-            ty = L[0] - 1813 - 500 * row
-            kw = dict(t='dim', h='WT_DH', p1=W(AX1 + s0, L[0]), p2=W(AX1 + s1, L[0]), dl=W(AX1 + (s0 + s1) / 2, ty), rot=0, txt=txt)
-            tw = 110 * max(len(txt), len(str(int(s1 - s0)))) / 2 + 150
-            if s1 - s0 < 2 * tw:                       # does not fit: beside, outward, off the axes
-                cx = AX1 + (s1 + tw if (s0 + s1) / 2 > (a + b) / 2 else s0 - tw)
+            w = CW * max(len(txt), len(str(int(round(s1 - s0))))) + 100
+            if s1 - s0 >= w: cx, moved = AX1 + (s0 + s1) / 2, False
+            else:
+                out = (s0 + s1) / 2 > (a + b) / 2
+                cx = AX1 + (s1 + w / 2 + 30 if out else s0 - w / 2 - 30); moved = True
                 for ax_ in AXES:
-                    if abs(cx - ax_) < tw - 50: cx = ax_ + (tw + 50) * (1 if cx >= ax_ else -1)
-                kw['tx'] = W(cx, ty + 60)
-            ops.append(kw)
+                    if abs(cx - ax_) < w / 2 + 40: cx = ax_ + (w / 2 + 60) * (1 if cx >= ax_ else -1)
+            items.append([cx, w, s0, s1, txt, moved])
+    rows = [[] for _ in RY]
+    for it in sorted(items, key=lambda t: t[0]):
+        cx, w = it[0], it[1]
+        r = next((j for j in range(len(RY)) if all(cx + w / 2 + TGAP < c - ww / 2 or cx - w / 2 - TGAP > c + ww / 2 for c, ww in rows[j])), None)
+        if r is None:
+            r = min(range(len(RY)), key=lambda j: max(c + ww / 2 for c, ww in rows[j]))
+            cx = max(c + ww / 2 for c, ww in rows[r]) + TGAP + w / 2; it[5] = True
+        rows[r].append((cx, w))
+        cx0, w, s0, s1, txt, moved = it
+        ty = RY[r]
+        kw = dict(t='dim', h='WT_DH', p1=W(AX1 + s0, L[0]), p2=W(AX1 + s1, L[0]), dl=W(AX1 + (s0 + s1) / 2, ty), rot=0, txt=txt)
+        if moved or cx != cx0: kw['tx'] = W(cx, ty + 60)
+        ops.append(kw)
     ops += [dict(t='erase', h=['S1N', 'S1C']), dict(t='save')]
     json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open(CFG['OUT'], 'w'), ensure_ascii=False)
     print('erase', len(er), 'ops', len(ops), 'positions', len(POS))
