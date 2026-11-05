@@ -647,6 +647,7 @@ namespace AB
                     var d = tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite) as Dimension; if (d == null) continue;
                     if (Has(m, "lfac")) d.Dimlfac = D(m["lfac"]);
                     if (Has(m, "dscale")) d.Dimscale = D(m["dscale"]);
+                    if (Has(m, "tmove")) d.Dimtmove = Convert.ToInt32(m["tmove"]);
                 }
             }
             else if (t == "movegrp")
@@ -1225,6 +1226,7 @@ namespace AB
                         for (int i = 0; i < pl.Count; i++) pc.Add(MP(pl[i]));
                         sv.Points = pc;
                     }
+                    if (Has(m, "get")) { var sb2 = new StringBuilder("SECPTS " + S(m, "h", "")); foreach (var q in sv.Points) sb2.Append("	" + q.X.ToString("0.0", IC) + "," + q.Y.ToString("0.0", IC)); log.AppendLine(sb2.ToString()); return; }
                     if (Has(m, "word")) sv.Word = S(m, "word", "1");
                     if (Has(m, "dir")) sv.Dir = Convert.ToInt32(m["dir"]);
                     sv.DbEntity.Update();

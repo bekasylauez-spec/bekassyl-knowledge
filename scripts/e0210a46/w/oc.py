@@ -61,7 +61,21 @@ def add_geo(pid, ents):
             if s.strip(): texts.append((pid, p, s))
 
 ptype = {}
+NOPLOT_L = set()
+for _l in doc.layers:
+    try:
+        if _l.dxf.get('plot', 1) == 0 or _l.is_off() or _l.is_frozen(): NOPLOT_L.add(_l.dxf.name)
+    except Exception: pass
+NOPLOT = set()
 for e in msp:
+    try:
+        if e.dxf.layer in NOPLOT_L: NOPLOT.add(e.dxf.handle)
+    except Exception: pass
+import os as _os
+_np = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'noplot.txt')
+if _os.path.exists(_np): NOPLOT |= set(open(_np).read().split())
+for e in msp:
+    if e.dxf.handle in NOPLOT: continue
     t = e.dxftype(); pid = e.dxf.handle; ptype[pid] = t
     if t in ('HATCH', 'INSERT', 'CIRCLE', 'ARC', 'ACAD_TABLE', 'POINT'): continue
     try: lay = e.dxf.layer
@@ -86,6 +100,7 @@ if GEOM:
     GS, GT = {}, {}
     for ln in open(GEOM, encoding='utf-8-sig'):
         f = ln.rstrip('\r\n').split('|')
+        if len(f) > 1 and f[1] in NOPLOT: continue
         if f[0] == 'S':
             ptype[f[1]] = f[2]; a_, b_ = (float(f[3]), float(f[4])), (float(f[5]), float(f[6]))
             if a_ != b_: GS.setdefault(f[1], []).append((a_, b_))
@@ -110,8 +125,12 @@ if GEOM:
                 if len(side) >= 2: rects.append(((x0, y0, x1, y1), {i, j, side[0], side[1]}))
         for bb, txt in GT.get(pid_, []):
             w, h = bb[2] - bb[0], bb[3] - bb[1]; fit = None
+            best_ = None
             for (x0, y0, x1, y1), ids in rects:
-                if abs((x1 - x0) - w) < 0.35 * w + 150 and abs((y1 - y0) - h) < h and not (ids & used): fit = ((x0, y0, x1, y1), ids); break
+                if abs((x1 - x0) - w) < 0.35 * w + 150 and abs((y1 - y0) - h) < h and not (ids & used):
+                    sc_ = abs((x1 - x0) - w) + abs((y1 - y0) - h)     # best-fitting frame, not the first (knot ellipse box is also a rectangle)
+                    if best_ is None or sc_ < best_[0]: best_ = (sc_, ((x0, y0, x1, y1), ids))
+            if best_: fit = best_[1]
             if fit:
                 used |= fit[1]; m = 0.4 * ((fit[0][3] - fit[0][1]) - h)
                 texts.append((pid_, _box(fit[0][0] + m, fit[0][1] + m, fit[0][2] - m, fit[0][3] - m), txt))
