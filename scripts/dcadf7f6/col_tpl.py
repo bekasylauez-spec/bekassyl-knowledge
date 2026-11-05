@@ -98,8 +98,9 @@ def build(X0, Y0, c, num):
             seg = [(pos[0], '50'), (pos[n1], '100х%d' % n1), (pos[n1 + nm], ('200х%d' % k200) + (('+%d' % rr[0]) if rr else '')), (pos[-1], '100х%d' % n3)]
         else:
             seg = [(pos[0], '50'), (pos[-1], '100х%d' % (len(pos) - 1))]
+        if i > 0: seg[0] = (seg[0][0], '')               # node: one dim from the last hoop below to the first hoop above
         for zz, tt in seg: chainp.append(lo + zz); chaint.append(tt)
-        chainp += [hi, Ls[i + 1]]; chaint += ['50', '%d' % hbs[i]]
+        if i == len(Ls) - 2: chainp += [hi, Ls[i + 1]]; chaint += ['50', '%d' % hbs[i]]
         zone_mid.append(lo + (pos[n1] + pos[n1 + nm]) / 2 if nm else lo + (pos[0] + pos[-1]) / 2)
     for i in range(len(chainp) - 1):
         if chainp[i + 1] - chainp[i] < 1: continue

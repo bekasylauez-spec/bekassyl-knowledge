@@ -17,7 +17,7 @@ def build(X0, Y0):
     W = walls_geom()
     outline(unary_union(W + pil), PX, PY, layer=L_THIN, **HID)
     for c in COLS_IN + COLS_PAV: outline(col_sq(c), PX, PY, layer=L_THIN, **HID)
-    for c in COLS_TOP: outline(col_sq(c, 400), PX, PY, layer=L_THIN, **HID)
+    for c in COLS_TOP: outline(col_sq(c, 500), PX, PY, layer=L_THIN, **HID)
     # beams under Пм-1 (hidden), clipped by walls
     wall_u = unary_union(W + pil + [col_sq(c) for c in COLS_IN])
     b1 = unary_union([box(*bar_rect(b, 350)) for b in BM1])
@@ -25,7 +25,7 @@ def build(X0, Y0):
     outline(b1.difference(wall_u), PX, PY, layer=L_THIN, **HID)
     outline(b2.difference(wall_u), PX, PY, layer=L_THIN, **HID)
     # Рм-1 350x500 between pavilion columns (+4.950): hidden under Пм-2, visible in the opening
-    rm = unary_union([box(*bar_rect(b, 350)) for b in RM1]).difference(unary_union([col_sq(c) for c in COLS_PAV] + [col_sq(c, 400) for c in COLS_TOP]))
+    rm = unary_union([box(*bar_rect(b, 350)) for b in RM1]).difference(unary_union([col_sq(c) for c in COLS_PAV] + [col_sq(c, 500) for c in COLS_TOP]))
     slabs = unary_union([box(*r) for r in PM2])
     outline(rm.intersection(slabs), PX, PY, layer=L_THIN, **HID)
     outline(rm.difference(slabs), PX, PY)
@@ -52,7 +52,7 @@ def build(X0, Y0):
                 if mk == 'Рм-9': ym = 9800
                 N(mk, (c + bw / 2, ym))
     for (x, y) in COLS_TOP:
-        N('Км-4', (x + 200, y - 200) if y in (13810, 24700) else (x + 200, y + 200), (400, -400) if y in (13810, 24700) else (400, 400))
+        N('Км-2', (x + 250, y - 250) if y in (13810, 24700) else (x + 250, y + 250), (400, -400) if y in (13810, 24700) else (400, 400))
     plev('+3,500', (PX + 26800, PY + 9300))
     plev('+4,950', (PX + 3400, PY + 4200))
     plev('+4,950', (PX + 3400, PY + 17000))
@@ -66,10 +66,10 @@ def build(X0, Y0):
             (5, 2, 'Ригели:')]
     r = 6
     for mk, bw, bh, segs in RIGS:
-        rows += [(r, 0, mk), (r, 1, 'лист 6.1'), (r, 2, 'Ригель %s %dх%d(h)' % (mk, bw, bh)), (r, 10, str(len(segs)))]; r += 1
+        rows += [(r, 0, mk), (r, 1, 'лист 6.%d' % (r - 5)), (r, 2, 'Ригель %s %dх%d(h)' % (mk, bw, bh)), (r, 10, str(len(segs)))]; r += 1
     rows += [(r, 0, ''), (r, 1, ''), (r, 2, 'Колонны:'), (r, 10, '')]; r += 1
-    rows += [(r, 0, 'Км-4'), (r, 1, 'лист 4.1'), (r, 2, 'Колонна Км-4 400х400'), (r, 10, '5')]
-    op(t='trows', h=tb, mode='ins', at=11, **{'from': 10}, n=5)
+    rows += [(r, 0, 'Км-2'), (r, 1, 'лист 4.2'), (r, 2, 'Колонна Км-2 (верх, 500х500)'), (r, 10, '5')]
+    op(t='trows', h=tb, mode='ins', at=11, **{'from': 10}, n=6)
     op(t='tset', h=tb, cells=[[r, c, v] for r, c, v in rows])
     s.notes(['Общие указания см. лист 1.1.', 'Данный лист читать совместно с листами 2.1, 2.3.',
              'Ригели Рм-1...Рм-5 и плиту Пм-1, ригели Рм-6...Рм-9 и плиту Пм-2 бетонировать совместно; высота ригелей дана с учетом толщины плиты.',

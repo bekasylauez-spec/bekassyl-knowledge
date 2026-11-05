@@ -44,3 +44,5 @@ LIRA traps (2026-11-05 evening, АБК v3):
 - A selection window that starts on the edge of the «Жесткости и материалы» panel resizes the panel. Close the panel before selecting. Vertical bars: the «||» button in the bottom toolbar («Отметка вертикальных стержней»), then a window.
 - Results to CSV: Железобетон → Документация → Стандартные таблицы, format CSV → `Work\<task>.DOCS\.INV\tblNN.*.csv`. In «Перемещения» the X;Y;Z columns are displacements in mm and UX;UY;UZ are rotations. Bars: AU1..AU4 corner bars, AS1..AS4 intermediate. Plates: AS1/AS2 X bottom/top, AS3/AS4 Y bottom/top.
 - The table window replaces LiraSapr's MainWindowHandle. Close it with WM_CLOSE on that handle.
+
+Column check rule (2026-11-05, АБК v3): never judge column rebar by total ΣAs from LIRA (AU1..4 + AS1..4). LIRA lumps steel into the corners. Check per face (2 corners + middle) or run a fiber N–My–Mz check (`АБК\Расчет\col_check.py`: EC2 5.8.9(4) Bresler, MRd by fiber, RSN forces from «Усилия от РСН» CSV tbl04.22_1, columns N;MX;MY;QZ;MZ;QY in t, t·m). Under one-axis seismic, 12Ø28 in 500×500 failed (η 1.20) although 73.9 > ΣAs 68.

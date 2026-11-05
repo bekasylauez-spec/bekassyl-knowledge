@@ -51,7 +51,8 @@ Z_RM1_BOT = 4450
 RIGS = [  # mark, b, h, segments
     ('Рм-1', 350, 700, [b for b in BM1 if b[0] == 'Y']),
     ('Рм-2', 350, 700, [b for b in BM1 if b[0] == 'X']),
-    ('Рм-3', 300, 650, [b for b in BM2 if b[2] == 0 and b[3] == 24700]),
+    ('Рм-3', 300, 650, [b for b in BM2 if b[2] == 0 and b[3] == 24700 and b[1] != 41000]),
+    ('Рм-3.1', 300, 650, [b for b in BM2 if b[1] == 41000]),
     ('Рм-4', 300, 650, [b for b in BM2 if b[1] == 8700]),
     ('Рм-5', 300, 650, [b for b in BM2 if b[1] == 37800]),
     ('Рм-6', 350, 500, [b for b in RM1 if b[0] == 'Y']),
