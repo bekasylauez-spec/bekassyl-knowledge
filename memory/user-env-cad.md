@@ -13,3 +13,5 @@ metadata:
 - In accoreconsole, entities freshly created by EXPLODE are mis-selected by ssget W/C — test them by their DXF points. SPDS proxies block WBLOCK → use erase-rest + SAVEAS + UNDO Back.
 - Revit 2025, Dynamo 3.0.3 (CPython3). No system Python; embedded Python 3.9 can be extracted from DynamoForRevit\Python.Included.dll resources for syntax checks.
 Related: [[revit-kzh-oformlenie]]
+
+- 05.11.2026 (BEKA-1): accoreconsole started from Bash (`timeout ... accoreconsole.exe /s x.scr`) hung on «Команда:» and did nothing. Working: PowerShell `Start-Process ... -NoNewWindow -PassThru -RedirectStandardOutput`, script written with CRLF (`[IO.File]::WriteAllText(..., [Text.Encoding]::Default)`). `_-PLOT _N <layout> "" "DWG To PDF.pc3" file _N _Y` plots every layout of an album in one script.
