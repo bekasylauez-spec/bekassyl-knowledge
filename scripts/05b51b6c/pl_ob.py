@@ -119,14 +119,14 @@ def sheetinfo(win):
     return dict(E=E, V=V, H=H, hd=hd, vd=vd, keep=keep, title=title, stamp=stamp, table=table)
 
 
-def setup_axes(o, si, XS, YS, EB, EL, chain_y, over_y, left_x=(None, None)):
+def setup_axes(o, si, XS, YS, EB, EL, chain_y, over_y, left_x=(None, None), ytop=None, xright=None):
     """move the analog SPDS axes and axis chains of a plan sheet to the new grid; surplus ones erased"""
     V, H = si['V'], si['H']
     for i, e in enumerate(V):
-        if i < len(XS): o.add({'t': 'axis', 'h': e['h'], 's': [XS[i], YS[-1]], 'e': [XS[i], EB], 'val': str(i + 1)})
+        if i < len(XS): o.add({'t': 'axis', 'h': e['h'], 's': [XS[i], YS[-1] if ytop is None else ytop], 'e': [XS[i], EB], 'val': str(i + 1)})
         else: o.add({'t': 'erase', 'h': [e['h']]})
     for j, e in enumerate(H):
-        if j < len(YS): o.add({'t': 'axis', 'h': e['h'], 's': [XS[-1], YS[j]], 'e': [EL, YS[j]]})
+        if j < len(YS): o.add({'t': 'axis', 'h': e['h'], 's': [XS[-1] if xright is None else xright, YS[j]], 'e': [EL, YS[j]]})
         else: o.add({'t': 'erase', 'h': [e['h']]})
     hd = si['hd']
     Lx = lambda e: abs(e['pts'][1][0] - e['pts'][0][0])
