@@ -56,6 +56,8 @@
 - [House 3D = web brochure](house-3d-web-format.md) — «үй 3Д» = three.js артефакт рендерлермен, Revit емес
 - [Қабырға қалыңдығын ауыстыру](plan-wall-rethickness.md) — аудан сақтап қайта жоспарлау: аймақтық карталар, тексерістер
 
+- [Opus + субагенттер](model-delegation-setup.md) — Opus басқарады, haiku/sonnet агенттер; usage_report.py графигі
+
 ## Екі комп, синхрон
 - [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.107) D:\РАБОЧКА = сервер, BEKA-2 (.133) сілтеме арқылы; BEKA-2-де жеке D:\Бекасыл КЖ КМ
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (junction/symlink; R--\memory → junction, claude-shared.ps1); ортақ ережелер ~/.claude/CLAUDE.md блогында (tools/CLAUDE.global.md); өзгеріс келесі чатта көрінеді
