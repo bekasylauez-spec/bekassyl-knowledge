@@ -1,0 +1,6 @@
+(setq e (handent "1B3986"))
+(princ (strcat "\nENT=" (vl-princ-to-string e)))
+(setq n0 (entlast))
+(command "_.COPY" e "" "0,0" "126000,0")
+(princ (strcat "\nLAST=" (vl-princ-to-string (entlast)) " SAME=" (if (eq n0 (entlast)) "Y" "N")))
+(command "_.QSAVE")

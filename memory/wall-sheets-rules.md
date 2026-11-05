@@ -19,6 +19,9 @@ User decisions/corrections:
 
 - 05.11 «Размерлерді таптамай сыртқа шығар, аналогтағыдай»: lap dim chains go OUTSIDE the wall (dim line ~350 beyond the piece face / cross-wall face, ext. lines from the bar), never on the wall hatch; the short 0.3L text beside the chain, clear of neighbour notes.
 
+- 05.11 (later) «Стенаны қайта жасаймыз… мыналарды переделка жасап размерлерін созу керек болса созып есептеп шық»: walls are made by REWORKING the analog sheets (import whole sheet into the main DWG so the stamp is ours, explode, drop missing pieces, stretch with op pmap/stretch, then recompute reinforcement in the analog's zones), not generated from scratch. Mapping of our marks to analog sheets: Obsidian «КЖ — ход работ» 05.11 (9).
+  **Why:** the user wants the analog's look kept exactly; my generated sheets drifted from it. **How to apply:** every wall/sheet type: import analog sheet → stretch → recalc; new separate DWG gets the analog's stamp style, so work in the main DWG.
+
 Scripts: Obsidian `15_Проекты/ЖК Галакси/Инструменты/` gen_wall_geom.py, gen_wall_opal.py, gen_wall_vert.py, arm/wall_zones.py.
 
 Related: [[galaxy-kzh-scheme]], [[column-rules-template]], [[obsidian-first]]

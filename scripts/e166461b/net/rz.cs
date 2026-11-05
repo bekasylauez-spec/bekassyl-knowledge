@@ -885,7 +885,16 @@ namespace GX
                 foreach (ObjectId id in ms)
                 {
                     var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
-                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    Extents3d x;
+                    try { x = e.GeometricExtents; }
+                    catch
+                    {
+                        // no extents (some SPDS proxies): report by the first stretch point so imports do not miss them
+                        var pn = new Point3dCollection(); try { e.GetStretchPoints(pn); } catch { }
+                        if (pn.Count > 0 && pn[0].X >= D(w[0]) && pn[0].X <= D(w[2]) && pn[0].Y >= D(w[1]) && pn[0].Y <= D(w[3]))
+                            log.AppendLine("N\t" + id.ObjectClass.DxfName + "\t" + e.Handle + "\t" + e.Layer + "\t" + pn[0].X.ToString("0", IC) + "," + pn[0].Y.ToString("0", IC));
+                        continue;
+                    }
                     if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
                     var sb = new StringBuilder("L\t" + id.ObjectClass.DxfName + "\t" + e.Handle + "\t" + e.Layer + "\tE" + x.MinPoint.X.ToString("0", IC) + "," + x.MinPoint.Y.ToString("0", IC) + "," + x.MaxPoint.X.ToString("0", IC) + "," + x.MaxPoint.Y.ToString("0", IC));
                     var pc = new Point3dCollection(); try { e.GetStretchPoints(pc); } catch { }
@@ -1201,6 +1210,93 @@ namespace GX
                 var nid = new ObjectId(ne.ID.ToOldIdPtr());
                 string tg = S(m, "tag", null);
                 if (tg != null) { var ee = tr.GetObject(nid, OpenMode.ForRead) as Entity; if (ee != null) map[tg] = ee.Handle.ToString(); }
+            }
+            else if (t == "pmap")
+            {
+                // piecewise-linear remap of every stretch point inside win along x (or y): pairs [[from,to],...] sorted
+                var w = L(m["win"]); double wx0 = D(w[0]), wy0 = D(w[1]), wx1 = D(w[2]), wy1 = D(w[3]);
+                bool ax = S(m, "axis", "x") == "x";
+                var pr = new List<double[]>(); foreach (var q in L(m["pairs"])) { var a = L(q); pr.Add(new double[] { D(a[0]), D(a[1]) }); }
+                Func<double, double> f = v =>
+                {
+                    if (v <= pr[0][0]) return v + pr[0][1] - pr[0][0];
+                    for (int i = 1; i < pr.Count; i++)
+                        if (v <= pr[i][0]) { double k = (v - pr[i - 1][0]) / (pr[i][0] - pr[i - 1][0]); return pr[i - 1][1] + k * (pr[i][1] - pr[i - 1][1]); }
+                    return v + pr[pr.Count - 1][1] - pr[pr.Count - 1][0];
+                };
+                Func<Point3d, bool> inW = q => q.X >= wx0 && q.X <= wx1 && q.Y >= wy0 && q.Y <= wy1;
+                int nm = 0, ns = 0, nf = 0;
+                var ms = MS(db, tr);
+                var ids = new List<ObjectId>(); foreach (ObjectId id in ms) ids.Add(id);
+                foreach (var id in ids)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MaxPoint.X < wx0 || x.MinPoint.X > wx1 || x.MaxPoint.Y < wy0 || x.MinPoint.Y > wy1) continue;
+                    try
+                    {
+                        var pc = new Point3dCollection(); e.GetStretchPoints(pc);
+                        if (pc.Count == 0) continue;
+                        var dl = new double[pc.Count]; bool any = false, same = true; int nin = 0;
+                        for (int i = 0; i < pc.Count; i++)
+                        {
+                            if (!inW(pc[i])) { dl[i] = double.NaN; same = false; continue; }
+                            nin++;
+                            double v = ax ? pc[i].X : pc[i].Y; dl[i] = f(v) - v;
+                            if (Math.Abs(dl[i]) > 0.01) any = true;
+                            if (i > 0 && !double.IsNaN(dl[0]) && Math.Abs(dl[i] - dl[0]) > 0.01) same = false;
+                        }
+                        if (!any) continue;
+                        e.UpgradeOpen();
+                        bool inside = x.MinPoint.X >= wx0 && x.MaxPoint.X <= wx1 && x.MinPoint.Y >= wy0 && x.MaxPoint.Y <= wy1;
+                        if (same && nin == pc.Count && (inside || pc.Count == 1 || e is Dimension || e is Hatch || e is Polyline || e is Line))
+                        { e.TransformBy(Matrix3d.Displacement(ax ? new Vector3d(dl[0], 0, 0) : new Vector3d(0, dl[0], 0))); nm++; }
+                        else if (same && nin == pc.Count && !(e is Curve) && !(e is Dimension))
+                        { e.TransformBy(Matrix3d.Displacement(ax ? new Vector3d(dl[0], 0, 0) : new Vector3d(0, dl[0], 0))); nm++; }
+                        else
+                        {
+                            for (int i = 0; i < pc.Count; i++)
+                            {
+                                if (double.IsNaN(dl[i]) || Math.Abs(dl[i]) < 0.01) continue;
+                                var ic = new IntegerCollection(); ic.Add(i);
+                                e.MoveStretchPointsAt(ic, ax ? new Vector3d(dl[i], 0, 0) : new Vector3d(0, dl[i], 0));
+                            }
+                            ns++;
+                        }
+                    }
+                    catch (System.Exception ex) { nf++; log.AppendLine("pmap fail " + e.Handle + " " + e.GetType().Name + " " + ex.Message); }
+                }
+                log.AppendLine("pmap moved " + nm + " remapped " + ns + " failed " + nf);
+            }
+            else if (t == "stretch")
+            {
+                // like STRETCH with a crossing window: stretch points inside win move by d; entities wholly inside move
+                var w = L(m["win"]); double wx0 = D(w[0]), wy0 = D(w[1]), wx1 = D(w[2]), wy1 = D(w[3]);
+                var dv = L(m["d"]); var vec = new Vector3d(D(dv[0]), D(dv[1]), 0);
+                Func<Point3d, bool> inW = q => q.X >= wx0 && q.X <= wx1 && q.Y >= wy0 && q.Y <= wy1;
+                int nm = 0, ns = 0, nf = 0;
+                var ms = MS(db, tr);
+                var ids = new List<ObjectId>(); foreach (ObjectId id in ms) ids.Add(id);
+                foreach (var id in ids)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MaxPoint.X < wx0 || x.MinPoint.X > wx1 || x.MaxPoint.Y < wy0 || x.MinPoint.Y > wy1) continue;
+                    try
+                    {
+                        if (x.MinPoint.X >= wx0 && x.MaxPoint.X <= wx1 && x.MinPoint.Y >= wy0 && x.MaxPoint.Y <= wy1)
+                        { e.UpgradeOpen(); e.TransformBy(Matrix3d.Displacement(vec)); nm++; continue; }
+                        var pc = new Point3dCollection(); e.GetStretchPoints(pc);
+                        var idx = new IntegerCollection(); bool all = pc.Count > 0;
+                        for (int i = 0; i < pc.Count; i++) { if (inW(pc[i])) idx.Add(i); else all = false; }
+                        if (idx.Count == 0) continue;
+                        e.UpgradeOpen();
+                        if (all) { e.TransformBy(Matrix3d.Displacement(vec)); nm++; }
+                        else { e.MoveStretchPointsAt(idx, vec); ns++; }
+                    }
+                    catch (System.Exception ex) { nf++; log.AppendLine("stretch fail " + e.Handle + " " + e.GetType().Name + " " + ex.Message); }
+                }
+                log.AppendLine("stretch moved " + nm + " stretched " + ns + " failed " + nf);
             }
             else if (t == "cmd")
             {
