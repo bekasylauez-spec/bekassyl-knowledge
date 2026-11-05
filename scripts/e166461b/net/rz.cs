@@ -852,6 +852,15 @@ namespace GX
                 string mode = S(m, "mode", "del"); int at = Convert.ToInt32(m["at"]), n = Convert.ToInt32(m["n"]);
                 if (mode == "del") tb.DeleteRows(at, n); else tb.InsertRowsAndInherit(at, Convert.ToInt32(m["from"]), n);
             }
+            else if (t == "explode")
+            {
+                // explode a block reference into model space (keeps layers); tag new entities with prefix
+                var br = (BlockReference)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var col = new DBObjectCollection(); br.Explode(col);
+                var ms = MS(db, tr); int n = 0; string pre = S(m, "pre", null);
+                foreach (DBObject o in col) { var en = o as Entity; if (en == null) continue; ms.AppendEntity(en); tr.AddNewlyCreatedDBObject(en, true); if (pre != null) map[pre + n] = en.Handle.ToString(); n++; }
+                br.Erase(); log.AppendLine("explode " + n);
+            }
             else if (t == "tcols")
             {
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
