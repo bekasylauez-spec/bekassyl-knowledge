@@ -336,6 +336,33 @@ namespace AB
                 var dv = L(m["d"]);
                 foreach (var h in L(m["h"])) ((Entity)tr.GetObject(H(db, h.ToString()), OpenMode.ForWrite)).TransformBy(Matrix3d.Displacement(new Vector3d(D(dv[0]), D(dv[1]), 0)));
             }
+            else if (t == "txtrep")
+            {
+                // replace substrings in MTEXT/TEXT/table cells/dimension overrides inside win: pairs [[old,new],...]
+                var w = L(m["win"]); var prs = L(m["pairs"]); int n = 0;
+                var ms = MS(db, tr); var ids = new List<ObjectId>(); foreach (ObjectId id in ms) ids.Add(id);
+                Func<string, string> rep = s0 => { var s = s0; foreach (var q in prs) { var a = L(q); s = s.Replace(a[0].ToString(), a[1].ToString()); } return s; };
+                foreach (var id in ids)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    Extents3d x; try { x = e.GeometricExtents; } catch { continue; }
+                    if (x.MinPoint.X < D(w[0]) || x.MaxPoint.X > D(w[2]) || x.MinPoint.Y < D(w[1]) || x.MaxPoint.Y > D(w[3])) continue;
+                    if (e is MText) { var mt = (MText)e; var s = rep(mt.Contents); if (s != mt.Contents) { e.UpgradeOpen(); mt.Contents = s; n++; } }
+                    else if (e is DBText) { var dt = (DBText)e; var s = rep(dt.TextString); if (s != dt.TextString) { e.UpgradeOpen(); dt.TextString = s; n++; } }
+                    else if (e is Dimension) { var dm = (Dimension)e; var s = rep(dm.DimensionText ?? ""); if (s != (dm.DimensionText ?? "")) { e.UpgradeOpen(); dm.DimensionText = s; n++; } }
+                    else if (e is Table)
+                    {
+                        var tb = (Table)e; bool up = false;
+                        for (int r = 0; r < tb.Rows.Count; r++) for (int c = 0; c < tb.Columns.Count; c++)
+                        {
+                            string s0; try { s0 = tb.Cells[r, c].TextString; } catch { continue; }
+                            if (string.IsNullOrEmpty(s0)) continue;
+                            var s = rep(s0); if (s != s0) { if (!up) { e.UpgradeOpen(); up = true; } tb.Cells[r, c].TextString = s; n++; }
+                        }
+                    }
+                }
+                log.AppendLine("txtrep " + n);
+            }
             else if (t == "settext")
             {
                 var e = tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
@@ -1517,6 +1544,47 @@ namespace AB
                 var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
                 db.SaveAs(doc.Name, true, DwgVersion.Current, doc.Database.SecurityParameters);
                 log.AppendLine("saved " + doc.Name);
+            }
+            else if (t == "medialist")
+            {
+                var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                var lo = (Layout)tr.GetObject(ld.GetAt(S(m, "layout", "1.1")), OpenMode.ForWrite);
+                var psv = PlotSettingsValidator.Current;
+                psv.SetPlotConfigurationName(lo, S(m, "dev", "DWG To PDF.pc3"), null);
+                psv.RefreshLists(lo);
+                foreach (var nm in psv.GetCanonicalMediaNameList(lo)) log.AppendLine("MEDIA	" + nm + "	" + psv.GetLocaleMediaName(lo, nm));
+            }
+            else if (t == "vpset")
+            {
+                // layout -> plot device/media, viewport shows model window win at 1:scale, paper-space origin at 0,0
+                var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                var lo = (Layout)tr.GetObject(ld.GetAt(S(m, "layout", "")), OpenMode.ForWrite);
+                var psv = PlotSettingsValidator.Current;
+                Action<string, Action> stp = (nm, a) => { try { a(); } catch (System.Exception ex) { log.AppendLine("vpset step " + nm + ": " + ex.Message); } };
+                stp("cfg", () => psv.SetPlotConfigurationName(lo, S(m, "dev", "DWG To PDF.pc3"), S(m, "media", "")));
+                stp("refresh", () => psv.RefreshLists(lo));
+                stp("units", () => psv.SetPlotPaperUnits(lo, PlotPaperUnit.Millimeters));
+                stp("rot", () => psv.SetPlotRotation(lo, Has(m, "rot") ? (PlotRotation)Convert.ToInt32(m["rot"]) : PlotRotation.Degrees000));
+                stp("type", () => psv.SetPlotType(lo, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout));
+                stp("std", () => psv.SetUseStandardScale(lo, true));
+                stp("scale", () => psv.SetStdScaleType(lo, StdScaleType.StdScale1To1));
+                stp("center", () => psv.SetPlotCentered(lo, false));
+                stp("origin", () => psv.SetPlotOrigin(lo, new Point2d(0, 0)));
+                stp("ctb", () => psv.SetCurrentStyleSheet(lo, S(m, "ctb", "monochrome.ctb")));
+                var w = L(m["win"]); double sc = D(m["scale"]);
+                double W = (D(w[2]) - D(w[0])) / sc, Hh = (D(w[3]) - D(w[1])) / sc;
+                var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                Viewport vp = null;
+                foreach (ObjectId id in btr) { var v = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (v != null && v.Number != 1 && vp == null) vp = v; }
+                if (vp == null) { log.AppendLine("vpset: no viewport " + lo.LayoutName); return; }
+                vp.UpgradeOpen();
+                vp.ViewDirection = Vector3d.ZAxis; vp.TwistAngle = 0; vp.ViewTarget = Point3d.Origin;
+                vp.CenterPoint = new Point3d(W / 2, Hh / 2, 0); vp.Width = W; vp.Height = Hh;
+                vp.ViewCenter = new Point2d((D(w[0]) + D(w[2])) / 2, (D(w[1]) + D(w[3])) / 2);
+                vp.ViewHeight = D(w[3]) - D(w[1]);
+                vp.CustomScale = 1.0 / sc;
+                vp.Locked = true;
+                log.AppendLine("vpset " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " " + lo.CanonicalMediaName);
             }
             else if (t == "layouts")
             {

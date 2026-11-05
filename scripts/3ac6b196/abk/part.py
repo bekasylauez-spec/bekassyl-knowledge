@@ -26,13 +26,21 @@ def pairs(S):
             if g < gmin: continue
             lo, hi = max(a[1], b[1]), min(a[2], b[2])
             if hi - lo > 150: res.append(((a[0] + b[0]) / 2, lo, hi, g))
-    # merge collinear overlapping
+    # merge collinear overlapping: cluster by coordinate (<15 mm), then merge intervals inside a cluster
     res.sort()
+    clusters = []
+    for r in res:
+        if clusters and abs(clusters[-1][-1][0] - r[0]) < 15: clusters[-1].append(r)
+        else: clusters.append([r])
     mg = []
-    for c, lo, hi, g in res:
-        if mg and abs(mg[-1][0] - c) < 15 and lo <= mg[-1][2] + 5:
-            mg[-1][2] = max(mg[-1][2], hi)
-        else: mg.append([c, lo, hi, g])
+    for cl in clusters:
+        cl.sort(key=lambda t: t[1]); cur = None
+        for c, lo, hi, g in cl:
+            if cur and lo <= cur[2] + 5: cur[2] = max(cur[2], hi)
+            else:
+                if cur: mg.append(cur)
+                cur = [c, lo, hi, g]
+        mg.append(cur)
     return mg
 out = {'H': pairs(H), 'V': pairs(V)}
 json.dump(out, open(sys.argv[6], 'w'), indent=0)
