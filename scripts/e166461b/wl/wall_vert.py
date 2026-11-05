@@ -23,45 +23,48 @@ KX = ('x0', 'x1') if CFG['PLANE'][0] == 'y' else ('y0', 'y1')
 LEV = [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7]
 v = lambda c: max(c['As'][2], c['As'][3])
 
-def design():
-    """D[i][g] = list of zones (kind, x0, x1, d, step) in scheme x"""
-    D = []
-    for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, ENDS)):
-        row = []
-        for g0, g1 in G:
-            cs = [c for c in CELLS if max(LEV[g0], CFG.get('ZMIN', -99)) - 1e-3 <= c['z0'] < LEV[g1] - 1e-3 and c[KX[1]] > la + 1 and c[KX[0]] < lb - 1]
-            xs = sorted(set(c[KX[0]] for c in cs))
-            colL = [c for c in cs if c[KX[0]] == xs[0]]; colR = [c for c in cs if c[KX[0]] == xs[-1]]
-            mid = [c for c in cs if (not el or c[KX[0]] != xs[0]) and (not er or c[KX[0]] != xs[-1])] or cs
-            zs = []; lo, hi = a + 50, b - 50
-            if el:
-                req = max(v(c) for c in colL); d = next(d for d in DS if A(d) * 10 >= req - 1e-6)
-                zs.append(('L', a + 50, a + EDGE, d, 100)); lo = a + EDGE + 100
-            if er:
-                req = max(v(c) for c in colR); d = next(d for d in DS if A(d) * 10 >= req - 1e-6)
-                zs.append(('R', b - EDGE, b - 50, d, 100)); hi = b - EDGE - 100
-            req = max([v(c) for c in mid] + [0])
-            md, ms = next((d, s) for d, s in ((12, 200), (14, 200), (16, 200), (12, 100), (14, 100), (16, 100), (18, 100), (20, 100), (22, 100), (25, 100)) if A(d) * 1000 / s >= req - 1e-6)
-            n = max(1, int(round((hi - lo) / ms)))
-            zs.insert(1 if el else 0, ('M', lo, lo + n * ms, md, ms))
-            row.append(zs)
-        D.append(row)
-    return D
-D = design()
+def split(lo, hi, st):
+    """bars from lo to hi (both ends included), step st; the leftover (< st) is one space in the middle (analog)"""
+    D_ = hi - lo; n = int(D_ // st + 1e-6); rem = int(round(D_ - n * st))
+    if rem < 5: spaces = [st] * n
+    else: k1 = n // 2; spaces = [st] * k1 + [rem] + [st] * (n - k1)
+    pos = [lo]
+    for sp_ in spaces: pos.append(pos[-1] + sp_)
+    segs = []; x = lo
+    for sp_ in spaces:
+        if segs and segs[-1][2] == sp_: segs[-1] = (segs[-1][0], x + sp_, sp_, segs[-1][3] + 1)
+        else: segs.append((x, x + sp_, sp_, 1))
+        x += sp_
+    return pos, segs
+def make_zones(a, b, el, er, dL, dR, dm, sm):
+    """first and last bar 50 from the faces; edge zones 4 x 100 at free ends; the middle divided by its step (leftover in the middle)"""
+    zs = []; lo, hi = a + 50, b - 50
+    if el: zs.append(('L', a + 50, a + 450, dL, 100, [a + 50 + 100 * k for k in range(5)], [(a + 50, a + 450, 100, 4)])); lo = a + 450
+    if er: zs.append(('R', b - 450, b - 50, dR, 100, [b - 450 + 100 * k for k in range(5)], [(b - 450, b - 50, 100, 4)])); hi = b - 450
+    pos, segs = split(lo, hi, sm)
+    inner = pos[(1 if el else 0):(len(pos) - 1 if er else len(pos))]
+    zs.insert(1 if el else 0, ('M', inner[0], inner[-1], dm, sm, inner, segs))
+    return zs
+REQ = []
+for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, ENDS)):
+    row = []
+    for g0, g1 in G:
+        cs = [c for c in CELLS if max(LEV[g0], CFG.get('ZMIN', -99)) - 1e-3 <= c['z0'] < LEV[g1] - 1e-3 and c[KX[1]] > la + 1 and c[KX[0]] < lb - 1]
+        xs = sorted(set(c[KX[0]] for c in cs))
+        colL = [c for c in cs if c[KX[0]] == xs[0]]; colR = [c for c in cs if c[KX[0]] == xs[-1]]
+        mid = [c for c in cs if (not el or c[KX[0]] != xs[0]) and (not er or c[KX[0]] != xs[-1])] or cs
+        dL = next(d for d in DS if A(d) * 10 >= max(v(c) for c in colL) - 1e-6) if el else None
+        dR = next(d for d in DS if A(d) * 10 >= max(v(c) for c in colR) - 1e-6) if er else None
+        req = max([v(c) for c in mid] + [0])
+        dm, sm = next((d, s) for d, s in ((12, 200), (14, 200), (16, 200), (12, 100), (14, 100), (16, 100), (18, 100), (20, 100), (22, 100), (25, 100)) if A(d) * 1000 / s >= req - 1e-6)
+        row.append((dL, dR, dm, sm))
+    REQ.append(row)
 # one Ø per group for all edge zones and one (Ø, step) for all middle zones (fewer positions, as in the analog)
+D = [[None] * 4 for _ in range(NP)]
 for g in range(4):
-    de = max([z[3] for i in range(NP) for z in D[i][g] if z[0] != 'M'] or [12])
-    mids = [(z[3], z[4]) for i in range(NP) for z in D[i][g] if z[0] == 'M']
-    dm, sm = max(mids, key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
-    for i in range(NP):
-        new = []
-        for z in D[i][g]:
-            if z[0] == 'M':
-                lo = z[1]; hi = max(zz[2] for zz in D[i][0] if zz[0] == 'M') if False else z[2]
-                n = max(1, int(round((z[2] - z[1]) / sm)))
-                new.append(('M', z[1], z[1] + n * sm, dm, sm))
-            else: new.append((z[0], z[1], z[2], de, 100))
-        D[i][g] = new
+    de = max([x for i in range(NP) for x in REQ[i][g][:2] if x] or [12])
+    dm, sm = max([REQ[i][g][2:] for i in range(NP)], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
+    for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)): D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
 def run(go=False):
     R = listwin(SX, SY, 59400, 42000, None)
     N = notes(SX, SY, 59400, 42000)
@@ -100,9 +103,8 @@ def run(go=False):
         yb, yt = L[g0], L[g1]
         DX = 20 * (gi % 2)
         for i in range(NP):
-            base0 = {z[0]: (z[1], z[2]) for z in D[i][0]}
-            for kind, x0, x1, d, st in D[i][gi]:
-                x0, x1 = base0[kind]                      # bar positions as they start in the basement
+            for z in D[i][gi]:
+                kind, x0, x1, d, st = z[:5]
                 lpd = lap_at(i, gi - 1, kind) if gi > 0 else LAP(d)
                 bA = yb; bB = yb + lpd + GAP(lpd)
                 if gi < 3: lp = lap_at(i, gi, kind); tA = yt + lp; tB = yt + 2 * lp + GAP(lp)
@@ -110,7 +112,7 @@ def run(go=False):
                 LA = int(round(tA - bA, -1)); LB = int(round(tB - bB, -1))
                 pA = pos_of((d, LA))
                 pB = pos_of((d, LB))
-                nb = int(round((x1 - x0) / st)) + 1
+                nb = len(z[5])
                 BARS.append(dict(pos=pA, d=d, L=LA, n=2 * ((nb + 1) // 2)))
                 BARS.append(dict(pos=pB, d=d, L=LB, n=2 * (nb // 2)))
                 lay = 'диам%d' % d
@@ -121,7 +123,7 @@ def run(go=False):
                 ys = L[g0] if (low and g1 - g0 > 1) else L[g1 - 1]; ye = (L[g0 + 1] if (low and g1 - g0 > 1) else L[g1]) - SLAB
                 if low and g1 - g0 == 1: ye = (ys + ye) / 2 - 100
                 ks = [z[0] for z in D[i][gi]]; n_ = len(ks)
-                side = 'R' if ENDS[i][1] else 'L'
+                side = CFG['NOTE_SIDE'][i] if CFG.get('NOTE_SIDE') else ('R' if ENDS[i][1] else 'L')
                 if side == 'R':
                     ox = AX1 + PIECES[i][1] + ((2050 if n_ == 3 else (1800 if CFG.get('CHAIN_SIDE', 'L' * NP)[i] == 'R' else 1500)) if CFG.get('OPEN_R', [True] * NP)[i] else 450)
                     dg = DIAG.get((round(AX1 + PIECES[i][1]), round(ys)))
@@ -164,36 +166,39 @@ def run(go=False):
     CAPS = {}
     for i in range(NP):
         tg = []; nums = []
-        for kind, x0, x1, d, st in D[i][3]:
+        for z in D[i][3]:
+            kind, x0, x1, d, st = z[:5]
             if d not in CAPS: CAPS[d] = len(CAPS) + 1
             yt = L[7] - TOPC; leg = LAP(d)
             for x in (x0, x1):
                 ops.append(dict(t='pl', p=[W(AX1 + x + 20, yt), W(AX1 + x + 20, yt - leg)], layer='диам%d' % d, lw=40))
             tg += [AX1 + x0 + 20, AX1 + x1 + 20]; nums.append(CAPS[d])
-            BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=int(round((x1 - x0) / st)) + 1))
+            BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=len(z[5])))
         ox = AX1 + PIECES[i][0] + (-300 if ENDS[i][0] else 400)
         yy = SY + L[7] - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
         note('S1C', 'Ск' + ';'.join(str(n) for n in sorted(set(nums))), '', [SX + ox, SY + L[7] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
-    # bottom chain: bar positions in the basement
+    # bottom chain (basement): 50 | 100x4 | steps (leftover in the middle) | 100x4 | 50 — as in the analog
     AXES = CFG['AXES']
     for i in range(NP):
-        for kind, x0, x1, d, st in D[i][0]:
-            n_ = round((x1 - x0) / st); txt = ('%dх%d' % (st, n_)) if n_ > 1 else ''
-            tw = 110 * len(txt) / 2 + 150
-            tx = AX1 + (x0 + x1) / 2
-            if kind == 'L': tx = AX1 + x0 - tw
-            if kind == 'R': tx = AX1 + x1 + tw
-            if kind == 'M':
-                for c in (AX1 + (x0 + x1) / 2, AX1 + x1 + tw, AX1 + x0 - tw):
-                    fits = c != AX1 + (x0 + x1) / 2 or (x1 - x0) > 2 * tw
-                    if fits and not any(abs(c - a) < tw - 100 for a in AXES): tx = c; break
-            ty = L[0] - 1813 if kind != 'M' else L[0] - 2513
-            ops.append(dict(t='dim', h='WT_DH', p1=W(AX1 + x0, L[0]), p2=W(AX1 + x1, L[0]), dl=W(AX1 + (x0 + x1) / 2, ty), rot=0, txt=txt, tx=W(tx, ty + 60)))
+        a, b = PIECES[i]
+        segs = [(a, a + 50, 50, 1)] + [sg for z in D[i][0] for sg in z[6]] + [(b - 50, b, 50, 1)]
+        for k_, (s0, s1, st, n_) in enumerate(segs):
+            txt = ('%dх%d' % (st, n_)) if n_ > 1 else ''
+            row = k_ % 2
+            ty = L[0] - 1813 - 500 * row
+            kw = dict(t='dim', h='WT_DH', p1=W(AX1 + s0, L[0]), p2=W(AX1 + s1, L[0]), dl=W(AX1 + (s0 + s1) / 2, ty), rot=0, txt=txt)
+            tw = 110 * max(len(txt), len(str(int(s1 - s0)))) / 2 + 150
+            if s1 - s0 < 2 * tw:                       # does not fit: beside, outward, off the axes
+                cx = AX1 + (s1 + tw if (s0 + s1) / 2 > (a + b) / 2 else s0 - tw)
+                for ax_ in AXES:
+                    if abs(cx - ax_) < tw - 50: cx = ax_ + (tw + 50) * (1 if cx >= ax_ else -1)
+                kw['tx'] = W(cx, ty + 60)
+            ops.append(kw)
     ops += [dict(t='erase', h=['S1N', 'S1C']), dict(t='save')]
     json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open(CFG['OUT'], 'w'), ensure_ascii=False)
     print('erase', len(er), 'ops', len(ops), 'positions', len(POS))
     for i in range(NP):
-        for g in range(4): print('P%d G%d' % (i + 1, g), [(z[0], z[3], z[4]) for z in D[i][g]])
+        for g in range(4): print('P%d G%d' % (i + 1, g), [(z[0], z[3], z[4], len(z[5]), z[1], z[2]) for z in D[i][g]])
     if go:
         out = gx.run(ops, 'wv')
         print([l for l in out.splitlines() if 'ERR' in l or 'done' in l or 'fail' in l][-8:])
