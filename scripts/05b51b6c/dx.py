@@ -8,7 +8,7 @@ if not os.path.exists('w/live.pkl') or os.path.getmtime('w/live.pkl')<os.path.ge
         try: bb=bbox.extents([e],fast=True,cache=c)
         except Exception: continue
         if not bb.has_data: continue
-        info=dict(h=e.dxf.handle,t=e.dxftype(),lay=e.dxf.get('layer',''),bb=(bb.extmin.x,bb.extmin.y,bb.extmax.x,bb.extmax.y))
+        info=dict(h=e.dxf.handle,t=e.dxftype(),lay=(e.dxf.layer if e.dxf.hasattr('layer') else ''),bb=(bb.extmin.x,bb.extmin.y,bb.extmax.x,bb.extmax.y))
         t=e.dxftype()
         if t=='TEXT': info['s']=e.dxf.text; info['ht']=e.dxf.height; info['p']=tuple(e.dxf.insert)[:2]
         elif t=='MTEXT': info['s']=e.plain_text(); info['ht']=e.dxf.char_height; info['p']=tuple(e.dxf.insert)[:2]
