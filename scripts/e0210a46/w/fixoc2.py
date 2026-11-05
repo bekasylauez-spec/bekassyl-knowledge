@@ -123,8 +123,10 @@ for name, (x0, y0, x1, y1) in sheets.items():
                 else:
                     for k in (0, 0.5, 1.0, 1.5, 2.0):
                         cands.append((tB + g + w / 2 + k * w, sc_)); cands.append((tA - g - w / 2 - k * w, sc_))
-                    for tt in (tB + g + w / 2, tA - g - w / 2, (tA + tB) / 2, tB + w, tA - w, tB + 1.6 * w, tA - 1.6 * w):
-                        for j in (1.3, 2.4, -1.3, -2.4):
+                    WIDE = __import__('os').environ.get('WIDE')
+                    tts = (tB + g + w / 2, tA - g - w / 2, (tA + tB) / 2, tB + w, tA - w, tB + 1.6 * w, tA - 1.6 * w) + ((tB + 2.2 * w, tA - 2.2 * w, tB + 3 * w, tA - 3 * w, tB + 0.3 * w, tB + 0.4 * w, tA - 0.3 * w, tA - 0.4 * w, tB, tA) if WIDE else ())
+                    for tt in tts:
+                        for j in ((1.3, 2.4, -1.3, -2.4) + ((3.4, -3.4, 4.5, -4.5) if WIDE else ())):
                             cands.append((tt, sc_ + out * j * hgt))
                 for tt, ss in cands:
                     dx = (tt - tc) * ux + (ss - sc_) * nx; dy = (tt - tc) * uy + (ss - sc_) * ny
