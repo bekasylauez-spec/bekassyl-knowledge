@@ -183,10 +183,11 @@ for name, (x0, y0, x1, y1) in sheets.items():
         if not W.intersects(st): continue
         for pl, ls in L:
             if pl == ps or (ptype.get(pl) in ('SPDSCONSTRUCTIONLINE', 'SPDSSECTION') and ls.length > 1000): continue
+            if ptype.get(ps) == 'SPDSCONSTRUCTIONLINE' and ptype.get(pl) == 'DIMENSION': continue   # an axis may pass through dims
             if st.crosses(ls) or (st.intersects(ls) and st.intersection(ls).length > 1):
                 found.append(('ЗНАК РАЗРЕЗА/ЛИНИЯ', '|'.join(ptexts.get(ps, []))+'#'+ps, pl, st.centroid))
     # every text inside the inner frame (20 mm left, 5 mm elsewhere) and off the stamp (185 x 55 mm, bottom right)
-    SC = {'2.3': 50, '3.7': 25}.get(name, 100); m5, m20 = 5 * SC, 20 * SC
+    SC = {'2.3': 50, '3.7': 25}.get(name, max(1, round((x1 - x0) / 594))); m5, m20 = 5 * SC, 20 * SC
     inner = box(x0 + m20, y0 + m5, x1 - m5, y1 - m5); stamp = box(x1 - m5 - 185 * SC, y0 + m5, x1 - m5, y0 + m5 + 55 * SC)
     for p_, poly, s_ in T:
         if ptype.get(p_, '') in ('SPDSFORMAT',): continue
