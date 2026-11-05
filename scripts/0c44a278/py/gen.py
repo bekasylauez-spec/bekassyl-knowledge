@@ -301,54 +301,93 @@ def dop_sheet(sh, zones, face, pos):
             if dirn == 'X': ops.append({'t': 'lineset', 'h': bt, 's': sh.T(s, c), 'e': sh.T(e, c), 'layer': lay, 'laylike': 'ф14_арм'})
             else: ops.append({'t': 'lineset', 'h': bt, 's': sh.T(c, s), 'e': sh.T(c, e), 'layer': lay, 'laylike': 'ф14_арм'})
         L = e - s
-        if dirn == 'X':
-            # length dim above the last bar or below the first bar
-            cands = [(c1, c1 + 350), (c0, c0 - 350)]
-            for cb, cd in cands:
-                tr = text_rect(*sh.T((s + e) / 2, cd + (180 if cd > cb else -180)), str(int(L)))
-                if free(sh, tr): break
-            else:
-                cb, cd = c1, c1 + 700; tr = text_rect(*sh.T((s + e) / 2, cd + 180), str(int(L)))
-            ops.append({'t': 'dim', 'h': tp('dimLenH'), 'p1': sh.T(s, cb), 'p2': sh.T(e, cb), 'dl': sh.T(e, cd), 'rot': 0}); occupy(sh, tr)
-            if n > 2:
-                txt = '200х%d' % (n - 1)
-                cands = [(e, e + 350), (s, s - 350)]
-                for xb, xd in cands:
-                    tr = text_rect(*sh.T(xd + (180 if xd > xb else -180), (c0 + c1) / 2), txt, horiz=False)
-                    if free(sh, tr): break
-                ops.append({'t': 'dim', 'h': tp('dimCrossV'), 'p1': sh.T(xb, c0), 'p2': sh.T(xb, c1), 'dl': sh.T(xd, c1), 'rot': math.pi / 2, 'txt': txt}); occupy(sh, tr)
-            # mark
-            xl = s + min(0.33 * L, 900); ym = (c0 + c1) / 2
-            for frac in (0.33, 0.5, 0.66, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
-                xl = s + frac * L
-                ty = ym if c1 - c0 >= 900 else c0 - 500
-                tr = text_rect(*sh.T(xl - 200, ty), str(p))
-                if free(sh, tr): break
-            arr = [sh.T(xl, c0)] + ([sh.T(xl, c1)] if n > 1 else [])
-            ops.append({'t': 'ml', 'h': tp('mlX'), 'base': anchor('mlX'), 'to': sh.T(xl, ty), 'text': str(p), 'arrows': arr}); occupy(sh, tr)
-        else:
-            cands = [(c0, c0 - 350), (c1, c1 + 350)]
-            for cb, cd in cands:
-                tr = text_rect(*sh.T(cd + (180 if cd > cb else -180), (s + e) / 2), str(int(L)), horiz=False)
-                if free(sh, tr): break
-            else:
-                cb, cd = c0, c0 - 700; tr = text_rect(*sh.T(cd - 180, (s + e) / 2), str(int(L)), horiz=False)
-            ops.append({'t': 'dim', 'h': tp('dimLenV'), 'p1': sh.T(cb, s), 'p2': sh.T(cb, e), 'dl': sh.T(cd, e), 'rot': math.pi / 2}); occupy(sh, tr)
-            if n > 2:
-                txt = '200х%d' % (n - 1)
-                cands = [(e, e + 350), (s, s - 350)]
-                for yb, yd in cands:
-                    tr = text_rect(*sh.T((c0 + c1) / 2, yd + (180 if yd > yb else -180)), txt)
-                    if free(sh, tr): break
-                ops.append({'t': 'dim', 'h': tp('dimCrossH'), 'p1': sh.T(c0, yb), 'p2': sh.T(c1, yb), 'dl': sh.T(c1, yd), 'rot': 0, 'txt': txt}); occupy(sh, tr)
-            xm = (c0 + c1) / 2
-            for frac in (0.35, 0.5, 0.65, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
-                yl = s + frac * L
-                tx = xm if c1 - c0 >= 900 else c0 - 550
-                tr = text_rect(*sh.T(tx, yl + 300), str(p))
-                if free(sh, tr): break
-            arr = [sh.T(c0, yl)] + ([sh.T(c1, yl)] if n > 1 else [])
-            ops.append({'t': 'ml', 'h': tp('mlY'), 'base': anchor('mlY'), 'to': sh.T(tx, yl), 'text': str(p), 'arrows': arr}); occupy(sh, tr)
+        ops += place_zone(sh, dirn, c0, c1, s, e, n, p)
+    return ops
+
+
+def overlap_area(sh, r, pad=40):
+    t = 0.0
+    for q in sh.occ:
+        w = min(r[2], q[2]) + pad - max(r[0], q[0]); h = min(r[3], q[3]) + pad - max(r[1], q[1])
+        if w > 0 and h > 0: t += w * h
+    return t
+
+def pick(sh, cands):
+    for c in cands:
+        if free(sh, c[0]): return c
+    return min(cands, key=lambda c: overlap_area(sh, c[0]))
+
+def place_zone(sh, dirn, c0, c1, s, e, n, p):
+    """length dim, cross dim '200хN' and the position mark of one zone, each in a free spot.
+    Dim text may slide only along its dim line (rule: move text along the line only)."""
+    ops = []; L = e - s; Ls = str(int(L))
+    fr = (0.5, 0.3, 0.7, 0.15, 0.85)
+    if dirn == 'X':
+        cands = []
+        for off in (350, 700, 1050):
+            for cb, cd in ((c1, c1 + off), (c0, c0 - off)):
+                for f in fr:
+                    tx = s + f * L; ty = cd + (180 if cd > cb else -180)
+                    cands.append((text_rect(*sh.T(tx, ty), Ls), cb, cd, f, tx, ty))
+        r, cb, cd, f, tx, ty = pick(sh, cands)
+        op = {'t': 'dim', 'h': tp('dimLenH'), 'p1': sh.T(s, cb), 'p2': sh.T(e, cb), 'dl': sh.T(e, cd), 'rot': 0}
+        if f != 0.5: op['tx'] = sh.T(tx, cd + (90 if cd > cb else -270))
+        ops.append(op); occupy(sh, r)
+        occupy(sh, tuple(sh.T(s, min(cb, cd)) + sh.T(e, max(cb, cd))))
+        if n > 2:
+            txt = '200х%d' % (n - 1); W = c1 - c0; cands = []
+            for off in (350, 700, 1050):
+                for xb, xd in ((e, e + off), (s, s - off)):
+                    for f in fr:
+                        ty = c0 + f * W; tx = xd + (180 if xd > xb else -180)
+                        cands.append((text_rect(*sh.T(tx, ty), txt, horiz=False), xb, xd, f, ty))
+            r, xb, xd, f, ty = pick(sh, cands)
+            op = {'t': 'dim', 'h': tp('dimCrossV'), 'p1': sh.T(xb, c0), 'p2': sh.T(xb, c1), 'dl': sh.T(xd, c1), 'rot': math.pi / 2, 'txt': txt}
+            if f != 0.5: op['tx'] = sh.T(xd - 90, ty)
+            ops.append(op); occupy(sh, r)
+        ym = (c0 + c1) / 2; cands = []
+        for f in (0.33, 0.5, 0.66, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
+            xl = s + f * L
+            ty = ym if c1 - c0 >= 900 else c0 - 500
+            cands.append((text_rect(*sh.T(xl - 200, ty), str(p)), xl, ty))
+            if c1 - c0 >= 900: cands.append((text_rect(*sh.T(xl - 200, c0 - 500), str(p)), xl, c0 - 500))
+            cands.append((text_rect(*sh.T(xl - 200, c1 + 500), str(p)), xl, c1 + 500))
+        r, xl, ty = pick(sh, cands)
+        arr = [sh.T(xl, c0)] + ([sh.T(xl, c1)] if n > 1 else [])
+        ops.append({'t': 'ml', 'h': tp('mlX'), 'base': anchor('mlX'), 'to': sh.T(xl, ty), 'text': str(p), 'arrows': arr}); occupy(sh, r)
+    else:
+        cands = []
+        for off in (350, 700, 1050):
+            for cb, cd in ((c0, c0 - off), (c1, c1 + off)):
+                for f in fr:
+                    ty = s + f * L; tx = cd + (180 if cd > cb else -180)
+                    cands.append((text_rect(*sh.T(tx, ty), Ls, horiz=False), cb, cd, f, ty))
+        r, cb, cd, f, ty = pick(sh, cands)
+        op = {'t': 'dim', 'h': tp('dimLenV'), 'p1': sh.T(cb, s), 'p2': sh.T(cb, e), 'dl': sh.T(cd, e), 'rot': math.pi / 2}
+        if f != 0.5: op['tx'] = sh.T(cd + (270 if cd > cb else -90), ty)
+        ops.append(op); occupy(sh, r)
+        occupy(sh, tuple(sh.T(min(cb, cd), s) + sh.T(max(cb, cd), e)))
+        if n > 2:
+            txt = '200х%d' % (n - 1); W = c1 - c0; cands = []
+            for off in (350, 700, 1050):
+                for yb, yd in ((e, e + off), (s, s - off)):
+                    for f in fr:
+                        tx = c0 + f * W; ty = yd + (180 if yd > yb else -180)
+                        cands.append((text_rect(*sh.T(tx, ty), txt), yb, yd, f, tx))
+            r, yb, yd, f, tx = pick(sh, cands)
+            op = {'t': 'dim', 'h': tp('dimCrossH'), 'p1': sh.T(c0, yb), 'p2': sh.T(c1, yb), 'dl': sh.T(c1, yd), 'rot': 0, 'txt': txt}
+            if f != 0.5: op['tx'] = sh.T(tx, yd + 90)
+            ops.append(op); occupy(sh, r)
+        xm = (c0 + c1) / 2; cands = []
+        for f in (0.35, 0.5, 0.65, 0.2, 0.8, 0.42, 0.58, 0.12, 0.9):
+            yl = s + f * L
+            tx = xm if c1 - c0 >= 900 else c0 - 550
+            cands.append((text_rect(*sh.T(tx, yl + 300), str(p)), tx, yl))
+            if c1 - c0 >= 900: cands.append((text_rect(*sh.T(c0 - 550, yl + 300), str(p)), c0 - 550, yl))
+            cands.append((text_rect(*sh.T(c1 + 550, yl + 300), str(p)), c1 + 550, yl))
+        r, tx, yl = pick(sh, cands)
+        arr = [sh.T(c0, yl)] + ([sh.T(c1, yl)] if n > 1 else [])
+        ops.append({'t': 'ml', 'h': tp('mlY'), 'base': anchor('mlY'), 'to': sh.T(tx, yl), 'text': str(p), 'arrows': arr}); occupy(sh, r)
     return ops
 
 def zone_counts(res, z, pos):
