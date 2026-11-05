@@ -154,6 +154,11 @@ for z in (Z1, Z2):
 for x in AX_X:
     for y in AX_Y:
         for za, zb in ((ZF, Z0), (Z0, Z1), (Z1, Z2)): el(10, 2, [node(x, y, za), node(x, y, zb)], 'col')
+# Бф-1 300x500 на 0.000 (усиление по Y, 05.11): по осям 2-10 (А-Б-В) и по оси Б (1-11); на осях 1, 11 — стенка См-1
+fbeam = []
+for x in AX_X[1:-1]:
+    for j in range(len(Y) - 1): fbeam.append(el(10, 7, [node(x, Y[j], Z0), node(x, Y[j + 1], Z0)], 'fbeam'))
+for i in range(len(X) - 1): fbeam.append(el(10, 7, [node(X[i], 6.0, Z0), node(X[i + 1], 6.0, Z0)], 'fbeam'))
 # стенка См-1 по периметру
 wall = []
 for y in (0.0, 12.0):
@@ -208,7 +213,7 @@ for e, (t, s, ns, tag) in enumerate(els, 1):
     if t in (41, 44):
         q = {1: G_SLAB, 7: G_SLAB, 4: G_WALL, 5: G_PAD}[s]; L(e, 16, 1, (q, 0, 0, 0)); summ[1] += q * area(e)
     else:
-        q = {'col': RO_COL, 'beam': RO_BEAM_DOWN, 'strip': RO_STRIP}[tag]; L(e, 16, 1, (q, 0, 0, 0)); summ[1] += q * blen(e)
+        q = {'col': RO_COL, 'beam': RO_BEAM_DOWN, 'strip': RO_STRIP, 'fbeam': 0.3 * 0.5 * 2.5}[tag]; L(e, 16, 1, (q, 0, 0, 0)); summ[1] += q * blen(e)
 def in_corr(cx, cy): return any(a < cx < b and c < cy < d for a, b, c, d in [(0.0, 60.0, 4.05, 6.0), (42.0, 48.0, 6.0, 6.95)])
 for (z, i, j), e in slab.items():
     A = area(e); cx, cy = (X[i] + X[i + 1]) / 2, (Y[j] + Y[j + 1]) / 2
@@ -335,7 +340,9 @@ o.append('''( 3/
 6 S0 3.06e+006 50 30/
  0 RO 0.375/
  0 Mu 0.2/
-7 GEI 3.06e+006 0.2 0.2 RO 2.5 /
+7 S0 3.06e+006 30 50/
+ 0 RO 0.375/
+ 0 Mu 0.2/
  )''')
 o.append('( 4/\n' + recs(['%.3f %.3f %.3f /' % n for n in nodes], 3) + '\n )')
 o.append('( 5/\n' + recs(['%d 1 2 6 /' % n for n in fnodes]) + '\n )')
