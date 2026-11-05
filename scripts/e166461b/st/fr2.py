@@ -1,5 +1,6 @@
 import ezdxf, sys, json, ezdxf.bbox as BB
-out={}
+import os
+out=json.load(open("frames.json")) if os.path.exists("frames.json") else {}
 for n in sys.argv[1:]:
     d=ezdxf.readfile(n+'.dxf'); m=d.modelspace(); fr=[]
     for e in m.query('ACAD_PROXY_ENTITY'):

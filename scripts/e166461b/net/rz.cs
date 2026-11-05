@@ -568,7 +568,7 @@ namespace GX
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
-                d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]);
+                d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]); d.RecomputeDimensionBlock(true);
             }
             else if (t == "scalegrp")
             {
