@@ -1,6 +1,6 @@
 ---
 name: project-abk-zavod-make
-description: АБК завод (От Маке) КЖ — өз аналогын жаңа Задание осьтеріне келтіру; сечение/арматура аналогтан
+description: АБК завод (От Маке) КЖ — өз аналогын жаңа Задание осьтеріне келтіру; сечение/арматура аналогтан; 05.11 BEKA-2 күйі
 metadata:
   type: project
 ---
@@ -8,6 +8,6 @@ metadata:
 Rule: «жаңадан сызба, тек менікін переделка» — dims from Задание, element sections and rebar exactly as analog.
 **Why:** user wants their own style/solutions reused. **How to apply:** clone analog sheets and stretch/remap to new grid; never invent new sections. Obsidian: `15_Проекты\АБК Завод (Маке)\КЖ АБК — переделка по аналогу.md`. Related: [[cad-clone-analog-stretch]]
 
-05.11.2026 LIRA: new scheme `D:\РАБОЧКА\От Маке\Завод\АБК\Расчет\ABK_zavod.lir` from `gen_abk.py` (same folder): geometry from Задание, loads/seismic (module 61, ag 5.3, soil II, q 3.9) and mass coefficients from the analog `Аналог\Станция очистки - Цех пред обработки.lir`. Partitions of floor 2 placed at their real plan positions (floor-1 partitions are on slab-on-grade). Wall material confirmed by the user (gas block 250 / 100). RSN done 05.11 (EN 1990, normative loads, 22 columns). Still open: torsion cases, footing level −0.800, calculation not run. Details in the Obsidian note above. Related: [[lira-model-by-analog]]
+05.11 LIRA scheme `Расчет\ABK_zavod.lir` (gen_abk.py), open questions in Obsidian note. Related: [[lira-model-by-analog]]
 
-**State 05.11 14:04 (BEKA-1 stopped, BEKA-2 continues):** working file `D:\РАБОЧКА\От Маке\Завод\АБК\КЖ Чертеж АБК.dwg`; new sheets row at y −1749172.3. Done 2.1–2.4, 3.1–3.4, 7.1–7.4, 7.6 (A3x3); 7.7 needs finish; 1.3 redo; rest not started. User remark: «Разрезде выноска қате түзет». Full handoff + tools: `D:\РАБОЧКА\От Маке\Завод\АБК\_Инструменты\ПРОМПТ_BEKA-2.md`.
+**State 05.11 15:30 (BEKA-2):** all 32 sheets rebuilt in the new row of `КЖ Чертеж АБК.dwg`, old analog row deleted, layouts retargeted, specs recalculated. User decisions: stair 150×22, march 250×12; long elements stay on A2 with a break (not A2x4). Open: oc.py TOTAL 1426 to fix, then PDF from layouts. Handoff: `_Инструменты\ПРОМПТ_BEKA-2.md`, tools `_Инструменты\beka2\`.
