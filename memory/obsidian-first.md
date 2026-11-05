@@ -61,3 +61,7 @@ For a new analog, do the same depth of reading: render each sheet, view zoomed t
 - Also GitHub `bekasylauez-spec/bekassyl-knowledge` (public fork) and `idea-statica-notes`.
 
 Related: [[obsidian-log-work]], [[kzh-scheme-karkasa]], [[reservoir-kzh]]
+
+
+**05.11.2026 (Аэротенк) — негізгі ереже, қатаңдатылды.** Мен колонна мен ригельді шаблонды (`Шаблон для Кж.dwg` «Колонна Км-1», «Ригель Рм-1» парақтары) және Obsidian ережелерін (03_Колонны, 04_Ригели, позиция ережелері) қарамай өзімше сыздым, Фм-ге КР-1 каркас қостым. Пайдаланушы: «СЕН ОБСИДИАННАН ҚАЛАЙ ЖАСАЛУЫН ЖАТТАП ОҚЫП ШЫҚ. Қателер өте көп», «Позициялардың ережесін обсидианнан қара. Негізгі ереже ет. соларды көрмеден ешқандай жұмыс жасамасын».
+**How to apply (MANDATORY):** before drawing ANY element: (1) open its Obsidian topic note + `01_Общие правила/Оформление КЖ…` §2 позиции + `02_Фундамент/Оформление листов Фм…` «Правила позиций»; (2) find the user's own template sheet for that element in `Шаблон для Кж.dwg` (also present in every КЖ copy, template row y≈271898) and BUILD FROM IT (copywin → edit); (3) only then draw. Positions: main slab rebar = one pos «1»; доп. numbered by unique Ø+L, sequential across Фм in sheet order 3.3 низ букв. → 3.4 верх букв. → 3.5 низ цифр. → 3.6 верх цифр.; same Ø+L top/bottom = same pos; скобы/фиксаторы/каркасы = letter marks; callout = mark + step only (no Ø). Аэротенк: Фм-1 main Ø16, no КР-1 inside (user 05.11).

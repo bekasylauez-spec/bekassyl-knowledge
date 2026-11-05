@@ -35,12 +35,12 @@ def zone_note(pos, step, z, d, PX, PY, sc=100, layer=L_R20, lab_off=(500, 500), 
     if d == 'X':
         ym = y0 + (y1 - y0) * frac; n = int(round((y1 - y0) / step))
         pl([(PX + x0, PY + ym), (PX + x1, PY + ym)], layer=layer, lw=40)
-        note(pos, 'ш.%d' % step, (PX + (x0 + x1) / 2 + lab_off[0], PY + ym + lab_off[1]), (PX + (x0 + x1) / 2, PY + ym), sc)
+        note(pos, 'ш.%d' % step, (PX + (x0 + x1) / 2 + lab_off[0], PY + ym + lab_off[1]), (PX + (x0 + x1) / 2, PY + ym), sc, arrow='oblique')
         return n + 1, x1 - x0
     else:
         xm = x0 + (x1 - x0) * frac; n = int(round((x1 - x0) / step))
         pl([(PX + xm, PY + y0), (PX + xm, PY + y1)], layer=layer, lw=40)
-        note(pos, 'ш.%d' % step, (PX + xm + lab_off[0], PY + (y0 + y1) / 2 + lab_off[1]), (PX + xm, PY + (y0 + y1) / 2), sc)
+        note(pos, 'ш.%d' % step, (PX + xm + lab_off[0], PY + (y0 + y1) / 2 + lab_off[1]), (PX + xm, PY + (y0 + y1) / 2), sc, arrow='oblique')
         return n + 1, y1 - y0
 
 
@@ -63,72 +63,70 @@ def build31(X0, Y0):
     return s
 
 
+POSL = {1900: '2', 2000: '3', 2400: '4'}     # доп. positions by unique Ø20 + L (rule: same Ø+L top/bottom/both directions = one pos)
+DOPD = 20
+
+
 def build32(X0, Y0):
-    s = Sheet('3.2', 'Схема расположения основной\\Pарматуры фундамента Фм-1', 'Схема расположения основной арматуры фундамента Фм-1 на отм. -4.000', X0, Y0, 'A1')
+    s = Sheet('3.2', 'Схема расположения основной\Pарматуры фундамента Фм-1', 'Схема расположения основной арматуры фундамента Фм-1 на отм. -4.000', X0, Y0, 'A1')
     PX, PY = X0 + 9500, Y0 + 15000
     base(s, PX, PY, walls=False)
     x0, y0, x1, y1 = FM1[0] + EDGE, FM1[1] + EDGE, FM1[2] - EDGE, FM1[3] - EDGE
     yb = 7300; xb = 34600
-    pl([(PX + x0, PY + yb), (PX + x1, PY + yb)], layer=L_R20, lw=40)
-    pl([(PX + xb, PY + y0), (PX + xb, PY + y1)], layer=L_R20, lw=40)
+    pl([(PX + x0, PY + yb), (PX + x1, PY + yb)], layer=L_R16, lw=40)
+    pl([(PX + xb, PY + y0), (PX + xb, PY + y1)], layer=L_R16, lw=40)
     nx = int((y1 - y0) / 200); ny = int((x1 - x0) / 200)
-    note('1', 'ш.200', (PX + 16400, PY + yb + 500), (PX + 16000, PY + yb))
-    note('1', 'ш.200', (PX + xb + 400, PY + 16900), (PX + xb, PY + 16500))
-    # Ск1 at the ends of typical bars
+    note('1', 'ш.200', (PX + 16400, PY + yb + 500), (PX + 16000, PY + yb), arrow='oblique')
+    note('1', 'ш.200', (PX + xb + 400, PY + 16900), (PX + xb, PY + 16500), arrow='oblique')
     for (tx, ty, dx, dy) in ((x0, yb, 400, 400), (x1, yb, -1400, 400), (xb, y0, 400, 400), (xb, y1, 400, -400)):
-        note('Ск1', 'ш.200', (PX + tx + dx, PY + ty + dy), (PX + tx, PY + ty))
+        note('Ск1', 'ш.200', (PX + tx + dx, PY + ty + dy), (PX + tx, PY + ty), arrow='oblique')
     dim((PX + x0, PY + 25600 + 0), (PX + x1, PY + 25600), (PX + x0, PY + 26800), 0.0, 100, txt='200х%d=%d' % (ny, ny * 200))
     dim((PX + 45100, PY + y0), (PX + 45100, PY + y1), (PX + 46300, PY + y0), math.pi / 2, 100, txt='200х%d=%d' % (nx, nx * 200))
-    s.notes(['Общие указания см. лист 1.1. Данный лист читать совместно с листами 3.1, 3.3 - 3.5.',
-             'Поз. 1 - %%C20 A500C шаг 200 в нижней и верхней сетке в обоих направлениях (основная арматура по толщине плиты 700 мм).',
-             'По периметру плиты - П-образная скоба Ск1 %%C16 A500C, высота 620 мм (Hплиты - 80), ноги 1000 мм, шаг 200.',
-             'Сетки фиксировать каркасами КР-1 (%%C16) 700х700 с шагом 1200х1200 в шахматном порядке.',
-             'Стыки внахлестку без сварки, длина нахлеста 61d (1220 мм); в одном сечении стыковать не более 50% стержней. Расход в пог.м. с учетом нахлеста.',
+    s.notes(['Общие указания см. лист 1.1. Данный лист читать совместно с листами 3.1, 3.3 - 3.7.',
+             'Поз. 1 - %%C16 A500C шаг 200 в нижней и верхней сетке в обоих направлениях (основная арматура плиты толщиной 700 мм).',
+             'По периметру плиты - П-образная скоба Ск1* %%C16 A500C, высота 620 мм (Hплиты - 80), ноги 400 мм, шаг 200, отступ 20 от грани.',
+             'Стыки внахлестку без сварки, длина нахлеста 61d (980 мм); в одном сечении стыковать не более 50% стержней. Расход в пог.м. с учетом нахлеста.',
              'Защитный слой бетона: низ - 50 мм, верх - 40 мм.'], x=X0 + 65100, y=Y0 + 6462)
     return s, nx + 1, ny + 1, x1 - x0, y1 - y0
 
 
-def build_dop(X0, Y0, top=False):
-    num = '3.4' if top else '3.3'; zn = 'верхней' if top else 'нижней'
-    s = Sheet(num, 'Схема расположения доп. арматуры\\PФм-1 %s зоны' % zn,
-              'Схема расположения дополнительной арматуры фундамента Фм-1 %s зоны на отм. -4.000' % zn, X0, Y0, 'A1')
+SHEETS_DOP = {'3.3': (False, 'X'), '3.4': (True, 'X'), '3.5': (False, 'Y'), '3.6': (True, 'Y')}
+
+
+def build_dop(X0, Y0, num):
+    top, fam = SHEETS_DOP[num]
+    zn = 'верхней' if top else 'нижней'; ax = 'буквенным' if fam == 'X' else 'цифровым'
+    s = Sheet(num, 'Схема расположения доп. арматуры Фм-1\P%s зоны по %s осям' % (zn, ax),
+              'Схема расположения дополнительной арматуры фундамента Фм-1 %s зоны по %s осям на отм. -4.000' % (zn, ax), X0, Y0, 'A1')
     PX, PY = X0 + 9500, Y0 + 15000
     base(s, PX, PY)
-    p = (6, 7, 8) if top else (3, 4, 5)
-    cnt = {}
-    def add(k, n, L):
-        c = cnt.setdefault(k, [L, 0]); c[1] += n
-    for z in ZX:
-        L = z[2] - z[0]; pos = p[0] if L < 1950 else p[1]
-        lo = (1200, 500) if z[0] < 40000 else (-2400, 500)
-        n, _ = zone_note(str(pos), 200, z, 'X', PX, PY, lab_off=lo); add(pos, n, L)
-    for z in ZY:
-        L = z[3] - z[1]; pos = p[0] if L < 1950 else p[1]
-        n, _ = zone_note(str(pos), 200, z, 'Y', PX, PY, lab_off=(500, 1200)); add(pos, n, L)
-    for z in ZC:
-        n, _ = zone_note(str(p[2]), 200, z, 'X', PX, PY, lab_off=(1500, 700)); add(p[2], 2 * n, 2400)
-        xm = (z[0] + z[2]) / 2
-        pl([(PX + xm, PY + z[1]), (PX + xm, PY + z[3])], layer=L_R20, lw=40)
-    # zone dims for one of each kind
-    z = ZX[0]; dim((PX + z[0], PY + 25600), (PX + z[2], PY + 25600), (PX + z[0], PY + 26800), 0.0)
-    z = ZY[0]; dim((PX + 45100, PY + z[1]), (PX + 45100, PY + z[3]), (PX + 46300, PY + z[1]), math.pi / 2)
-    z = ZC[0]; chain_h([PX + z[0], PX + COLS_IN[0][0], PX + z[2]], PY + z[3], PY + z[3] + 700)
-    s.notes(['Общие указания см. лист 1.1. Данный лист читать совместно с листами 3.1, 3.2, 3.5.',
-             'Дополнительные стержни укладывать в одном уровне с основной арматурой %s сетки, посередине между основными стержнями (шаг 200 со смещением 100).' % zn,
-             'Зоны дополнительного армирования показаны штриховой линией; в каждой зоне показан один стержень. Количество стержней см. спецификацию (лист 3.5).',
-             'Дополнительное армирование назначено с запасом (по заданию - максимальное армирование) под стенами, по периметру плиты и у колонн Км-1.',
+    lr = 'ф%d_арм' % DOPD
+    if fam == 'X':
+        for z in ZX:
+            lo = (1200, 500) if z[0] < 40000 else (-2400, 500)
+            zone_note(POSL[int(z[2] - z[0])], 200, z, 'X', PX, PY, layer=lr, lab_off=lo)
+        for z in ZC: zone_note(POSL[2400], 200, z, 'X', PX, PY, layer=lr, lab_off=(1500, 700))
+        z = ZX[0]; dim((PX + z[0], PY + 25600), (PX + z[2], PY + 25600), (PX + z[0], PY + 26800), 0.0)
+        z = ZC[0]; chain_h([PX + z[0], PX + COLS_IN[0][0], PX + z[2]], PY + z[3], PY + z[3] + 700)
+    else:
+        for z in ZY: zone_note(POSL[int(z[3] - z[1])], 200, z, 'Y', PX, PY, layer=lr, lab_off=(500, 1200))
+        for z in ZC: zone_note(POSL[2400], 200, z, 'Y', PX, PY, layer=lr, lab_off=(700, 1500))
+        z = ZY[0]; dim((PX + 45100, PY + z[1]), (PX + 45100, PY + z[3]), (PX + 46300, PY + z[1]), math.pi / 2)
+        z = ZC[0]; chain_v([PY + z[1], PY + COLS_IN[0][1], PY + z[3]], PX + z[2], PX + z[2] + 700)
+    s.notes(['Общие указания см. лист 1.1. Данный лист читать совместно с листами 3.1 - 3.7.',
+             'Дополнительные стержни %%C%d A500C укладывать в одном уровне с основной арматурой %s сетки, посередине между основными стержнями (шаг 200 со смещением 100).' % (DOPD, zn),
+             'Зоны дополнительного армирования показаны штриховой линией; в каждой зоне показан один стержень. Количество - см. спецификацию на листе 3.7.',
              'Стыки рабочей арматуры выполнять без сварки внахлестку.'], x=X0 + 65100, y=Y0 + 6462)
-    return s, cnt
+    return s
 
 
-def dop_counts(top=False):
-    p = (6, 7, 8) if top else (3, 4, 5)
+def dop_counts():
+    """all доп. positions: {pos: [L, n]} over 4 faces/directions"""
     cnt = {}
     def add(k, n, L):
         c = cnt.setdefault(k, [L, 0]); c[1] += n
-    for z in ZX:
-        L = z[2] - z[0]; add(p[0] if L < 1950 else p[1], int(round((z[3] - z[1]) / 200)) + 1, L)
-    for z in ZY:
-        L = z[3] - z[1]; add(p[0] if L < 1950 else p[1], int(round((z[2] - z[0]) / 200)) + 1, L)
-    for z in ZC: add(p[2], 2 * 13, 2400)
+    for face in (0, 1):
+        for z in ZX: L = int(z[2] - z[0]); add(POSL[L], int(round((z[3] - z[1]) / 200)) + 1, L)
+        for z in ZY: L = int(z[3] - z[1]); add(POSL[L], int(round((z[2] - z[0]) / 200)) + 1, L)
+        for z in ZC: add(POSL[2400], 2 * 13, 2400)
     return cnt

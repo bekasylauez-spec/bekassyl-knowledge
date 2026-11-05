@@ -9,11 +9,11 @@ SC = 25
 LR = {20: 'ф20_арм', 16: 'ф16_арм', 12: 'ф12_арм', 10: 'ф10_арм', 8: 'ф8_арм'}
 
 
-def rbar(pts, d=20):
+def rbar(pts, d=16):
     pl(pts, layer=LR[d], lw=40)
 
 
-def dots(xs, z, d=20):
+def dots(xs, z, d=16):
     for x in xs: op(t='circle', c=[x, z], r=d / 2.0 + 2, layer=LR[d], lw=40)
 
 
@@ -49,9 +49,9 @@ def sec_edge(OX, OZ):
     xs = [X(xe + 50 + 100 + 200 * i) for i in range(int((xr - xe - 150) / 200) + 1)]
     dots(xs, Z(zb + 20)); dots(xs, Z(zt - 20))
     # доп 3 (bottom) / 6 (top) L=1900
-    rbar([(X(xe + 50), Z(zb - 25)), (X(xe + 1950), Z(zb - 25))]); rbar([(X(xe + 50), Z(zt + 25)), (X(xe + 1950), Z(zt + 25))])
+    rbar([(X(xe + 50), Z(zb - 25)), (X(xe + 1950), Z(zb - 25))], 20); rbar([(X(xe + 50), Z(zt + 25)), (X(xe + 1950), Z(zt + 25))], 20)
     # Ск1
-    rbar([(X(xe + 1060), Z(zt - 45)), (X(xe + 60), Z(zt - 45)), (X(xe + 60), Z(zb + 45)), (X(xe + 1060), Z(zb + 45))], 16)
+    rbar([(X(xe + 460), Z(zt - 45)), (X(xe + 20), Z(zt - 45)), (X(xe + 20), Z(zb + 45)), (X(xe + 460), Z(zb + 45))], 16)
     # wall dowels Вп-1 (both faces) with 200 foot on bottom mesh
     for xv, sgn in ((xw0 + 50, -1), (xw1 - 50, 1)):
         rbar([(X(xv + sgn * 200), Z(zb + 45)), (X(xv), Z(zb + 45)), (X(xv), Z(-2900 + 40))])
@@ -62,8 +62,8 @@ def sec_edge(OX, OZ):
     dim((X(xw1), Z(-4000)), (X(xw1), Z(-2780)), (X(xw1 + 450), Z(-4000)), math.pi / 2, SC, txt='1220')
     lev(Z(0), (X(xe - 1000), Z(-4000)), SC); lev(Z(0), (X(xe - 1000), Z(-4700)), SC)
     N25('1', 'ш.200', (X(8000), Z(zt)), (150, 250)); N25('1', 'ш.200', (X(8000), Z(zb)), (150, -300))
-    N25('6', 'ш.200', (X(6300), Z(zt + 25)), (150, 400)); N25('3', 'ш.200', (X(6300), Z(zb - 25)), (150, -450))
-    N25('Ск1', 'ш.200', (X(xe + 60), Z(-4350)), (-600, 150))
+    N25('2', 'ш.200', (X(6300), Z(zt + 25)), (150, 400)); N25('2', 'ш.200', (X(6300), Z(zb - 25)), (150, -450))
+    N25('Ск1', 'ш.200', (X(xe + 20), Z(-4350)), (-600, 150))
     N25('Вп-1', 'ш.200', (X(xw1 - 50), Z(-3300)), (250, 150))
     N25('Фм-1', '', (X(8100), Z(-4400)), (150, 150))
     N25('Подбетонка C8/10', 't=100', (X(7600), Z(-4800)), (150, -350))
@@ -83,39 +83,36 @@ def sec_mid(OX, OZ):
     rbar([(X(xl), Z(zb)), (X(xr), Z(zb))]); rbar([(X(xl), Z(zt)), (X(xr), Z(zt))])
     xs = [X(xl + 100 + 200 * i) for i in range(int((xr - xl - 100) / 200) + 1)]
     dots(xs, Z(zb + 20)); dots(xs, Z(zt - 20))
-    rbar([(X(c - 1000), Z(zb - 25)), (X(c + 1000), Z(zb - 25))]); rbar([(X(c - 1000), Z(zt + 25)), (X(c + 1000), Z(zt + 25))])
+    rbar([(X(c - 1000), Z(zb - 25)), (X(c + 1000), Z(zb - 25))], 20); rbar([(X(c - 1000), Z(zt + 25)), (X(c + 1000), Z(zt + 25))], 20)
     for xv, sgn in ((c - 150, -1), (c + 150, 1)):
         rbar([(X(xv + sgn * 200), Z(zb + 45)), (X(xv), Z(zb + 45)), (X(xv), Z(-2900 + 40))])
     chain_h([X(c - 1000), X(c - 200), X(c), X(c + 200), X(c + 1000)], Z(-4800), Z(-5450), SC)
     dim((X(xr), Z(-4700)), (X(xr), Z(-4000)), (X(xr + 400), Z(-4700)), math.pi / 2, SC)
     axis('В', (X(c), Z(-2700)), (X(c), Z(-5700)), SC, True)
-    N25('4', 'ш.200', (X(c - 600), Z(zb - 25)), (-900, -450)); N25('7', 'ш.200', (X(c - 600), Z(zt + 25)), (-900, 400))
+    N25('3', 'ш.200', (X(c - 600), Z(zb - 25)), (-900, -450)); N25('3', 'ш.200', (X(c - 600), Z(zt + 25)), (-900, 400))
     N25('1', 'ш.200', (X(c + 1300), Z(zt)), (150, 250)); N25('Вп-1', 'ш.200', (X(c + 150), Z(-3300)), (250, 150))
     return X(xl), Z(-2600)
 
 
-def spec_rows(nx, ny, Lx, Ly, cnt_b, cnt_t):
-    lap = 1220
+def spec_rows(nx, ny, Lx, Ly, cnt, _unused=None):
+    lap = 980
     def run(L):
         nl = max(0, math.ceil(L / 11700.0) - 1); return (L + nl * lap) / 1000.0
     pm1 = 2 * (nx * run(Lx) + ny * run(Ly))
-    rows = [('1', '%%C20 A500C (п.м)', pm1, KG[20])]
-    nsk = 2 * (nx + ny); rows.append(('Ск1', '%%C16 A500C, L=2620', nsk, round(2.62 * KG[16], 2)))
-    for c in (cnt_b, cnt_t):
-        for pos in sorted(c):
-            L, n = c[pos]
-            rows.append((str(pos), '%%C20 A500C, L=' + str(int(L)), n, round(L / 1000.0 * KG[20], 2)))
-    nkr = int(1039 / 1.44) + 1
-    rows.append(('КР-1', 'Каркас фиксирующий %%C16, L=2800', nkr, round(2.8 * KG[16], 2)))
+    rows = [('1', '%%C16 A500C (п.м)', pm1, KG[16])]
+    nsk = 2 * (nx + ny); rows.append(('Ск1*', '%%C16 A500C, L=1420', nsk, round(1.42 * KG[16], 2)))
+    for pos in sorted(cnt):
+        L, n = cnt[pos]
+        rows.append((str(pos), '%%C20 A500C, L=' + str(int(L)), n, round(L / 1000.0 * KG[20], 2)))
     nvp = 2 * int((2 * 24700 + 2 * 37400 + 15500 + 29100 + 4 * 6400 + 2 * 3700 + 2 * 1900) / 200)
-    rows.append(('Вп-1', 'Выпуск %%C20 A500C, L=2060', nvp, round(2.06 * KG[20], 2)))
+    rows.append(('Вп-1', 'Выпуск стен %%C20 A500C, L=2060', nvp, round(2.06 * KG[20], 2)))
     rows.append(('Вп-2', 'Выпуск колонн Км-2 %%C25 A500C, L=1550', 20, round(1.55 * 3.853, 2)))
     rows.append(('Вп-3', 'Выпуск колонн Км-2 %%C25 A500C, L=2150', 20, round(2.15 * 3.853, 2)))
     return rows
 
 
 def build(X0, Y0):
-    s = Sheet('3.5', 'Разрезы 1-1, 2-2 фундамента Фм-1.\\PСпецификация', None, X0, Y0, 'A2', SC)
+    s = Sheet('3.7', 'Разрезы 1-1, 2-2 фундамента Фм-1.\\PСпецификация', None, X0, Y0, 'A2', SC)
     # sections
     t1 = sec_edge(X0 + 1500 - 5900 + 1700, Y0 + 8600)
     s.text(title_u('Разрез 1-1'), t1[0] + 1800, t1[1] + 250, 75, att=8, layer='0')
@@ -123,7 +120,7 @@ def build(X0, Y0):
     s.text(title_u('Разрез 2-2'), t2[0] + 1700, t2[1] + 250, 75, att=8, layer='0')
     _, nx, ny, Lx, Ly = (None, 133, 196, 39100, 26400)
     import importlib
-    cnt_b = s3x.dop_counts(False); cnt_t = s3x.dop_counts(True)
+    cnt_b = s3x.dop_counts(); cnt_t = None
     rows = spec_rows(nx, ny, Lx, Ly, cnt_b, cnt_t)
     tb = tag('tb')
     op(t='clone', h=A_TABLE, base=[10700, 356330], to=[X0 + 14850 - 125 - 4625, Y0 + 10500 - 400], s=0.25, tag=tb)
@@ -142,7 +139,7 @@ def build(X0, Y0):
     cells += [[r, 0, ''], [r, 1, ''], [r, 2, 'Итого, кг'], [r, 10, ''], [r, 11, ''], [r, 12, '%.1f' % tot]]
     op(t='tset', h=tb, cells=cells)
     op(t='ttext', h=tb, th=62.5, rh=158.25, rh1=375)
-    s.notes(['Разрезы читать совместно с листами 3.1 - 3.4. Общие указания см. лист 1.1.',
+    s.notes(['Разрезы читать совместно с листами 3.1 - 3.6. Общие указания см. лист 1.1.',
              'Защитный слой бетона: низ - 50 мм, верх - 40 мм, торцы - 50 мм.',
              'Выпуски Вп-1 %%C20 ш.200 у обеих граней стен; длина выпуска над плитой 1220 мм (61d), анкеровка - лапкой 200 мм на нижнюю сетку.',
              'Рабочий шов плита/стена - с гидрошпонкой (ПВХ шпонка ширина 250 мм) по оси стены.'],
