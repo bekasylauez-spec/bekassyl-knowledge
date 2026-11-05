@@ -606,6 +606,28 @@ namespace AB
             {
                 foreach (var hh in L(m["h"])) { try { var d = (Dimension)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite); d.UsingDefaultTextPosition = true; d.RecomputeDimensionBlock(true); } catch { } }
             }
+            else if (t == "blkerase")
+            {
+                // erase entities inside a block definition: texts whose plain text starts with any of 'texts', inserts whose block name starts with any of 'blocks'
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var btr = (BlockTableRecord)tr.GetObject(bt[S(m, "name", "")], OpenMode.ForRead);
+                var txs = new List<string>(); if (Has(m, "texts")) foreach (var q in L(m["texts"])) txs.Add(q.ToString());
+                var bls = new List<string>(); if (Has(m, "blocks")) foreach (var q in L(m["blocks"])) bls.Add(q.ToString());
+                int n = 0;
+                foreach (ObjectId id in btr)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                    string s = null;
+                    if (e is MText) s = ((MText)e).Text; else if (e is DBText) s = ((DBText)e).TextString;
+                    bool hit = false;
+                    if (s != null) { s = s.Trim(); foreach (var a in txs) if (s.StartsWith(a)) hit = true; }
+                    if (e is BlockReference) { var nm = ((BlockReference)e).Name; foreach (var a in bls) if (nm.StartsWith(a)) hit = true; }
+                    if (hit) { e.UpgradeOpen(); e.Erase(); n++; }
+                }
+                log.AppendLine("blkerase " + n);
+                // regen all references
+                foreach (ObjectId rid in btr.GetBlockReferenceIds(true, false)) { var br = (BlockReference)tr.GetObject(rid, OpenMode.ForWrite); br.RecordGraphicsModified(true); }
+            }
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
@@ -1589,6 +1611,55 @@ namespace AB
                 vp.CustomScale = 1.0 / sc;
                 vp.Locked = true;
                 log.AppendLine("vpset " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " " + lo.CanonicalMediaName);
+            }
+            else if (t == "vplist")
+            {
+                var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                foreach (DBDictionaryEntry en in ld)
+                {
+                    var lo = (Layout)tr.GetObject(en.Value, OpenMode.ForRead);
+                    var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                    int k = 0;
+                    foreach (ObjectId id in btr)
+                    {
+                        var vp = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (vp == null) continue;
+                        log.AppendLine("VPL	" + lo.LayoutName + "	" + (k++) + "	" + vp.Handle + "	n" + vp.Number + "	c" + vp.CenterPoint.X.ToString("0", IC) + "," + vp.CenterPoint.Y.ToString("0", IC) + "	w" + vp.Width.ToString("0", IC) + "	h" + vp.Height.ToString("0", IC) + "	vc" + vp.ViewCenter.X.ToString("0", IC) + "," + vp.ViewCenter.Y.ToString("0", IC) + "	vh" + vp.ViewHeight.ToString("0", IC) + "	t" + vp.ViewTarget.X.ToString("0", IC) + "," + vp.ViewTarget.Y.ToString("0", IC) + "	on" + vp.On);
+                    }
+                }
+            }
+            else if (t == "vpset2")
+            {
+                var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                var lo = (Layout)tr.GetObject(ld.GetAt(S(m, "layout", "")), OpenMode.ForWrite);
+                var psv = PlotSettingsValidator.Current;
+                Action<string, Action> stp = (nm, a) => { try { a(); } catch (System.Exception ex) { log.AppendLine("vpset2 step " + nm + ": " + ex.Message); } };
+                stp("cfg", () => psv.SetPlotConfigurationName(lo, "DWG To PDF.pc3", S(m, "media", "")));
+                stp("refresh", () => psv.RefreshLists(lo));
+                stp("units", () => psv.SetPlotPaperUnits(lo, PlotPaperUnit.Millimeters));
+                stp("rot", () => psv.SetPlotRotation(lo, PlotRotation.Degrees000));
+                stp("type", () => psv.SetPlotType(lo, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout));
+                stp("std", () => psv.SetUseStandardScale(lo, true));
+                stp("scale", () => psv.SetStdScaleType(lo, StdScaleType.StdScale1To1));
+                stp("origin", () => psv.SetPlotOrigin(lo, new Point2d(0, 0)));
+                stp("ctb", () => psv.SetCurrentStyleSheet(lo, "monochrome.ctb"));
+                var w = L(m["win"]); double sc = D(m["scale"]);
+                double W = (D(w[2]) - D(w[0])) / sc, Hh = (D(w[3]) - D(w[1])) / sc;
+                var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                var vps = new List<Viewport>();
+                foreach (ObjectId id in btr) { var v = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (v != null) vps.Add(v); }
+                if (vps.Count < 2) { log.AppendLine("vpset2: viewports " + vps.Count + " in " + lo.LayoutName); return; }
+                var ov = vps[0]; ov.UpgradeOpen();
+                ov.ViewDirection = Vector3d.ZAxis; ov.TwistAngle = 0; ov.ViewTarget = Point3d.Origin;
+                ov.CenterPoint = new Point3d(W / 2, Hh / 2, 0); ov.Width = W * 1.4; ov.Height = Hh * 1.4;
+                ov.ViewCenter = new Point2d(W / 2, Hh / 2); ov.ViewHeight = Hh * 1.4;
+                var vp = vps[1]; vp.UpgradeOpen();
+                vp.ViewDirection = Vector3d.ZAxis; vp.TwistAngle = 0; vp.ViewTarget = Point3d.Origin;
+                vp.CenterPoint = new Point3d(W / 2, Hh / 2, 0); vp.Width = W; vp.Height = Hh;
+                vp.ViewCenter = new Point2d((D(w[0]) + D(w[2])) / 2, (D(w[1]) + D(w[3])) / 2);
+                vp.ViewHeight = D(w[3]) - D(w[1]);
+                vp.CustomScale = 1.0 / sc; vp.Locked = true; stp("on", () => { ov.On = true; vp.On = true; });
+                for (int i = 2; i < vps.Count; i++) { var x = vps[i]; x.UpgradeOpen(); x.Erase(); }
+                log.AppendLine("vpset2 " + lo.LayoutName + " " + W.ToString("0") + "x" + Hh.ToString("0") + " extra " + (vps.Count - 2));
             }
             else if (t == "layouts")
             {
