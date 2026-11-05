@@ -129,8 +129,10 @@ def setup_axes(o, si, XS, YS, EB, EL, chain_y, over_y, left_x=(None, None)):
         if j < len(YS): o.add({'t': 'axis', 'h': e['h'], 's': [XS[-1], YS[j]], 'e': [EL, YS[j]]})
         else: o.add({'t': 'erase', 'h': [e['h']]})
     hd = si['hd']
-    ch = [e for e in hd if abs(e['pts'][1][0] - e['pts'][0][0]) < 20000]
-    ov = [e for e in hd if abs(e['pts'][1][0] - e['pts'][0][0]) >= 20000]
+    Lx = lambda e: abs(e['pts'][1][0] - e['pts'][0][0])
+    Ly = lambda e: abs(e['pts'][1][1] - e['pts'][0][1])
+    ch = [e for e in hd if any(abs(Lx(e) - v) < 1 for v in (3250, 4500, 6000))]
+    ov = [e for e in hd if any(abs(Lx(e) - v) < 1 for v in (60000, 32000, 20000))]
     for i, e in enumerate(ch):
         if i < len(XS) - 1:
             o.add({'t': 'dimset2', 'h': e['h'], 'p1': [XS[i], EB], 'p2': [XS[i + 1], EB], 'dl': [XS[i], chain_y], 'tx': [(XS[i] + XS[i + 1]) / 2, chain_y + 187]})
@@ -140,8 +142,8 @@ def setup_axes(o, si, XS, YS, EB, EL, chain_y, over_y, left_x=(None, None)):
         else: o.add({'t': 'erase', 'h': [e['h']]})
     vd = si['vd']
     xl1, xl2 = left_x
-    small = [e for e in vd if abs(e['pts'][1][1] - e['pts'][0][1]) < 7000]
-    big = [e for e in vd if abs(e['pts'][1][1] - e['pts'][0][1]) >= 7000]
+    small = [e for e in vd if abs(Ly(e) - 6000) < 1]
+    big = [e for e in vd if abs(Ly(e) - 12000) < 1]
     for k, e in enumerate(small):
         if k < len(YS) - 1:
             o.add({'t': 'dimset2', 'h': e['h'], 'p1': [EL, YS[k]], 'p2': [EL, YS[k + 1]], 'dl': [xl1, YS[k]], 'tx': [xl1 - 188, (YS[k] + YS[k + 1]) / 2]})
@@ -149,4 +151,4 @@ def setup_axes(o, si, XS, YS, EB, EL, chain_y, over_y, left_x=(None, None)):
     for k, e in enumerate(big):
         if k == 0: o.add({'t': 'dimset2', 'h': e['h'], 'p1': [EL, YS[0]], 'p2': [EL, YS[-1]], 'dl': [xl2, YS[0]], 'tx': [xl2 - 188, (YS[0] + YS[-1]) / 2 + 1500]})
         else: o.add({'t': 'erase', 'h': [e['h']]})
-    return [e['h'] for e in V + H + hd + vd]
+    return [e['h'] for e in V + H + ch + ov + small + big]
