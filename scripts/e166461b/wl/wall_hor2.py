@@ -8,7 +8,7 @@ CFG = importlib.import_module(sys.argv[1]).HOR
 SX, SY = CFG['SX'], 455939.0
 def W(x, y): return [SX + x, SY + y]
 L = CFG['L']; SLAB = 250.0
-LAP = lambda d: int(math.ceil(61 * d / 10.0) * 10)
+LAP = lambda d: {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}.get(d, int(math.ceil(61 * d / 10.0) * 10))   # 61d as in the analog lap table (B25)
 A = lambda d: math.pi * d * d / 400
 LEV = CFG.get('LEV', [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7])
 CELLS = [c for c in json.load(open('arm/wall_cells.json')) if c['pl'] == CFG['PLANE']]
@@ -87,7 +87,7 @@ for s in range(len(L) - 1):
         if b - a < 450: kw['tx'] = W(XD + 620, (a + b) / 2)
         ops.append(kw)
 ops.append(dict(t='save'))
-json.dump(dict(HD=HD, POS={'%s_%d' % k: v for k, v in POS.items()}, CKS=CKS, BARS=BARS), open(CFG['OUT'], 'w'), ensure_ascii=False)
+json.dump(dict(HD=HD, POS={'%s_%d' % k: v for k, v in POS.items()}, CKS=CKS, BARS=BARS), open(CFG['OUT'], 'w', encoding='utf-8'), ensure_ascii=False)
 print('HD', HD, 'POS', POS, 'CK', CKS, 'chain erased', len(chain))
 if '--run' in sys.argv:
     out = gx.run(ops, 'wh2'); print([l for l in out.splitlines() if 'ERR' in l or 'done' in l][-4:])

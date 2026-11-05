@@ -8,7 +8,7 @@ def W(x, y): return [SX + x, SY + y]
 L = [v - 347 for v in (15147, 19697, 23747, 26897, 30047, 33197, 36347, 39497)]
 SLAB = 250.0
 HD = [(14, 200), (16, 200), (16, 200), (12, 200), (12, 200), (12, 200), (14, 100)]   # per storey, max As of the pieces (LIRA AS1/AS2)
-LAP = lambda d: int(math.ceil(61 * d / 10.0) * 10)
+LAP = lambda d: {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}.get(d, int(math.ceil(61 * d / 10.0) * 10))   # 61d as in the analog lap table (B25)
 LONG = {'end': 1310, 'mid': 1810}            # analog 1085 / 1760 for pieces 875 / 1800 -> ours 1100 / 1850
 vj = json.load(open('wl/sm1_vert.json', encoding='utf-8'))
 P0 = max(vj['POS'].values())

@@ -14,7 +14,7 @@ SLAB = 250.0; EDGE = 450.0; TOPC = 30.0
 PIECES = [(125, 1225), (5875, 7725), (12325, 14175), (18825, 19925)]   # scheme x (axis 1 = 0)
 LIRA = [(0, 1225), (5875, 7725), (12325, 14175), (18825, 20050)]
 ENDS = [(False, True), (True, True), (True, True), (True, False)]
-LAP = lambda d: int(math.ceil(61 * d / 10.0) * 10)
+LAP = lambda d: {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}.get(d, int(math.ceil(61 * d / 10.0) * 10))   # 61d as in the analog lap table (B25)
 GAP = lambda lap: int(round(0.3 * lap, -1))
 A = lambda d: math.pi * d * d / 400
 DS = [12, 14, 16, 18, 20, 22, 25, 28]

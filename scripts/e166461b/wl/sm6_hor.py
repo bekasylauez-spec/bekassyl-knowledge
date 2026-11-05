@@ -8,7 +8,7 @@ def W(x, y): return [SX + x, SY + y]
 L = [15206, 19756, 23806, 26956, 30106, 33256, 36406, 39556]
 LEV = [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7]
 SLAB = 250.0
-LAP = lambda d: int(math.ceil(61 * d / 10.0) * 10)
+LAP = lambda d: {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}.get(d, int(math.ceil(61 * d / 10.0) * 10))   # 61d as in the analog lap table (B25)
 A = lambda d: math.pi * d * d / 400
 CELLS = [c for c in json.load(open('arm/wall_cells.json')) if c['pl'] == ['y', 22750]]
 LIRA = [(0, 1225), (18825, 20050)]

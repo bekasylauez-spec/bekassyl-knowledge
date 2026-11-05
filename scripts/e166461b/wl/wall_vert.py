@@ -14,7 +14,7 @@ L = CFG['L']
 G = CFG.get('G', [(0, 1), (1, 3), (3, 5), (5, len(L) - 1)])          # storey index ranges of the groups
 SLAB = 250.0; EDGE = 450.0; TOPC = 30.0
 PIECES = CFG['PIECES']; LIRA = CFG['LIRA']; ENDS = CFG['ENDS']; NP = len(PIECES)
-LAP = lambda d: int(math.ceil(61 * d / 10.0) * 10)
+LAP = lambda d: {10: 610, 12: 730, 14: 860, 16: 980, 18: 1100, 20: 1220}.get(d, int(math.ceil(61 * d / 10.0) * 10))   # 61d as in the analog lap table (B25)
 GAP = lambda lap: int(round(0.3 * lap, -1))
 A = lambda d: math.pi * d * d / 400
 DS = [12, 14, 16, 18, 20, 22, 25, 28]
@@ -48,7 +48,11 @@ def make_zones(a, b, el, er, dL, dR, dm, sm):
 REQ = []
 for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, CFG.get('LENDS', ENDS))):     # LENDS: free ends as seen in the LIRA cells (mirrored pieces)
     row = []
-    for g0, g1 in G:
+    for gi_, (g0, g1) in enumerate(G):
+        if gi_ == 0 and CFG.get('PIECES0'):                            # basement pieces differ (e.g. a full wall below the openings)
+            (la, lb), (el, er) = CFG['LIRA0'][i], CFG['ENDS0'][i]
+        else:
+            (la, lb), (el, er) = LIRA[i], CFG.get('LENDS', ENDS)[i]
         cs = [c for c in CELLS if max(LEV[g0], CFG.get('ZMIN', -99)) - 1e-3 <= c['z0'] < LEV[g1] - 1e-3 and c[KX[1]] > la + 1 and c[KX[0]] < lb - 1]
         xs = sorted(set(c[KX[0]] for c in cs))
         colL = [c for c in cs if c[KX[0]] == xs[0]]; colR = [c for c in cs if c[KX[0]] == xs[-1]]
@@ -64,7 +68,9 @@ D = [[None] * 4 for _ in range(NP)]
 for g in range(4):
     de = max([x for i in range(NP) for x in REQ[i][g][:2] if x] or [12])
     dm, sm = max([REQ[i][g][2:] for i in range(NP)], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
-    for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)): D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
+    for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)):
+        if g == 0 and CFG.get('PIECES0'): (a, b), (el, er) = CFG['PIECES0'][i], CFG['ENDS0'][i]
+        D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
 def run(go=False):
     R = listwin(SX, SY, 59400, 42000, None)
     N = notes(SX, SY, 59400, 42000)
@@ -115,6 +121,7 @@ def run(go=False):
     def zone(i, g, kind):
         for z in D[i][g]:
             if z[0] == kind: return z
+        return max(D[i][g], key=lambda z: z[3])                      # other pieces in that group (basement): the largest Ø
     def lap_at(i, g, kind):              # lap at the top splice of group g
         d = zone(i, g, kind)[3]; dn = zone(i, g + 1, kind)[3]
         return LAP(max(d, dn))
@@ -229,7 +236,7 @@ def run(go=False):
     AXES = CFG['AXES']; CW = 140; TGAP = 120; RY = [L[0] - 1813, L[0] - 2313, L[0] - 2813]
     items = []
     for i in range(NP):
-        a, b = PIECES[i]
+        a, b = (CFG.get('PIECES0') or PIECES)[i]
         segs = [(a, a + 50, 50, 1)] + [sg for z in D[i][0] for sg in z[6]] + [(b - 50, b, 50, 1)]
         for k_, (s0, s1, st, n_) in enumerate(segs):
             txt = ('%dх%d' % (st, n_)) if n_ > 1 else ''
