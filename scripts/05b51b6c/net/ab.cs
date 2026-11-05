@@ -894,6 +894,7 @@ else if (t == "sysvar")
                         cell.DataType = new DataTypeParameter(DataType.Double, UnitType.Unitless);
                         cell.Contents[0].Formula = "=" + f;
                         if (Has(m, "fmt")) fmt = S(m, "fmt", null);
+                        if (a.Count >= 5 && a[4] != null) fmt = a[4].ToString();
                         if (fmt != null) try { cell.DataFormat = fmt; } catch { }
                     }
                     if (th > 0) try { cell.Contents[0].TextHeight = th; } catch { }

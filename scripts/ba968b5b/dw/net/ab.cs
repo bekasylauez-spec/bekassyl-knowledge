@@ -364,6 +364,47 @@ else if (t == "sysvar")
                 dbe.Update();
                 var dd = mo as IDisposable; if (dd != null) dd.Dispose();
             }
+            else if (t == "xscale")
+            {
+                // блокты тек X бойынша созу (bx нүктесіне қатысты); бұрылмаған блоктар үшін
+                foreach (var hh in L(m["h"]))
+                {
+                    var br = (BlockReference)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite);
+                    double sx = D(m["sx"]), bx = D(m["bx"]); var sf = br.ScaleFactors; var p = br.Position;
+                    br.ScaleFactors = new Scale3d(sf.X * sx, sf.Y, sf.Z);
+                    br.Position = new Point3d(bx + (p.X - bx) * sx, p.Y, p.Z);
+                    log.AppendLine("xscale " + br.Handle + " rot=" + br.Rotation.ToString("0.000", IC) + " sx=" + br.ScaleFactors.X.ToString("0.000", IC));
+                }
+            }
+            else if (t == "vstretch")
+            {
+                // жеке объектінің нүктелерін ортадан екі жаққа созу: x > xc+mg → +d, x < xc-mg → -d (Polyline, Line)
+                double xc = D(m["xc"]), mg = D(m["mg"]), d = D(m["d"]);
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite);
+                    Func<double, double> f = x => x > xc + mg ? x + d : (x < xc - mg ? x - d : x);
+                    if (e is Polyline) { var pl = (Polyline)e; for (int i = 0; i < pl.NumberOfVertices; i++) { var q = pl.GetPoint2dAt(i); pl.SetPointAt(i, new Point2d(f(q.X), q.Y)); } }
+                    else if (e is Line) { var ln = (Line)e; ln.StartPoint = new Point3d(f(ln.StartPoint.X), ln.StartPoint.Y, 0); ln.EndPoint = new Point3d(f(ln.EndPoint.X), ln.EndPoint.Y, 0); }
+                    log.AppendLine("vstretch " + e.Handle);
+                }
+            }
+            else if (t == "trowfmt")
+            {
+                // жол форматын көшіру: sr жолының әр ұяшығынан (биіктік, стиль, туралау, түс) dr жолына
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                int sr = Convert.ToInt32(m["sr"]), dr = Convert.ToInt32(m["dr"]);
+                for (int c = 0; c < tb.Columns.Count; c++)
+                {
+                    var a0 = tb.Cells[sr, c]; var b0 = tb.Cells[dr, c];
+                    try { b0.TextHeight = a0.TextHeight; } catch { }
+                    try { b0.TextStyleId = a0.TextStyleId; } catch { }
+                    try { b0.Alignment = a0.Alignment; } catch { }
+                    try { b0.ContentColor = a0.ContentColor; } catch { }
+                    try { if (b0.Contents.Count > 0 && a0.Contents.Count > 0) { b0.Contents[0].TextHeight = a0.Contents[0].TextHeight; b0.Contents[0].TextStyleId = a0.Contents[0].TextStyleId; } } catch { }
+                }
+                tb.GenerateLayout(); log.AppendLine("trowfmt " + sr + ">" + dr);
+            }
             else if (t == "mtinfo")
             {
                 foreach (var hh in L(m["h"]))
