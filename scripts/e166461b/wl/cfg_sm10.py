@@ -9,5 +9,5 @@ VERT = dict(SX=2733600.0, AX1=13951.0, L=L, LEV=LEV, G=[(0, 1), (1, 3), (3, 5), 
             PIECES0=[(125, 7425), None, (15475, 22625)], LIRA0=[(0, 8000), None, (14750, 22750)], ENDS0=[(False, False), None, (False, False)],
             PLANE=['x', 13250], AXES=[13951, 18951, 28701, 36701],
             CHAIN_X=[-125, 6175, 15225], CHAIN_DIAG=[False, True, True], CHAIN_SIDE='LLL', CHAIN_OFF_L=[350, 350, 650],
-            ZMIN=-4.2, ANALOG_NOTES=False, NOTE_MODE='zone', WH=(42000, 59400), XLO=12450, EDGE_GE_MID=True, SMOOTH=True,
+            ZMIN=-4.2, ANALOG_NOTES=False, NOTE_MODE='zone', WH=(42000, 59400), XLO=11700, EDGE_GE_MID=True, SMOOTH=True,
             VLINES=[-125, 7425, 15475, 22625, 22875], XLIM=(-100, 22850), CK_SPLIT=6000, OUT='wl/sm10_vert.json')

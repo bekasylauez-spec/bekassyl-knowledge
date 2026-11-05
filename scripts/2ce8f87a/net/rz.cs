@@ -402,6 +402,69 @@ namespace RG
                 foreach (var id in ids) { try { tr.GetObject(id, OpenMode.ForWrite).Erase(); n++; } catch (System.Exception ex) { log.AppendLine("ERR erase " + ex.Message); } }
                 log.AppendLine("keepregion erased " + n + " unknown kept " + nk);
             }
+            else if (t == "dimget")
+            {
+                foreach (var hh in L(m["h"]))
+                {
+                    var d = tr.GetObject(H(db, hh.ToString()), OpenMode.ForRead) as Dimension; if (d == null) continue;
+                    log.AppendLine("DIM " + hh + " " + d.Handle + " txt=[" + d.DimensionText + "] meas=" + d.Measurement.ToString("0.#", IC) + " lfac=" + d.Dimlfac + " pre/suf=" + d.Prefix + "/" + d.Suffix + " st=" + d.DimensionStyleName);
+                }
+            }
+            else if (t == "combinfo" || t == "combset")
+            {
+                // comb leader: list child segments / replace the targets of the first child (k = branch point)
+                var id = H(db, S(m, "h", ""));
+                var mo = MGet(id); var lead = (Multicad.Symbols.McBaseLeader)mo.GetType().GetProperty("Leader").GetValue(mo, null);
+                foreach (Multicad.Symbols.McBLSegment c in lead.Childs)
+                {
+                    log.AppendLine("SEG start " + c.Start + " end " + c.End + " arrow " + c.Arrow + " childs " + c.Childs.Count);
+                    foreach (Multicad.Symbols.McBLSegment c2 in c.Childs) log.AppendLine("   CH start " + c2.Start + " end " + c2.End + " arrow " + c2.Arrow);
+                }
+                if (t == "combset")
+                {
+                    Multicad.Symbols.McBLSegment seg = null;
+                    foreach (Multicad.Symbols.McBLSegment c in lead.Childs) { seg = c; break; }
+                    var arr0 = MG.Arrows.Oblique; foreach (Multicad.Symbols.McBLSegment c2 in seg.Childs) { arr0 = c2.Arrow; break; }
+                    var chs = seg.Childs; var mi = chs.GetType().GetMethod("Clear"); mi.Invoke(chs, null);
+                    if (Has(m, "k")) seg.End = MP(m["k"]);
+                    foreach (object q in L(m["targets"])) seg.AddSegment(MP(q), seg.End);
+                    foreach (Multicad.Symbols.McBLSegment c in seg.Childs) c.Arrow = arr0;
+                    ((McDbEntity)mo.GetType().GetProperty("DbEntity").GetValue(mo, null)).Update();
+                    log.AppendLine("combset " + S(m, "h", "") + " childs " + seg.Childs.Count);
+                }
+            }
+            else if (t == "mcmembers")
+            {
+                var mo = MGet(H(db, S(m, "h", "")));
+                var ty = mo.GetType();
+                foreach (var mi in ty.GetMembers(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly))
+                    log.AppendLine("M " + mi.MemberType + " " + mi.ToString());
+                var bt = ty.BaseType; log.AppendLine("BASE " + (bt == null ? "" : bt.FullName));
+                if (bt != null) foreach (var mi in bt.GetMembers(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly))
+                    log.AppendLine("B " + mi.MemberType + " " + mi.ToString());
+                var dd = mo as IDisposable; if (dd != null) dd.Dispose();
+            }
+            else if (t == "combsegs")
+            {
+                // set every top-level leader segment [start(target), end(on shelf)] of a note (comb/position); optional shelf Start/End
+                var id = H(db, S(m, "h", ""));
+                var mo = MGet(id); var lead = (Multicad.Symbols.McBaseLeader)mo.GetType().GetProperty("Leader").GetValue(mo, null);
+                var segs = L(m["segs"]); int i = 0;
+                foreach (Multicad.Symbols.McBLSegment c in lead.Childs)
+                {
+                    if (i >= segs.Count) break;
+                    var q = L(segs[i]); c.Start = MP(q[0]); c.End = MP(q[1]); i++;
+                }
+                if (Has(m, "start")) mo.GetType().GetProperty("Start").SetValue(mo, MP(m["start"]), null);
+                if (Has(m, "end")) mo.GetType().GetProperty("End").SetValue(mo, MP(m["end"]), null);
+                ((McDbEntity)mo.GetType().GetProperty("DbEntity").GetValue(mo, null)).Update();
+                log.AppendLine("combsegs " + S(m, "h", "") + " set " + i);
+            }
+            else if (t == "insat")
+            {
+                var br = (BlockReference)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                br.Position = P(m["at"]);
+            }
             else if (t == "eraseregion")
             {
                 var w = L(m["win"]);

@@ -39,16 +39,16 @@ for P in C['PLANS']:
     # erase: inserts (dots / hoops / pins), fans and bar polylines, notes, bottom chain
     er += [r['h'] for r in R if r['t'] == 'INSERT' and inb(r, -400, 400) and (r['lay'].startswith('диам') or r['lay'] == '0') and r['x1'] - r['x0'] < 600]
     for r in R:
-        if r['t'] != 'LWPOLYLINE' or not inb(r) or r['lay'] != 'Размеры': continue
+        if r['t'] != 'LWPOLYLINE' or not inb(r): continue                                # any layer: analog fans are on диам*
         ys = [p[1] - WL for p in r['sp']]
         if len(r['sp']) >= 2 and all(abs(v) <= 230 for v in ys) and r['x1'] - r['x0'] > 300 and abs(r['sp'][0][0] - r['sp'][-1][0]) + abs(r['sp'][0][1] - r['sp'][-1][1]) > 1: er.append(r['h'])   # bar polylines (open)
         elif any(abs(v) < 250 for v in ys) and any(-1700 < v < -500 for v in ys): er.append(r['h'])                # fans below
-    er += [n['h'] for n in NS if WL - 1700 < n['pts'][0][1] < WL + 2700 and PX(xa) - X - 2500 < n['pts'][0][0] < PX(xb) - X + 2500]
+    er += [n['h'] for n in NS if (WL - 2250 < n['pts'][0][1] < WL + 2700 or any(abs(p[1] - WL) < 400 for p in n['pts'][1:])) and PX(xa) - X - 2500 < n['pts'][0][0] < PX(xb) - X + 2500]   # any note pointing at the wall too
     CH = [r for r in R if r['t'] == 'DIMENSION' and len(r['sp']) > 2 and abs(r['sp'][0][1] - (WL - 250)) < 30 and abs(r['sp'][1][1] - (WL - 250)) < 30 and -3300 < r['sp'][2][1] - WL < -1800]
     er += [r['h'] for r in CH]
     ydl = CH[0]['sp'][2][1] if CH else WL - 2352
     tch = 'WSC%d' % len(ops)
-    ops.append(dict(t='clone', h=CH[0]['h'], base=[0, 0], to=[0, 0], tag=tch))
+    ops.append(dict(t='clone', h=T['ch'], base=[0, 0], to=[0, 0], tag=tch))     # stashed template (sheet chains are erased first)
     cur = None
     for (i, a, b, ea, eb) in P['pieces']:
         zs = D[i][gi]
@@ -59,9 +59,10 @@ for P in C['PLANS']:
         for side, e in (('L', ea), ('R', eb)):
             sg = 1 if side == 'L' else -1
             if e[0] == 'F':
-                f = e[1]; hx = [f + sg * 150, f + sg * 350]
-                for x in hx: ins('x1', PX(x), Y + WL)
-                note('nx', [[PX(f) - sg * 311, Y + WL + 1637]] + [[PX(x), Y + WL + 181] for x in hx], 'Х1', 'ш.200', math.pi if side == 'L' else 0)
+                hk, offs, hl = C.get('FREE_HOOP', ('x1', [150, 350], 'Х1'))       # analog of this wall: См-8 -> two Х1, См-7 -> three Х2
+                f = e[1]; hx = [f + sg * o for o in offs]
+                for x in hx: ins(hk, PX(x), Y + WL)
+                note('nx', [[PX(f) - sg * 311, Y + WL + 1637]] + [[PX(x), Y + WL + 181] for x in hx], hl, 'ш.200', math.pi if side == 'L' else 0)
             else:
                 f, bc = e[1], e[2]; hx1 = f + sg * 150
                 ins('x1', PX(hx1), Y + WL); ins('x2', PX(bc), Y + WL)
@@ -108,10 +109,14 @@ for P in C['PLANS']:
                 note('nz', [[B_, YS], [B_, YS]], lab, 'ш.%d' % z[4]); cur = E_ + 400
         # bottom chain
         lo = zs[0][1] - 50; hi = zs[-1][2] + 50
-        segs = [(lo, lo + 50, 50, 1)] + [sg for z in zs for sg in z[6]] + [(hi - 50, hi, 50, 1)]
-        for k, (s0, s1, stp, n_) in enumerate([q_ for q_ in segs if q_[1] > q_[0]]):
+        segs = [(lo, lo + 50, 50, 1)] + sorted([sg for z in zs for sg in z[6]]) + [(hi - 50, hi, 50, 1)]
+        mg = []
+        for q_ in [q_ for q_ in segs if q_[1] > q_[0]]:                    # one dimension per run of equal steps
+            if mg and mg[-1][2] == q_[2] and abs(mg[-1][1] - q_[0]) < 1: mg[-1] = (mg[-1][0], q_[1], q_[2], mg[-1][3] + q_[3])
+            else: mg.append(q_)
+        for k, (s0, s1, stp, n_) in enumerate(mg):
             kw = dict(t='dim', h=tch, p1=[PX(s0), Y + WL - 250], p2=[PX(s1), Y + WL - 250], dl=[PX((s0 + s1) / 2), Y + ydl], rot=0, txt=('%dх%d' % (stp, n_)) if n_ > 1 else '')
-            if 2 * (s1 - s0) < 650: kw['tx'] = [PX((s0 + s1) / 2), Y + ydl - 330]
+            if 2 * (s1 - s0) < 650: kw['tx'] = [PX((s0 + s1) / 2), Y + ydl - 330 - (330 if k % 2 else 0)]
             ops.append(kw)
     ops.append(dict(t='erase', h=[tch]))
 ops = [dict(t='erase', h=sorted(set(er)))] + ops + [dict(t='save')]

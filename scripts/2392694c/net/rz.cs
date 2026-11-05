@@ -153,6 +153,12 @@ namespace PL
                     log.AppendLine("einfo " + e.Handle + " " + e.GetType().Name + " lay=" + e.Layer + " lw=" + e.LineWeight + " c=" + e.Color + " lt=" + e.Linetype + " lts=" + e.LinetypeScale + extra);
                 }
             }
+            else if (t == "noteh")
+            {
+                var np = MGet(H(db, S(m, "h", ""))) as McNotePosition;
+                if (np != null) { np.FirstLine = S(m, "l1", ""); if (Has(m, "l2")) np.SecondLine = S(m, "l2", ""); np.DbEntity.Update(); }
+                var dd = (object)np as IDisposable; if (dd != null) dd.Dispose();
+            }
             else if (t == "sysvar")
             {
                 foreach (var kv in (Dictionary<string, object>)m["set"])

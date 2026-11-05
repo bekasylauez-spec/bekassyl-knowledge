@@ -92,6 +92,15 @@ if CFG.get('SMOOTH'):                                    # rule: Ø of neighbour
         for g in range(4):
             mx = max([z[3] for i in range(NP) for z in D[i][g] if z[0] == kind] or [0])
             for i in range(NP): D[i][g] = [tuple([z[0], z[1], z[2], mx] + list(z[4:])) if z[0] == kind else z for z in D[i][g]]
+    for i in range(NP):                                     # an edge zone equal to the middle one (same Ø and step) is one zone
+        for g in range(4):
+            zs = D[i][g]; M_ = next((z for z in zs if z[0] == 'M'), None)
+            if not M_: continue
+            for e in [z for z in zs if z[0] in 'LR' and z[3] == M_[3] and z[4] == M_[4]]:
+                bars = sorted(set(list(M_[5]) + list(e[5]))); segs = sorted(list(M_[6]) + list(e[6]) + ([(e[2], M_[1], M_[1] - e[2], 1)] if e[0] == 'L' and M_[1] - e[2] > 0 and not any(sg[0] == e[2] for sg in M_[6]) else []) + ([(M_[2], e[1], e[1] - M_[2], 1)] if e[0] == 'R' and e[1] - M_[2] > 0 and not any(sg[1] == e[1] for sg in M_[6]) else []))
+                M_ = ('M', bars[0], bars[-1], M_[3], M_[4], bars, segs) + tuple(M_[7:])
+                zs = [z for z in zs if z is not e and z[0] != 'M'] + [M_]
+            D[i][g] = sorted(zs, key=lambda z: z[1])
 def run(go=False):
     WW, HH = CFG.get('WH', (59400, 42000))
     R = listwin(SX, SY, WW, HH, None)
@@ -329,6 +338,7 @@ def run(go=False):
             tg += [AX1 + x0 - 20, AX1 + x1 + 20]; nums.append(CAPS[d])
             BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=len(z[5])))
         ox = AX1 + PIECES[i][0] + (-300 if ENDS[i][0] else 400)
+        if len(tg) == 2 and PIECES[i][1] - PIECES[i][0] > 3000: ox = AX1 + (PIECES[i][0] + PIECES[i][1]) / 2 - 600     # one zone on a wide piece: note at the middle
         LT = L[TOP(i)]
         yy = SY + LT - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
         lab_c = 'Ск' + ';'.join(str(n) for n in sorted(set(nums)))

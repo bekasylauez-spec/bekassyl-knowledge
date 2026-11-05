@@ -1037,6 +1037,27 @@ namespace GX
             {
                 map.Clear();
             }
+            else if (t == "axismk")
+            {
+                // SPDS axis markers: list them; "keep": n -> remove all markers after the first n (reflection, API-version safe)
+                var id = H(db, S(m, "h", ""));
+                var a = MGet(id) as McAxisEntity;
+                object mk = a.Axis.Methods.Markers; var ty = mk.GetType();
+                var sb = new StringBuilder("axismk " + ty.FullName + " :");
+                foreach (var mi in ty.GetMethods()) sb.Append(" " + mi.Name);
+                foreach (var pi in ty.GetProperties()) sb.Append(" P:" + pi.Name);
+                log.AppendLine(sb.ToString());
+                if (Has(m, "keep"))
+                {
+                    var cntP = ty.GetProperty("Count"); int cnt = cntP != null ? Convert.ToInt32(cntP.GetValue(mk, null)) : -1;
+                    System.Reflection.MethodInfo rm = null; foreach (var mi in ty.GetMethods()) { var ps = mi.GetParameters(); if (mi.Name == "removeMarker" && ps.Length == 1 && ps[0].ParameterType == typeof(int)) rm = mi; }
+                    var sb2 = new StringBuilder(); foreach (var mi in ty.GetMethods()) if (mi.Name == "removeMarker") { sb2.Append(" ("); foreach (var pp in mi.GetParameters()) sb2.Append(pp.ParameterType.Name + " "); sb2.Append(")"); } log.AppendLine("removeMarker" + sb2);
+                    for (int i = cnt - 1; i >= Convert.ToInt32(m["keep"]) && rm != null; i--) rm.Invoke(mk, new object[] { i });
+                    if (rm == null) foreach (var mi in ty.GetMethods()) if (mi.Name == "removeMarker" && mi.GetParameters().Length == 0) { for (int i = cnt - 1; i >= Convert.ToInt32(m["keep"]); i--) mi.Invoke(mk, null); log.AppendLine("removeMarker() x" + (cnt - Convert.ToInt32(m["keep"]))); break; }
+                    log.AppendLine("axismk count " + cnt + (rm == null ? " no RemoveAt" : " removed"));
+                    a.DbEntity.Update();
+                }
+            }
             else if (t == "axis")
             {
                 // SPDS axis: start s, end e (marker at end), value, scale
