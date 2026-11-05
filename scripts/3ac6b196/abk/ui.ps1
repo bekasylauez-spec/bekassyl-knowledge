@@ -8,11 +8,28 @@ public class U {
  [DllImport("user32.dll")] public static extern void mouse_event(int f, int dx, int dy, int d, int e);
  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
  [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
+ [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+ [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+ [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte sc, int f, int e);
 }
 "@
 [U]::SetProcessDPIAware() | Out-Null
 $dir = $PSScriptRoot
-if ($procId -gt 0) { $p = Get-Process -Id $procId; [U]::SetForegroundWindow($p.MainWindowHandle) | Out-Null; Start-Sleep -Milliseconds 400 }
+$lira = (Get-Process LiraSapr -ErrorAction SilentlyContinue | Select -First 1)
+if ($procId -gt 0) {
+  $p = Get-Process -Id $procId
+  for ($t = 0; $t -lt 3; $t++) {
+    $fpid = 0; [U]::GetWindowThreadProcessId([U]::GetForegroundWindow(), [ref]$fpid) | Out-Null
+    if ($fpid -eq $procId) { break }
+    [U]::keybd_event(0x12, 0, 0, 0); [U]::keybd_event(0x12, 0, 2, 0)
+    [U]::ShowWindow($p.MainWindowHandle, 9) | Out-Null; [U]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
+    Start-Sleep -Milliseconds 400
+  }
+}
+if ($act -ne 'none' -and $lira) {
+  $fpid = 0; [U]::GetWindowThreadProcessId([U]::GetForegroundWindow(), [ref]$fpid) | Out-Null
+  if ($fpid -ne $lira.Id) { "ABORT: foreground pid $fpid is not LIRA"; $act = 'none' }
+}
 switch ($act) {
  'click'  { [U]::SetCursorPos($x, $y); Start-Sleep -Milliseconds 150; [U]::mouse_event(2,0,0,0,0); [U]::mouse_event(4,0,0,0,0) }
  'dclick' { [U]::SetCursorPos($x, $y); Start-Sleep -Milliseconds 150; 1..2 | % { [U]::mouse_event(2,0,0,0,0); [U]::mouse_event(4,0,0,0,0); Start-Sleep -Milliseconds 80 } }
