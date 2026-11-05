@@ -12,7 +12,7 @@ for o in ops:
             if o['h'] == 'SP_2BDEA3' and c[1] in (5, 11, 12): c[3] = '%lu2%pr1'
         out.append(o)
 out = [x for x in out]
-n2 = len(rows) - 46
+n2 = max(0, len(rows) - 46)
 out.append({'t': 'theight', 'h': 'SPB' + GS.C['tag'], 'rows': [[r, 800] for r in range(n2, n2 + 5)]})
 
 out += [{'t': 'evalf'}, {'t': 'save'}]

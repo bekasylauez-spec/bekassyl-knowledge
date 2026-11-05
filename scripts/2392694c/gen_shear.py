@@ -78,7 +78,7 @@ def build(k, Zn, posmap):
     name = 'Поперечное армирование плиты перекрытия %s на отм %s' % (C['name'], C['mark'])
     ops.append({'t': 'clone', 'h': '2B47A5', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\L\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479D', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\C0;' + name + '}'})
-    ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '6.%d' % k})
+    ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '7.%d' % k})
     for tg, h in gx.tagmap().items():
         if tg.startswith(C['bgp']): ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [SW * (k - C['km']), 0]})
     occ = []
@@ -126,7 +126,7 @@ def build(k, Zn, posmap):
         ops.append({'t': 'clone', 'h': pick[0], 'tag': tn})
         ops.append({'t': 'spmove', 'h': tn, 'items': [[0, X + pick[1], Y + pick[2]], [1, X + cx, Y + cy]]})
         ops.append({'t': 'noteh', 'h': tn, 'l1': '%d(ф%d)' % (posmap[z['d']], z['d']), 'l2': 'ш.200х200'})
-    ops.append({'t': 'trepl', 'win': [x0 - 5, 455900, x0 + SW + 5, 498000], 'pairs': [['КЖ-6.1 ... 6.8', 'КЖ-6.%d ... 6.%d' % (lev.CUR['k0'], lev.CUR['k0'] + 7)]]})
+    ops.append({'t': 'trepl', 'win': [x0 - 5, 455900, x0 + SW + 5, 498000], 'pairs': [['КЖ-7.1 ... 7.8', 'КЖ-7.%d ... 7.%d' % (lev.CUR['k0'], lev.CUR['k0'] + 7)]]})
     ops.append({'t': 'save'})
     return ops
 

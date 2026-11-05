@@ -66,7 +66,7 @@ def build():
     for h in L: ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [dx, 0], 'tag': 'SP_' + h})
     name = 'Спецификация плиты перекрытия %s на отм. %s' % (C['name'], C['mark'])
     ops.append({'t': 'settext', 'h': 'SP_2BDB0C', 's': '{\\C0;' + name + '}'})
-    ops.append({'t': 'settext', 'h': 'SP_2BDB0E', 's': '6.%d' % (C['k0'] + 7)})
+    ops.append({'t': 'settext', 'h': 'SP_2BDB0E', 's': '7.%d' % (C['k0'] + 7)})
     # part 2 = copy of the main table and of its header, to the right
     ops.append({'t': 'clone', 'h': 'SP_2BDB7E', 'tag': 'SPB' + C['tag'], 'base': [0, 0], 'to': [19000, 0]})
     ops.append({'t': 'clone', 'h': 'SP_2BDE8B', 'tag': 'SPBH' + C['tag'], 'base': [0, 0], 'to': [19000, 0]})
@@ -74,13 +74,12 @@ def build():
     det = [h for h in L if h in ('2BDB13',) or ('2BDB55' <= h <= '2BDB7D')]
     ops.append({'t': 'movegrp', 'h': ['SP_' + h for h in det], 'd': [-5465, 2562]})
     ops.append({'t': 'movegrp', 'h': ['SP_2BDEA3'], 'd': [-7560, 177]})
-    N1 = 46                                   # data rows of part 1 (rows 1..46), rest in part 2
+    N1 = min(46, len(rows))                   # data rows of part 1 (rows 1..46), rest in part 2
     p1, p2 = rows[:N1], rows[N1:]
     # part 1: rows 0 header, 1..33 analog rows; need N1 data rows + nothing below
     A, B = 'SP_2BDB7E', 'SPB' + C['tag']
-    ops.append({'t': 'trows', 'h': A, 'mode': 'ins', 'at': 3, 'from': 2, 'n': N1 + 1 - 29})   # rows 1..N1 + keep tail
-    # after insert: data rows 1..(28+N1+1-29)=N1, tail rows N1+1.. (blank, blank, Материалы, бетон, note) -> delete tail in part 1
-    ops.append({'t': 'trows', 'h': A, 'mode': 'del', 'at': N1 + 1, 'n': 5})
+    if N1 > 28: ops.append({'t': 'trows', 'h': A, 'mode': 'ins', 'at': 3, 'from': 2, 'n': N1 - 28})   # rows 1..N1
+    ops.append({'t': 'trows', 'h': A, 'mode': 'del', 'at': N1 + 1, 'n': 5 + max(0, 28 - N1)})       # tail of part 1
     # part 2: delete header row 0 and analog data rows, keep 2 template data rows then tail
     n2 = len(p2)
     ops.append({'t': 'trows', 'h': B, 'mode': 'del', 'at': 0, 'n': 1})                          # rows: 0..27 data, 28.. tail
@@ -100,7 +99,7 @@ def build():
     for i, row in enumerate(p2): fill(cells2, form2, i, row)
     cells2 += [[n2 + 3, 12, '']]
     form2 += [[n2 + 3, 12, '(%.2f*0.25)' % area, '%lu2%pr2']]
-    form1 += [[0, 12, '(Sum(M2:M%d)+Table({T:%s}).Evaluate(Sum(M1:M%d)))' % (N1 + 1, B, n2), '%lu2%pr2']]
+    form1 += [[0, 12, ('(Sum(M2:M%d)+Table({T:%s}).Evaluate(Sum(M1:M%d)))' % (N1 + 1, B, n2)) if n2 else '(Sum(M2:M%d))' % (N1 + 1), '%lu2%pr2']]
     ops += [{'t': 'tset', 'h': A, 'cells': cells1}, {'t': 'tformula', 'h': A, 'cells': form1},
             {'t': 'tset', 'h': B, 'cells': cells2}, {'t': 'tformula', 'h': B, 'cells': form2}]
     # ведомость расхода стали: Ø columns 4..10 (10,12,14,16,18,20,22), A240 empty
@@ -115,7 +114,7 @@ def build():
            [6, 11, '(Sum(E7:K7))', '%lu2%pr2'], [6, 12, '(Sum(L7:L7)+Sum(D7:D7))', '%lu2%pr2']]
     ops.append({'t': 'tformula', 'h': 'SP_2BDEA3', 'cells': vf})
     ops.append({'t': 'tset', 'h': 'SP_2BDEA3', 'cells': [[6, 0, C['name']]]})
-    ops.append({'t': 'trepl', 'win': [X0 - 5, 455900, X0 + SW + 5, 498000], 'pairs': [['КЖ-5.1... 5.8', 'КЖ-6.%d ... 6.%d' % (C['k0'], C['k0'] + 7)]]})
+    ops.append({'t': 'trepl', 'win': [X0 - 5, 455900, X0 + SW + 5, 498000], 'pairs': [['КЖ-5.1... 5.8', 'КЖ-7.%d ... 7.%d' % (C['k0'], C['k0'] + 7)]]})
     ops += [{'t': 'evalf'}, {'t': 'save'}]
     return ops, rows, area
 

@@ -22,12 +22,12 @@ def listwin(x0, x1):
 def texts(k, num_old, num_new, notes_new):
     x0 = S61 + SW * (k - 1)
     return {'t': 'trepl', 'win': [x0, 455900, x0 + SW, 498000],
-            'pairs': [['КЖ-6.1 ... 6.8', '@@N'], [num_old, num_new], ['@@N', notes_new], ['Пм-1', C['name']], ['-0.100', C['mark']]]}
+            'pairs': [['КЖ-7.1 ... 7.8', '@@N'], [num_old, num_new], ['@@N', notes_new], ['Пм-1', C['name']], ['-0.100', C['mark']]]}
 
 
 def run():
     k1, k2 = C['k0'], C['k0'] + 1
-    notes = 'КЖ-6.%d ... 6.%d' % (C['k0'], C['k0'] + 7)
+    notes = 'КЖ-7.%d ... 7.%d' % (C['k0'], C['k0'] + 7)
     d1, d2 = SW * (k1 - 1), SW * (k2 - 2)
     for k in (k1, k2):
         x0 = S61 + SW * (k - 1)
@@ -53,8 +53,8 @@ def run():
         w, hh = c - a, d - b
         ops.append({'t': 'pl', 'p': [P(a, b), P(a + 0.15 * w, b + 0.89 * hh), P(c, d)], 'layer': '_0', 'lw': 20})
     for h in lv: ops.append({'t': 'levelval', 'h': h, 'old': '-0,100', 'value': C['lvl']})
-    ops.append(texts(k1, '6.1', '6.%d' % k1, notes))
-    ops.append(texts(k2, '6.2', '6.%d' % k2, notes))
+    ops.append(texts(k1, '7.1', '7.%d' % k1, notes))
+    ops.append(texts(k2, '7.2', '7.%d' % k2, notes))
     ops.append({'t': 'save'})
     out = gx.run(ops, 'cp')
     print(len(old), 'old openings', len(lv), 'levels', [l for l in out.splitlines() if 'ERR' in l or 'trepl' in l or 'done' in l])

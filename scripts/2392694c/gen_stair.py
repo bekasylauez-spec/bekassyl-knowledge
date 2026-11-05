@@ -13,7 +13,7 @@ Y = C['oy']
 U = 4300000.0
 DX = 172179.0 + SW * (K - 1) - U          # analog sheet -> sheet 6.9 (same place on the sheet)
 EDGE = 18025
-FL = [(10525, 11700), (11700, 13125)]
+FL = C.get('flights', [(10525, 11700), (11700, 13125)])
 
 
 def P(a, b): return [X + a, Y + b, 0]
@@ -35,7 +35,7 @@ def build():
             ops.append({'t': 'lineset', 'h': '2DE314', 's': P(x, EDGE - 700), 'e': P(x, top)})
         # note «Вп1;Вп2» across the bars (analog 2DE313: shelf + 4 arrows), at 800 above the slab edge
         tg = 'STN%d' % gi
-        if gi == 0:          # analog 2DE313: shelf on the left, 4 arrows
+        if gi == 0 and len(FL) > 1:          # analog 2DE313: shelf on the left, 4 arrows
             ops.append({'t': 'clone', 'h': '2DE313', 'tag': tg})
             yy = EDGE + 500
             pick = [xs[0], xs[1], xs[-2], xs[-1]]
@@ -59,16 +59,16 @@ def build():
             if txt: op['tx'] = P((p + q) / 2, yl + 180)
             ops.append(op)
     # length chain on the right of the right group: 700 | 980 | 1280
-    xr = FL[1][1] + 250 + 600
+    xr = FL[-1][1] + 250 + 600
     for p, q in ((EDGE - 700, EDGE), (EDGE, EDGE + 980), (EDGE + 980, EDGE + 2260)):
-        ops.append({'t': 'dim', 'h': GD.T_DV, 'p1': P(FL[1][1] - 50, p), 'p2': P(FL[1][1] - 50, q), 'dl': P(xr, p), 'rot': math.pi / 2, 'txt': ''})
+        ops.append({'t': 'dim', 'h': GD.T_DV, 'p1': P(FL[-1][1] - 50, p), 'p2': P(FL[-1][1] - 50, q), 'dl': P(xr, p), 'rot': math.pi / 2, 'txt': ''})
     # section mark 2-2 along the left flight
     ops.append({'t': 'clone', 'h': '2DE43E', 'tag': 'STS'})
-    ops.append({'t': 'spmove', 'h': 'STS', 'items': [[0, X + 11100, Y + EDGE + 2300], [1, X + 11100, Y + EDGE - 2300]]})
+    ops.append({'t': 'spmove', 'h': 'STS', 'items': [[0, X + (FL[0][0] + FL[0][1]) / 2 - 300, Y + EDGE + 2300], [1, X + (FL[0][0] + FL[0][1]) / 2 - 300, Y + EDGE - 2300]]})
     # Разрез 2-2 (analog group), level of this slab
     SEC = ['2DE366', '2DE367', '2DE368', '2DE369', '2DE36A', '2DE36C', '2DE37B', '2DE388', '2DE395', '2DE396', '2DE397', '2DE3A4']
     for h in SEC: ops.append({'t': 'clone', 'h': h, 'base': [0, 0], 'to': [DX, 0], 'tag': 'STX_' + h})
-    ops.append({'t': 'levelval', 'h': 'STX_2DE396', 'old': '+3.050', 'value': C['lvl'].replace(',', '.')})
+    if len(C['lvl']) == 6: ops.append({'t': 'levelval', 'h': 'STX_2DE396', 'old': '+3.050', 'value': C['lvl'].replace(',', '.')})
     ops.append({'t': 'save'})
     return ops, nb
 

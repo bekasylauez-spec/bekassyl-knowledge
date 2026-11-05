@@ -39,7 +39,7 @@ def build(key, k, R, pos):
     name = 'Дополнительное армирование плиты перекрытия %s %s на отм %s' % (C['name'], TITLES[key], C['mark'])
     ops.append({'t': 'clone', 'h': '2B47A5', 'base': [0, 0], 'to': [dx - 2500, -650], 'text': '{\\L\\C0;' + name + '}'})
     ops.append({'t': 'clone', 'h': '2B479D', 'base': [0, 0], 'to': [dx, 0], 'text': '{\\C0;' + name + '}'})
-    ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '6.%d' % k})
+    ops.append({'t': 'clone', 'h': '2B479F', 'base': [0, 0], 'to': [dx, 0], 'text': '7.%d' % k})
     # plan background = the 2.2 clones of sheet 6.2
     mp = gx.tagmap()
     for tg, h in mp.items():
@@ -126,7 +126,7 @@ def build(key, k, R, pos):
             items[0] = [0, items[0][1] + (0 if along_x else 300), items[0][2] + (300 if along_x else 0)]
         ops.append({'t': 'spmove', 'h': tg, 'items': items})
         ops.append({'t': 'noteh', 'h': tg, 'l1': str(num), 'l2': 'ш.200'})
-    ops.append({'t': 'trepl', 'win': [x0 - 5, 455900, x0 + SW + 5, 498000], 'pairs': [['КЖ-6.1 ... 6.8', 'КЖ-6.%d ... 6.%d' % (lev.CUR['k0'], lev.CUR['k0'] + 7)]]})
+    ops.append({'t': 'trepl', 'win': [x0 - 5, 455900, x0 + SW + 5, 498000], 'pairs': [['КЖ-7.1 ... 7.8', 'КЖ-7.%d ... 7.%d' % (lev.CUR['k0'], lev.CUR['k0'] + 7)]]})
     ops.append({'t': 'save'})
     return ops
 

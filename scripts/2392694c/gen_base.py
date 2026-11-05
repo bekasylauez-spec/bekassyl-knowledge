@@ -14,7 +14,17 @@ k1, k2 = C['k0'], C['k0'] + 1
 x1, x2 = S61 + SW * (k1 - 1), S61 + SW * (k2 - 1)
 X1, X2, Y = lev.ox(k1), lev.ox(k2), C['oy']
 SX0, SY0, SX1, SY1 = C['rect']
-dims = json.load(open(os.path.join(gx.S, 'w', 'dims24.json')))
+def keep_dims():
+    import ezdxf
+    dd = ezdxf.readfile(os.path.join(gx.S, 'an', 'pl.dxf')); keep = []
+    XA = -232964.0 + SW * (n - 1)
+    for e in dd.modelspace().query('DIMENSION'):
+        p = e.dxf.defpoint
+        if not (XS < p.x < XS + C.get('planw', SW) and 455939 < p.y < 497939): continue
+        vert = abs(e.dxf.defpoint2.x - e.dxf.defpoint3.x) < 1
+        if (not vert and p.y < Y - 1000) or (vert and p.x < XA - 125 - 3000): keep.append(e.dxf.handle)
+    return keep
+dims = {'keep': keep_dims()}
 EXCL_T = ('SPDSNOTEPOSITION', 'SPDSSECTION', 'SPDSFORMAT', 'MTEXT')
 
 
@@ -24,7 +34,7 @@ def scheme_ents(keep_dims_only):
         f = l.rstrip('\n').split('\t')
         if f[0] != 'L': continue
         a = list(map(float, f[4][1:].split(',')))
-        if not (a[0] >= XS and a[2] <= XS + SW and a[1] >= 455900): continue
+        if not (a[0] >= XS and a[2] <= XS + C.get('planw', SW) and a[1] >= 455900): continue
         if f[1] in EXCL_T or (f[1] == 'INSERT' and f[3] == 'Размеры'): continue
         if f[1] == 'LWPOLYLINE' and a[2] - a[0] > 20000 and a[3] - a[1] > 20000: continue      # slab contour of the scheme
         if keep_dims_only and f[1] == 'DIMENSION' and f[2] not in dims['keep']: continue
@@ -36,7 +46,7 @@ def P(X, a, b): return [X + a, Y + b, 0]
 
 
 def run():
-    notes = 'КЖ-6.%d ... 6.%d' % (k1, k1 + 7)
+    notes = 'КЖ-7.%d ... 7.%d' % (k1, k1 + 7)
     wipe = lambda x0, X: {'t': 'eraseregion', 'win': [x0 + 1, 455950, X + 23500, 495990]}
     ops = [{'t': 'eraseregion', 'win': [x0 - 1, 455930, x0 + SW + 1, 497950]} for x0 in (x1, x2)]
     ops += [{'t': 'clonewin', 'win': [S61 - 5, 455900, S61 + SW + 5, 498000], 'd': [x1 - S61, 0]},
@@ -90,17 +100,28 @@ def run():
                 op['tx'] = P(X2, SX1 + CH - 60, c) if vert else P(X2, c, SY1 + CH + 190)
             ops.append(op)
     # texts / level
-    for k, num in ((k1, '6.1'), (k2, '6.2')):
+    for k, num in ((k1, '7.1'), (k2, '7.2')):
         x0 = S61 + SW * (k - 1)
         ops.append({'t': 'trepl', 'win': [x0, 455900, x0 + SW, 498000],
-                    'pairs': [['КЖ-6.1 ... 6.8', '@@N'], [num, '6.%d' % k], ['@@N', notes], ['Пм-1', C['name']], ['-0.100', C['mark']]]})
+                    'pairs': [['КЖ-7.1 ... 7.8', '@@N'], [num, '7.%d' % k], ['@@N', notes], ['Пм-1', C['name']], ['-0.100', C['mark']]]})
     ops.append({'t': 'save'})
     out = gx.run(ops, 'b2')
     print([l for l in out.splitlines() if 'ERR' in l or 'trepl' in l or 'done' in l][:8])
     # level mark of the copied Разрез 1-1
     gx.run([{'t': 'list', 'win': [x1, 455900, x1 + SW, 498000]}], 'ls')
     lv = [l.split('\t')[2] for l in open(os.environ['TEMP'] + '/pl_log.txt', encoding='utf-8').read().splitlines() if '\tSPDSLEVELMARK\t' in l]
-    print(gx.run([{'t': 'levelval', 'h': h, 'old': '-0,100', 'value': C['lvl']} for h in lv] + [{'t': 'save'}], 'lv')[-80:])
+    if len(C['lvl']) == 6:
+        print(gx.run([{'t': 'levelval', 'h': h, 'old': '-0,100', 'value': C['lvl']} for h in lv] + [{'t': 'save'}], 'lv')[-80:])
+    else:   # longer value: clone the level mark of the scheme sections 2.6/2.7 with this value onto the place of the old one
+        SRC = {'+19,700': 'E3B6F', '+21,450': 'E3F44', '+22,400': 'E3B75', '+21,200': 'E3B71', '+23,100': 'E3B73'}
+        for h in lv:
+            def pts(hh):
+                o = gx.run([{'t': 'spmove', 'h': hh}], 'sp')
+                l = [x for x in o.splitlines() if x.startswith('spmove')][0]
+                import re
+                return [tuple(map(float, q.split(','))) for q in re.findall(r'\(([-\d.]+,[-\d.]+)\)', l)]
+            a, b = pts(h)[0], pts(SRC[C['lvl']])[0]
+            print(gx.run([{'t': 'clone', 'h': SRC[C['lvl']], 'base': [b[0], b[1]], 'to': [a[0], a[1]]}, {'t': 'erase', 'h': [h]}, {'t': 'save'}], 'lv2')[-60:])
 
 
 if __name__ == '__main__':

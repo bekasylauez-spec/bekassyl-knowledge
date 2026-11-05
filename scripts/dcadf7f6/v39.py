@@ -17,6 +17,7 @@ P = 'V39:'
 R = lambda h: P + h
 
 ops = lib.OPS
+op(t='eraseregion', win=[X0N - 10, Y0 - 10, X0N + 59410, Y0 + 42010])
 op(t='copywin', win=[SRC_X0 - 1, Y0 - 1, SRC_X0 + 59401, Y0 + 42001], d=[DX, 0], pre=P)
 # drop formwork-only objects
 op(t='erase', h=[R(h) for h in ['12D768', '12D769', '12D76A', '12D76B', '12D76C', '12D76D', '12D76E', '12D76F', '12D770',
@@ -69,25 +70,30 @@ for x, y in COLS_IN + COLS_PIL:
     pl([(PX + x - h, PY + y - h), (PX + x + h, PY + y - h), (PX + x + h, PY + y + h), (PX + x - h, PY + y + h)], layer='ф8_арм', closed=True, lw=25)
     pl([(PX + x, PY + y - h), (PX + x + h, PY + y), (PX + x, PY + y + h), (PX + x - h, PY + y)], layer='ф8_арм', closed=True, lw=25)
 
-# ---- notes: one per wall (inner face run), Вп-1 on each column
-done = set()
-for w, face, pts in runs:
-    if not pts or (w in done): continue
-    o, c, a, b = w
-    inner = (o == 'X' and ((c == 6800 and face > 0) or (c == 44200 and face < 0))) or \
-            (o == 'Y' and ((c == 0 and face > 0) or (c == 24700 and face < 0))) or (w in WALLS_IN and face > 0)
-    if not inner: continue
-    done.add(w)
-    k = len(pts) // 3
-    t = pts[k]
-    if o == 'X':
-        org = (PX + t[0] + face * 900, PY + t[1] + 700)
-    else:
-        org = (PX + t[0] + 700, PY + t[1] + face * 900)
-    note('1;2;3', 'ш.100', org, (PX + t[0], PY + t[1]), arrow='arrow')
-for i, (x, y) in enumerate(COLS_IN + COLS_PIL):
-    sgn = 1 if (x, y) in COLS_IN else 1
-    note('Вп-1', '', (PX + x + 700, PY + y + 700), (PX + x + 250, PY + y + 250), arrow='arrow')
+# ---- notes (explicit, shelf to the right of origin; never across walls / other notes)
+F = 150  # dot row offset from wall axis (400 wall, 50 from face)
+WN = [  # target (x,y) on a dot row, origin
+    ((23000, 12350 + F), (23700, 13300)),          # ось В
+    ((25000, 0 + F), (25700, 1100)),               # ось А
+    ((25000, 24700 - F), (25700, 23600)),          # ось Д
+    ((6800 + F, 3000), (7700, 3700)),              # ось 2
+    ((44200 + F, 8000), (45400, 8800)),            # ось 8 (outer row, from outside)
+    ((37800 + F, 7500), (38700, 8300)),            # x=37800
+    ((41000, 4600 + F), (41700, 5500)),            # y=4600
+    ((41000, 10950 + F), (41700, 11800)),          # y=10950
+    ((41000, 13750 + F), (41700, 14600)),          # y=13750
+    ((41000, 20100 + F), (41700, 21000)),          # y=20100
+    ((7700, 14200 + F), (8200, 15100)),            # pit y=14200 (from the tank side)
+    ((7700, 10500 - F), (8200, 9600)),             # pit y=10500 (from the tank side)
+    ((8700 + F, 11400), (9500, 10600)),            # pit x=8700 (outside, under В)
+]
+for t_, o_ in WN:
+    note('1;2;3', 'ш.100', (PX + o_[0], PY + o_[1]), (PX + t_[0], PY + t_[1]), arrow='arrow')
+for x, y in COLS_IN + COLS_PIL:
+    if (x, y) == (6800, 13810): org, tg = (7300, 12500), (x + 250, y - 250)
+    elif (x, y) == (6800, 24700): org, tg = (7600, 23300), (x + 250, y - 250)
+    else: org, tg = (x + 800, y + 800), (x + 250, y + 250)
+    note('Вп-1', '', (PX + org[0], PY + org[1]), (PX + tg[0], PY + tg[1]), arrow='arrow')
 
 notes = ['Общие указания см. лист 1.1. Данный лист читать совместно с листами 3.1, 3.10, 4.1, 4.2, 5.1 ... 5.24.',
          'Выпуски стен поз. 1;2 - %%C20 A500C ш.200 у обеих граней, стыки вразбежку (выпуск над плитой 1220 и 2810 мм); поз. 3 - %%C20 ш.200 между ними, нижняя зона стены (до отм. -1.000).',

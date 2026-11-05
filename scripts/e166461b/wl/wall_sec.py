@@ -105,27 +105,27 @@ for P in C['PLANS']:
             else: zn.append((lab, z[1], z[2], z[4]))
         bnd = [PX(v) for sg in [q_ for z in zs for q_ in z[6]] for v in sg[:2]] + [PX(zs[0][1] - 50), PX(zs[-1][2] + 50)]
         bnd += [X + r['sp'][0][0] for r in R if r['t'] == 'SPDSCONSTRUCTIONLINE' and abs(r['sp'][0][0] - r['sp'][1][0]) < 1 and min(r['y0'], r['y1']) < WL - 1161 < max(r['y0'], r['y1'])]   # axis lines
-        def place(c0, lo_, hi_):                                     # text (about 950 wide, centred) clear of the chain's extension lines
-            for dd in [0] + [sg_ * 60 * k for k in range(1, 60) for sg_ in (1, -1)]:
+        def place(c0, lo_, hi_):                                     # note text starts at its origin (about 960 wide): clear of extension / axis lines
+            for dd in [0] + [sg_ * 60 * k for k in range(1, 70) for sg_ in (1, -1)]:
                 c = c0 + dd
-                if lo_ <= c - 480 and c + 480 <= hi_ and not any(c - 540 < v < c + 540 for v in bnd): return c
+                if lo_ <= c and c + 960 <= hi_ and not any(c - 60 < v < c + 1020 for v in bnd): return c
             return c0
         for k_, (lab, z1, z2, stp) in enumerate(zn):
             edge = z2 - z1 <= 600 and len(zn) > 1
             if edge and k_ == 0:                                     # free-end edge zone at the left: fan out of the end, shelf in the opening
-                A_ = PX(z1) - 300; c = place(A_ - 700, A_ - 3000, A_)
-                ops.append(dict(t='pl', p=[[PX(z2), YT], [A_, YS], [min(A_ - 1400, c - 520), YS]], layer='Размеры'))
+                A_ = PX(z1) - 300; c = place(A_ - 1180, A_ - 3200, A_)
+                ops.append(dict(t='pl', p=[[PX(z2), YT], [A_, YS], [min(A_ - 1400, c - 60), YS]], layer='Размеры'))
                 ops.append(dict(t='pl', p=[[PX(z1), YT], [A_, YS]], layer='Размеры'))
                 note('nz', [[c, YS], [c, YS]], lab, 'ш.%d' % stp)
             elif edge:                                                # free-end edge zone at the right
-                A_ = PX(z2) + 300; c = place(A_ + 700, A_, A_ + 3000)
-                ops.append(dict(t='pl', p=[[PX(z1), YT], [A_, YS], [max(A_ + 1400, c + 520), YS]], layer='Размеры'))
+                A_ = PX(z2) + 300; c = place(A_ + 220, A_, A_ + 3200)
+                ops.append(dict(t='pl', p=[[PX(z1), YT], [A_, YS], [max(A_ + 1400, c + 1020), YS]], layer='Размеры'))
                 ops.append(dict(t='pl', p=[[PX(z2), YT], [A_, YS]], layer='Размеры'))
                 note('nz', [[c, YS], [c, YS]], lab, 'ш.%d' % stp)
             else:
                 B_ = PX(z1) + 500; E_ = max(PX(z2) - 400, B_ + 1100)
                 ops.append(dict(t='pl', p=[[PX(z1), YT], [B_, YS], [E_, YS], [PX(z2), YT]], layer='Размеры'))
-                tx0 = place((B_ + E_) / 2, B_, E_)
+                tx0 = place((B_ + E_) / 2 - 480, B_, E_)
                 note('nz', [[tx0, YS], [tx0, YS]], lab, 'ш.%d' % stp)
         # bottom chain
         lo = zs[0][1] - 50; hi = zs[-1][2] + 50
