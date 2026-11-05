@@ -26,6 +26,8 @@ def mtext_box(e, ox=0, oy=0):
     txt = e.plain_text().split('\n'); h = e.dxf.char_height
     w = max(TW(t) for t in txt) * h; H = len(txt) * h * 1.6
     if e.dxf.hasattr('width') and e.dxf.width > 0 and len(txt) == 1: w = min(w, e.dxf.width) if e.dxf.width > w else w
+    if e.dxf.hasattr('width') and e.dxf.width > 0 and w > e.dxf.width * 1.02:          # word-wrapped MTEXT (06.11: title over 2 lines)
+        n = sum(max(1, math.ceil(TW(t) * h / e.dxf.width)) for t in txt); w = e.dxf.width; H = n * h * 1.6
     ap = e.dxf.get('attachment_point', 1)
     ix, iy = e.dxf.insert[0], e.dxf.insert[1]
     dx = {1: 0, 2: -w / 2, 3: -w}[(ap - 1) % 3 + 1]; dy = {0: -H, 1: -H / 2, 2: 0}[(ap - 1) // 3]
@@ -59,9 +61,22 @@ def add_geo(pid, ents):
             if s.strip(): texts.append((pid, p, s))
 
 ptype = {}
+ins_hatch = []
 for e in msp:
     t = e.dxftype(); pid = e.dxf.handle; ptype[pid] = t
-    if t in ('HATCH', 'INSERT', 'CIRCLE', 'ARC', 'ACAD_TABLE', 'POINT'): continue
+    if t == 'INSERT':                                   # blocks (columns, symbols): their lines and hatches count too (06.11: «1600» on a column)
+        try:
+            ve = list(e.virtual_entities())
+            from ezdxf import bbox as _bb
+            ext = _bb.extents(ve)
+            if ext.has_data and (ext.size.x > 15000 or ext.size.y > 15000): continue      # frames / stamps
+            add_geo(pid, [v for v in ve if v.dxftype() != 'HATCH'])
+            for v in ve:
+                if v.dxftype() == 'HATCH': ins_hatch.append((pid, v))
+        except Exception as ex:
+            unread.append((pid, t, str(ex)[:60]))
+        continue
+    if t in ('HATCH', 'CIRCLE', 'ARC', 'ACAD_TABLE', 'POINT'): continue
     try: lay = e.dxf.layer
     except Exception: lay = ''
     if lay in ('О_Формат', 'Формат - тонкая линия', 'Формат - толстая линия', 'Штамп', 'Рамка_Штамп'): continue
@@ -135,7 +150,7 @@ def _is_shelf(pid_, ls_):
 shelves = [(pid_, ls_) for pid_, ls_ in segs if ptype.get(pid_, '').startswith('SPDSNOTE') and _is_shelf(pid_, ls_)]   # SPDS callouts only
 strokes = [(pid_, ls_) for pid_, ls_ in segs if ptype.get(pid_) in ('SPDSSECTION', 'SPDSCONSTRUCTIONLINE') and ls_.length <= 1000]   # section mark strokes/arrows
 hatches = []                                                      # concrete/ground hatch areas: no text on them
-for e in msp.query('HATCH'):
+for e in list(msp.query('HATCH')) + [v for p_, v in ins_hatch]:
     try:
         acc = None                                                   # even-odd: outer boundary minus holes
         for path in e.paths:
@@ -147,7 +162,7 @@ for e in msp.query('HATCH'):
             if len(pts) >= 3:
                 pg = Polygon(pts).buffer(0)
                 if pg.area > 0: acc = pg if acc is None else acc.symmetric_difference(pg)
-        if acc is not None and acc.area > 0: hatches.append((e.dxf.handle, acc))
+        if acc is not None and acc.area > 0: hatches.append((e.dxf.handle or 'blk', acc))
     except Exception as ex:
         unread.append((e.dxf.handle, 'HATCH', str(ex)[:40]))
 total = 0

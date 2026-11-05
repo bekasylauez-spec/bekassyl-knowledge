@@ -141,10 +141,12 @@ for s in range(NS):
 LNT = {2: (16, 4), 3: (25, 2), 4: (25, 2), 5: (36, 2), 6: (36, 2)}       # storey: (Ø, bars per face)
 for s_, a_, b_, z0_, z1_ in OPN:
     d_, nf = LNT[s_]; lg = LAP(d_); x0_ = max(a_ - lg, 5750 + 50); x1_ = min(b_ + lg, 15675 - 50)
-    Ln = int(round(x1_ - x0_, -1)); pl_ = pos_of((d_, Ln)); BARS.append(dict(pos=pl_, d=d_, L=Ln, n=2 * nf, storey=s_, lintel=True))
+    hk = int(math.ceil(12 * d_ / 10.0) * 10) if a_ - x0_ < lg else 0        # Bekassyl 06.11: anchorage short at the free end -> 90° hook into the Ск
+    Ln = int(round(x1_ - x0_, -1)) + hk; pl_ = pos_of((d_, Ln)); BARS.append(dict(pos=pl_, d=d_, L=Ln, n=2 * nf, storey=s_, lintel=True, hook=hk))
     for k_ in range(2):
         yy = L[s_] + z1_ + 60 + 120 * k_
-        ops.append(dict(t='pl', p=[W(x0_, yy), W(x1_, yy)], layer='диам%d' % d_, lw=50))
+        pts = ([W(x0_, yy - hk)] if hk else []) + [W(x0_, yy), W(x1_, yy)]
+        ops.append(dict(t='pl', p=pts, layer='диам%d' % d_, lw=50))
     if b_ - a_ > 3000: xn, yn = (a_ + b_) / 2 - 500, L[s_] + z1_ - 500          # large opening: note inside it, above the diagonal
     else: xn, yn = x1_ - 120, L[s_] + z1_ - 450                                 # window: beside it, under the bars
     note('pos', str(pl_), '(%%%%C%d) %d+%d' % (d_, nf, nf) if nf > 2 else '(%%%%C%d)' % d_, xn, yn, L[s_] + z1_ + 60, L[s_] + z1_ + 180)

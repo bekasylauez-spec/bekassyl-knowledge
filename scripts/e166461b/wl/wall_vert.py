@@ -56,6 +56,7 @@ for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, CFG.get('LEND
             (la, lb), (el, er) = CFG['LIRA0'][i], CFG['ENDS0'][i]
         else:
             (la, lb), (el, er) = LIRA[i], CFG.get('LENDS', ENDS)[i]
+        if CFG.get('ENDS_G', {}).get('%d|%d' % (i, gi_)): el, er = CFG['ENDS_G']['%d|%d' % (i, gi_)]   # free end only in this storey group
         cs = [c for c in CELLS if max(LEV[g0], CFG.get('ZMIN', -99)) - 1e-3 <= c['z0'] < LEV[g1] - 1e-3 and c[KX[1]] > la + 1 and c[KX[0]] < lb - 1]
         xs = sorted(set(c[KX[0]] for c in cs))
         colL = [c for c in cs if c[KX[0]] == xs[0]]; colR = [c for c in cs if c[KX[0]] == xs[-1]]
@@ -75,6 +76,7 @@ for g in range(4):
     for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)):
         if g == 0 and CFG.get('PIECES0') and CFG['PIECES0'][i] is None: D[i][g] = []; continue
         if g == 0 and CFG.get('PIECES0'): (a, b), (el, er) = CFG['PIECES0'][i], CFG['ENDS0'][i]
+        if CFG.get('ENDS_G', {}).get('%d|%d' % (i, g)): el, er = CFG['ENDS_G']['%d|%d' % (i, g)]
         D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
         if g == 0 and CFG.get('ONE0'): D[i][g] = make_zones(CFG['ONE0'][0], CFG['ONE0'][1], False, False, de, de, dm, sm) if i == 0 else []
 if CFG.get('SMOOTH'):                                    # rule: Ø of neighbouring storey groups differ by <= 4 mm (raise the smaller one)
