@@ -37,22 +37,36 @@ R = listwin(SX, SY, 59400, 42000, None)
 N = notes(SX, SY, 59400, 42000)
 ops = []; BARS = []
 X1E = CFG['AXES'][0] - 300; X4E = CFG['AXES'][-1] + 300
-for r in R:
-    if r['t'] in ('LINE', 'LWPOLYLINE') and r['lay'].lower().startswith('диам') and abs(r['y1'] - r['y0']) < 1 and X1E < r['x0'] and r['x1'] < X4E and r['y0'] > L[0] - 100:
-        s = storey(r['y0'])
-        if s is None: continue
-        d = HD[s][0]; y0, y1, n = grid(s); y = y0 if r['y0'] < (L[s] + L[s + 1]) / 2 else y1
-        ops.append(dict(t='erase', h=[r['h']]))
-        ops.append(dict(t='pl', p=[W(r['x0'], y), W(r['x1'], y)], layer='диам%d' % d, lw=40))
+HL = [r for r in R if r['t'] in ('LINE', 'LWPOLYLINE') and r['lay'].lower().startswith('диам') and abs(r['y1'] - r['y0']) < 1 and X1E < r['x0'] and r['x1'] < X4E and r['y0'] > L[0] - 100]
+LONG = [r for r in HL if r['x1'] - r['x0'] >= 1500]
+CK_X = []                                                              # (old centre, new centre) of the Ск lines, for the notes
+for r in HL:
+    s = storey(r['y0'])
+    if s is None: continue
+    d = HD[s][0]; y0, y1, n = grid(s); bottom = r['y0'] < (L[s] + L[s + 1]) / 2
+    ops.append(dict(t='erase', h=[r['h']]))
+    if r['x1'] - r['x0'] >= 1500:                                      # straight bar through the piece, on the step grid
+        ops.append(dict(t='pl', p=[W(r['x0'], y0 if bottom else y1), W(r['x1'], y0 if bottom else y1)], layer='диам%d' % d, lw=40))
+    else:                                                              # analog: Ск leg drawn BESIDE the main bar (20 inward), length = leg
+        leg = LAP(d); left = any(abs(q['x0'] - r['x0']) < 5 for q in LONG)
+        xa, xb = (r['x0'], r['x0'] + leg) if left else (r['x1'] - leg, r['x1'])
+        y = y0 + 20 if bottom else y1 - 20
+        ops.append(dict(t='pl', p=[W(xa, y), W(xb, y)], layer='диам%d' % d, lw=40))
+        CK_X.append((s, (r['x0'] + r['x1']) / 2, (xa + xb) / 2))
 for nn in N:
-    if nn['pts'][0][1] < L[0] - 100 or len(nn['pts']) != 3 or nn['pts'][0][0] > CFG['AXES'][-1] + 3000: continue
+    if nn['pts'][0][1] < L[0] - 100 or len(nn['pts']) != 3 or not (CFG['AXES'][0] - 3000 < nn['pts'][0][0] < CFG['AXES'][-1] + 3000): continue
     s = storey(nn['pts'][0][1])
     if s is None: continue
     d, st = HD[s]; y0, y1, n = grid(s)
     if nn['l1'].startswith('Ск'): l1, l2 = 'Ск%d' % ck_of(d), '(%%%%%%%%C%d)' % d
     else: l1, l2 = str(pos_of(('S', d))), 'ш.%d' % st
     ops.append(dict(t='mcset', h=nn['h'], set={'FirstLine': l1.replace('%%%%', '%%'), 'SecondLine': ('(%%%%C%d)' % d) if l2.startswith('(') else l2}))
-    ops.append(dict(t='spmove', h=nn['h'], items=[[0, SX + nn['pts'][0][0], SY + (y0 + y1) / 2], [1, SX + nn['pts'][1][0], SY + y0], [2, SX + nn['pts'][2][0], SY + y1]]))
+    if nn['l1'].startswith('Ск'):                                       # leaders to the Ск legs (20 inside the main bars)
+        cs = [q for q in CK_X if q[0] == s] or CK_X
+        xc = min(cs, key=lambda q: abs(q[1] - nn['pts'][1][0]))[2] if cs else nn['pts'][1][0]
+        ops.append(dict(t='spmove', h=nn['h'], items=[[0, SX + xc, SY + (y0 + y1) / 2], [1, SX + xc, SY + y0 + 20], [2, SX + xc, SY + y1 - 20]]))
+    else:
+        ops.append(dict(t='spmove', h=nn['h'], items=[[0, SX + nn['pts'][0][0], SY + (y0 + y1) / 2], [1, SX + nn['pts'][1][0], SY + y0], [2, SX + nn['pts'][2][0], SY + y1]]))
 # straight bars and caps per storey
 for s in range(7):
     d, st = HD[s]; y0, y1, n = grid(s); rows = n + 1                  # n spaces -> n + 1 rows

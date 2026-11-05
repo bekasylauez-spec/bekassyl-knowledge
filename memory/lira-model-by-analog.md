@@ -34,3 +34,6 @@ LIRA text gotchas (2026-11-05, АБК):
 - Line load on a plate edge = kind 19, doc-7 row `i j q1 q2` (local node pair). Rect КЭ 41 nodes are in Z order (1-2, 3-4 opposite; 1-3, 2-4).
 - «Нормативная нагрузка» rule = Описание схемы (Ctrl+Shift+P) → «Значения нагрузок: нормативные». It is not in the text export. Send the hotkey with keybd_event; SendKeys does not reach it. The РСН dialog only shows this flag (greyed).
 - РСН dropdown cells: a mouse click on a list item does not register. Open ▼, press Down (index+1) times, then Enter. For the EN «Вид» order see the АБК Obsidian note.
+- User rule (2026-11-05): do NOT model the slab on grade (плита по грунту) in LIRA. Its floor, partition and live loads go to the ground; the ground-floor exterior wall load goes on top of the basement wall.
+- ЖБ materials (types/concrete/rebar) transfer between tasks through a *.lmcr file (Ж/Б → Редактировать → save/load icons). Assigning them needs element marking + ✓; plate and bar types are rejected for the wrong element type, so assign per group.
+- Before importing a .txt under an existing task name, move the old Work\<task>.ald away, otherwise its РСУ and other leftovers are offered for import.

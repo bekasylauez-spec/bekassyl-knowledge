@@ -211,9 +211,9 @@ def run(go=False):
             kind, x0, x1, d, st = z[:5]
             if d not in CAPS: CAPS[d] = len(CAPS) + 1
             yt = L[7] - TOPC; leg = LAP(d)
-            for x in (x0, x1):
-                ops.append(dict(t='pl', p=[W(AX1 + x + 20, yt), W(AX1 + x + 20, yt - leg)], layer='диам%d' % d, lw=40))
-            tg += [AX1 + x0 + 20, AX1 + x1 + 20]; nums.append(CAPS[d])
+            for x in (x0 - 20, x1 + 20):                                   # analog: legs 20 outside the zone's end bars
+                ops.append(dict(t='pl', p=[W(AX1 + x, yt), W(AX1 + x, yt - leg)], layer='диам%d' % d, lw=40))
+            tg += [AX1 + x0 - 20, AX1 + x1 + 20]; nums.append(CAPS[d])
             BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=len(z[5])))
         ox = AX1 + PIECES[i][0] + (-300 if ENDS[i][0] else 400)
         yy = SY + L[7] - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece

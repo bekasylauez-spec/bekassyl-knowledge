@@ -36,12 +36,12 @@ last = b0 + need
 fm = []
 for j in range(len(rows)):
     r = first + j
-    fm += [[r, 10, str(rows[j][3])], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (r + 1, r + 1, r + 1)], [r, 12, 'L%d*K%d' % (r + 1, r + 1)]]
+    fm += [[r, 10, str(rows[j][3]), '%lu2%pr0'], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (r + 1, r + 1, r + 1)], [r, 12, 'L%d*K%d' % (r + 1, r + 1)]]
 for i in keep:                                                     # kept rows lose their formulas when neighbours change: restore
-    fm += [[i, 10, T[i][10].split('{')[0]], [i, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (i + 1, i + 1, i + 1)], [i, 12, 'L%d*K%d' % (i + 1, i + 1)]]
+    fm += [[i, 10, T[i][10].split('{')[0].split('.')[0], '%lu2%pr0'], [i, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (i + 1, i + 1, i + 1)], [i, 12, 'L%d*K%d' % (i + 1, i + 1)]]
 fm.append([CFG['TOTAL_ROW'], 12, 'Sum(M%d:M%d)' % (b0 + 1, last)])
 fm.append([last + CFG['CONC_OFF'], 12, '%.4f' % CFG['CONC']])
-ops.append(dict(t='tformula', h=SP, cells=fm))
+ops.append(dict(t='tformula', h=SP, cells=fm, fmt='%lu2%pr2'))
 ops.append(dict(t='theight', h=SP, rows=[[last, 739], [last + 1, 739]] + ([[last + 2, 739]] if CFG['CONC_OFF'] > 1 else [])))
 # steel summary
 S = dump(ST)
@@ -62,7 +62,7 @@ for d, cc in cols.items(): sf.append([6, cc, ev(byd[d])])
 for i in range(len(a500), slots): sf.append([6, c0 + i, '0'])
 it = c0 + slots
 sf += [[6, it, 'Sum(%s7:%s7)' % (chr(65 + c0), chr(65 + c0 + slots - 1))], [6, it + 1, '%s7+D7' % chr(65 + it)]]
-ops.append(dict(t='tformula', h=ST, cells=sf))
+ops.append(dict(t='tformula', h=ST, cells=sf, fmt='%lu2%pr2'))
 ops.append(dict(t='save'))
 print('body', b0, b1, 'keep', [T[i][0] for i in keep], 'rows', len(rows), 'need', need, 'have', have, 'A500', a500)
 for r in rows: print(r)

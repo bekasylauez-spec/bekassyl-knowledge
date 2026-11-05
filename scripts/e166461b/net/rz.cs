@@ -755,6 +755,8 @@ namespace GX
                     f = rx.Replace(f, mm => "%<\\_ObjId " + H(db, mm.Groups[1].Value).OldIdPtr.ToInt64() + ">%");
                     double th = 0; try { th = cell.Contents[0].TextHeight; } catch { }
                     string fmt = null; try { fmt = cell.DataFormat; } catch { }
+                    if (a.Count >= 4 && a[3] != null && a[3].ToString() != "") fmt = a[3].ToString();   // per-cell format, e.g. "%lu2%pr0"
+                    else if (Has(m, "fmt")) fmt = S(m, "fmt", "");                                    // forced format, e.g. "%lu2%pr2"
                     cell.TextString = "";
                     if (f.StartsWith("TEXT:"))
                     {
@@ -771,6 +773,14 @@ namespace GX
                     }
                     if (th > 0) try { cell.Contents[0].TextHeight = th; } catch { }
                 }
+                tb.GenerateLayout();
+            }
+            else if (t == "tfmtset")
+            {
+                // set DataFormat (e.g. "%lu2%pr2" = 2 decimals) of cells [[r,c]] of h
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                string fmt = S(m, "fmt", "%lu2%pr2");
+                foreach (var q in L(m["cells"])) { var a = L(q); tb.Cells[Convert.ToInt32(a[0]), Convert.ToInt32(a[1])].DataFormat = fmt; }
                 tb.GenerateLayout();
             }
             else if (t == "tfmtcopy")
