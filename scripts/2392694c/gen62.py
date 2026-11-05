@@ -65,24 +65,32 @@ def chain(lo, hi, strips):
 
 
 def place(pts, vert):
-    """dims of one chain; short texts staggered on two sides of the dim line"""
-    res, k = [], 0
-    for p, q, t in pts:
+    """one row of texts on the outer side; short texts slid along the line clear of each other"""
+    res = []
+    rig = [(p, q) for p, q, t in pts if t is None and abs(q - p - 450) < 1]
+    lo, hi = pts[0][0], pts[-1][1]
+    for i, (p, q, t) in enumerate(pts):
         L = q - p
         op = {'t': 'dim', 'h': '2B4879' if vert else '2B4846', 'rot': math.pi / 2 if vert else 0}
         if vert: op.update(p1=P(SX1, p), p2=P(SX1, q), dl=P(SX1 + CH, p))
         else: op.update(p1=P(p, SY1), p2=P(q, SY1), dl=P(p, SY1 + CH))
-        if t: op['txt'] = t
+        if t:
+            op['txt'] = t
+            if L < 2500:      # short bay: the count goes to the outer side of the line
+                c = (p + q) / 2
+                op['tx'] = P(SX1 + CH + 310, c) if vert else P(c, SY1 + CH - 330)
         elif L < 700:
-            side = 1 if k % 2 == 0 else -1; k += 1
-            c = (p + q) / 2; off = 330 * side + (0 if side > 0 else -40)
-            op['tx'] = P(SX1 + CH + off, c) if vert else P(c, SY1 + CH + off)
-        else: k = 0
+            if (p, q) in rig: c = (p + q) / 2
+            elif any(abs(q - a) < 1 for a, b in rig): c = q - 470          # rest before a rigel
+            elif abs(q - hi) < 1: c = q + 300                                 # last piece at the edge
+            elif abs(p - lo) < 1: c = p - 300                                 # first piece at the edge
+            else: c = q + 260                                                 # 50 after a rigel
+            op['tx'] = P(SX1 + CH - 60, c) if vert else P(c, SY1 + CH + 190)
         res.append(op)
     return res
 
 
-CH = 900
+CH = 600
 ops += place(chain(SX0, SX1, RX), False)
 ops += place(chain(SY0, SY1, RY), True)
 ops.append({'t': 'erase', 'h': ['2B4846', '2B4858', '2B486A', '2B4879', '2B488B', '2B489D', '2B48AC']})

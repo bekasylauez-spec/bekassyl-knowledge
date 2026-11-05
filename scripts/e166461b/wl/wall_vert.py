@@ -77,6 +77,21 @@ for g in range(4):
         if g == 0 and CFG.get('PIECES0'): (a, b), (el, er) = CFG['PIECES0'][i], CFG['ENDS0'][i]
         D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
         if g == 0 and CFG.get('ONE0'): D[i][g] = make_zones(CFG['ONE0'][0], CFG['ONE0'][1], False, False, de, de, dm, sm) if i == 0 else []
+if CFG.get('SMOOTH'):                                    # rule: Ø of neighbouring storey groups differ by <= 4 mm (raise the smaller one)
+    for kind in 'LRM':
+        for _ in range(4):
+            for i in range(NP):
+                ds = [next((z[3] for z in D[i][g] if z[0] == kind), None) for g in range(4)]
+                for g in range(4):
+                    if ds[g] is None: continue
+                    nb = [ds[h] for h in (g - 1, g + 1) if 0 <= h < 4 and ds[h] is not None]
+                    need = max([ds[g]] + [d_ - 4 for d_ in nb]); need = next(d_ for d_ in DS if d_ >= need)
+                    if need != ds[g]:
+                        D[i][g] = [tuple([z[0], z[1], z[2], need] + list(z[4:])) if z[0] == kind else z for z in D[i][g]]; ds[g] = need
+        # one Ø per group and kind over all pieces (as in the analog)
+        for g in range(4):
+            mx = max([z[3] for i in range(NP) for z in D[i][g] if z[0] == kind] or [0])
+            for i in range(NP): D[i][g] = [tuple([z[0], z[1], z[2], mx] + list(z[4:])) if z[0] == kind else z for z in D[i][g]]
 def run(go=False):
     WW, HH = CFG.get('WH', (59400, 42000))
     R = listwin(SX, SY, WW, HH, None)
@@ -317,7 +332,7 @@ def run(go=False):
         LT = L[TOP(i)]
         yy = SY + LT - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
         lab_c = 'Ск' + ';'.join(str(n) for n in sorted(set(nums)))
-        if CFG.get('CK_SPLIT') and PIECES[i][1] - PIECES[i][0] > CFG['CK_SPLIT']:      # wide piece: one Ск note at each end, to its two nearest legs
+        if CFG.get('CK_SPLIT') and PIECES[i][1] - PIECES[i][0] > CFG['CK_SPLIT'] and len(tg) >= 4:      # wide piece: one Ск note at each end, to its two nearest legs
             lg = sorted(tg)
             note('S1C', lab_c, '', [SX + AX1 + PIECES[i][0] + 400, SY + LT + 450], [[SX + lg[0], yy], [SX + lg[2], yy]])
             note('S1C', lab_c, '', [SX + AX1 + PIECES[i][1] - 1500, SY + LT + 450], [[SX + lg[-3], yy], [SX + lg[-1], yy]])

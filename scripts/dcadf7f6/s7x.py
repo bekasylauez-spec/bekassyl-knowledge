@@ -81,7 +81,7 @@ def build71d(X0, Y0):
         zone_note('2', 200, z, 'X', PX, PY, layer=L12, lab_off=(250, 450), frac=fr, tfrac=0.1)
         if not any(abs(c_ - w[0]) < 1 for w in wallX): lib.OPS[-1]['fixed'] = True     # beam zone: no lines inside -> callout inside the zone
     for z in zy:
-        fr = 0.5 if (z[2] - z[0]) < 12000 else (24850 - z[0]) / (z[2] - z[0])
+        fr = 0.5 if (z[2] - z[0]) < 12000 else (22950 - z[0]) / (z[2] - z[0])
         zone_note('2', 200, z, 'Y', PX, PY, layer=L12, lab_off=(300, 450), frac=fr, tfrac=0.2)
         if not any(abs((z[1] + z[3]) / 2 - wy) < 1 for wy in (12350, 10500, 14200, 4600, 10950, 13750, 20100)): lib.OPS[-1]['fixed'] = True
     for z in ex: zone_note('3', 200, z, 'X', PX, PY, layer=L12, lab_off=(250, 450), frac=0.12, tfrac=0.1)
@@ -107,8 +107,8 @@ def build72(X0, Y0):
         xa, ya, xb, yb = x0 + 30, y0 + 30, x1 - 30, y1 - 30
         ym = (ya + yb) / 2
         pl([(PX + xa, PY + ym - 600), (PX + xb, PY + ym - 600)], layer='ф10_арм', lw=40)
-        pl([(PX + 4800, PY + ya), (PX + 4800, PY + yb)], layer='ф10_арм', lw=40)
-        note('1', 'ш.200', (PX + 1600, PY + ym - 200), (PX + 1200, PY + ym - 600)); note('1', 'ш.200', (PX + 5200, PY + ym + 1400), (PX + 4800, PY + ym + 1000))
+        pl([(PX + 3900, PY + ya), (PX + 3900, PY + yb)], layer='ф10_арм', lw=40)
+        note('1', 'ш.200', (PX + 1600, PY + ym - 150), (PX + 1200, PY + ym - 600), arrow='oblique'); note('1', 'ш.200', (PX + 4300, PY + ym + 1400), (PX + 3900, PY + ym + 1000), arrow='oblique')
         n_all += 2 * (((yb - ya) / 200 + 1) * (xb - xa) / 1000.0 + ((xb - xa) / 200 + 1) * (yb - ya) / 1000.0)
     for b in RM1:
         o, c, a, e = b

@@ -7,8 +7,9 @@ for l in open(os.environ['TEMP'] + '/pl_log.txt', encoding='utf-8').read().split
     r = l.split('\t')
     if len(r) > 4 and r[0] == 'L' and r[1] == 'DIMENSION':
         e = [float(v) for v in r[4][1:].split(',')]
-        if e[1] >= OY + SY1 - 10 and e[0] < OX + SX1 - 10: top.append(r[2])
-        elif e[0] >= OX + SX1 - 10: right.append(r[2])
+        cx, cy = (e[0] + e[2]) / 2, (e[1] + e[3]) / 2
+        if cx > OX + SX1 - 600 and cy > OY - 3400: right.append(r[2])
+        elif cy > OY + SY1 + 100: top.append(r[2])
 print(len(top), len(right))
 new = G.place(G.chain(G.SX0, G.SX1, G.RX), False) + G.place(G.chain(G.SY0, G.SY1, G.RY), True)
 for o in new:
