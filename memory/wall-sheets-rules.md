@@ -30,3 +30,5 @@ User decisions/corrections:
 Scripts: Obsidian `15_Проекты/ЖК Галакси/Инструменты/` gen_wall_geom.py, gen_wall_opal.py, gen_wall_vert.py, arm/wall_zones.py.
 
 Related: [[galaxy-kzh-scheme]], [[column-rules-template]], [[obsidian-first]]
+
+- 05.11: Bekassyl См-1 өшіріп «тек аналогтан алып жылжытып келтір» деді → парақтар аналогтан қайта импорт + pmap (sm1_redo), содан кейін ғана ЛИРА есебі сол аналог объектілерінде. Шаг тізбегінің мәтіндері бір-біріне түспейді (3 қатар), выноска мәтіні простенка үстіне түспейді (notes_clear).

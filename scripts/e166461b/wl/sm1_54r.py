@@ -20,6 +20,8 @@ tdim = chain[0]['h']
 er += [r['h'] for r in chain[1:]]
 barnotes = [n for n in N if PL({'y0': n['pts'][0][1], 'y1': n['pts'][0][1]}) and n['l2'].startswith('ш.') and not n['l1'].startswith('Х')]
 er += [n['h'] for n in barnotes]
+er += [r['h'] for r in R if PL(r) and r['t'] == 'LWPOLYLINE' and r['lay'] == 'Размеры' and len(r['sp']) == 4 and abs(r['sp'][0][1] - 16914) < 3 and abs(r['sp'][3][1] - 16914) < 3]
+er += [r['h'] for r in R if PL(r) and r['t'] == 'LWPOLYLINE' and r['lay'] == 'Размеры' and len(r['sp']) == 2 and abs(r['sp'][0][1] - r['sp'][1][1]) < 1 and min(abs(r['sp'][0][1] - v) for v in (15413, 14300)) < 2]
 ops = [dict(t='clone', h=tdot['h'], base=[0, 0], to=[0, -300000], tag='S1D'), dict(t='erase', h=er)]
 NOTE = dict(scale=100, ts=2.5, style='ГОСТ 2.304', arrow='oblique', layer='Размеры')
 AX = [XP(0), XP(6800), XP(13250), XP(20050)]; SEGS = []
@@ -30,17 +32,27 @@ for i in range(4):
         for xb in z[5]:
             xp = XP(xb)
             ops.append(dict(t='clone', h='S1D', base=[0, 0], to=[xp - tx0, 300000], layer='диам%d' % d))
-        # note below the wall, leaders to the extreme dots (analog: «1(ф16) ш.100» under the piece)
-        lab = LAB['%d|0|%s' % (i, kind)]
-        ym = 13900 if kind == 'M' else 13200             # below the chain (the gap wall-chain is full of extension lines)
-        ox = {'L': XP(x0) - 1000, 'R': XP(x1) + 1000, 'M': (XP(x0) + XP(x1)) / 2}[kind]
-        for a in AX:
-            if abs(ox - a) < 1300: ox = a + 1300 if ox >= a else a - 1300
-        ops.append(dict(t='note', l1='%s(%%%%C%d)' % (lab, d), l2='ш.%d' % st, origin=W(ox, ym), targets=[W(XP(x0), 16887), W(XP(x1), 16887)], **NOTE))
+        # analog style (4.4 «1(ф16) ш.100»): shelf note without leader + thin polyline dot -> shelf -> dot (dots: no ticks)
+        lab = LAB['%d|0|%s' % (i, kind)]; l1 = '%s(%%%%C%d)' % (lab, d); l2 = 'ш.%d' % st
+        xa, xb = XP(z[5][0]), XP(z[5][-1]); cx = (xa + xb) / 2
+        w = 200 * max(len(l1.replace('%%%%C', 'Ф')), len(l2))
+        pc = (XP(PIECES[i][0]) + XP(PIECES[i][1])) / 2
+        lev2 = len(zs) == 3 and kind == 'M'                    # middle zone of a 3-zone piece: lower level
+        ys = 14300 if lev2 else 15413
+        lf, rf = xa + 100, max(xb - 100, xa + 200)
+        left = cx <= pc if not lev2 else True                  # Bekassyl's sample: text outward (left zone -> left, right zone -> right)
+        if left: shelf = [lf - w, rf]; org = lf
+        else: shelf = [lf, rf + w]; org = rf + w
+        ops.append(dict(t='pl', p=[W(xa, 16914), W(lf, ys), W(shelf[0], ys)] if False else [W(xa, 16914), W(lf, ys), W(rf, ys), W(xb, 16914)], layer='Размеры'))
+        ops.append(dict(t='pl', p=[W(shelf[0], ys), W(shelf[1], ys)], layer='Размеры'))
+        tag = 'S54N%d_%d' % (i, j)
+        ops.append(dict(t='clone', h='TPA:5D2951', base=[0, 0], to=[0, 0], tag=tag))
+        ops.append(dict(t='spmove', h=tag, items=[[0, SX + org, SY + ys]]))
+        ops.append(dict(t='mcset', h=tag, set={'FirstLine': l1, 'SecondLine': l2}))
     a_, b_ = PIECES[i]
     for s0, s1, st, n in [(a_, a_ + 50, 50, 1)] + [sg for z in zs for sg in z[6]] + [(b_ - 50, b_, 50, 1)]: SEGS.append((i, s0, s1, st, n))
 # chain of bar positions (one dim per zone, text «step x n»), the analog's dim as template; texts packed in rows without overlaps
-RY = [15700, 15250, 14800]; CW = 140; TG = 120; rows = [[] for _ in RY]; items = []
+RY = [13350, 12900]; CW = 140; TG = 120; rows = [[] for _ in RY]; items = []
 for i, s0, s1, st, n in SEGS:
     a_, b_ = PIECES[i]; txt = ('%dх%d' % (st, n)) if n > 1 else ''
     w = CW * max(len(txt), len(str(int(s1 - s0)))) + 100
@@ -67,6 +79,10 @@ for n in N:
     if n['l2'].startswith('(') and PL({'y0': n['pts'][0][1], 'y1': n['pts'][0][1]}):
         x = n['pts'][0][0]
         ops.append(dict(t='mcset', h=n['h'], set={'FirstLine': str(pe if (x < 12000 or x > 42000) else pm), 'SecondLine': '(%%%%C%d)' % HD0}))
+# U-bars of the plan: analog layer диам10 -> Ø of the basement horizontal bars
+ub = [r for r in R if PL(r) and r['t'] in ('LINE', 'LWPOLYLINE') and r['lay'].lower() == 'диам10']
+for r in ub: ops.append(dict(t='clone', h=r['h'], base=[0, 0], to=[0, 0], layer='диам%d' % HD0))
+if ub: ops.append(dict(t='erase', h=[r['h'] for r in ub]))
 ops.append(dict(t='save'))
 print('dots erased', len(dots), 'chain erased', len(chain) - 1, 'notes erased', len(barnotes), 'ops', len(ops))
 if '--run' in sys.argv:
