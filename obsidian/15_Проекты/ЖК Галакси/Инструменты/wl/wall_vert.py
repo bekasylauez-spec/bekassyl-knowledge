@@ -11,7 +11,7 @@ SX, SY = CFG['SX'], 455939.0
 def W(x, y): return [SX + x, SY + y]
 AX1 = CFG['AX1']
 L = CFG['L']
-G = [(0, 1), (1, 3), (3, 5), (5, 7)]                      # storey index ranges of the groups
+G = CFG.get('G', [(0, 1), (1, 3), (3, 5), (5, len(L) - 1)])          # storey index ranges of the groups
 SLAB = 250.0; EDGE = 450.0; TOPC = 30.0
 PIECES = CFG['PIECES']; LIRA = CFG['LIRA']; ENDS = CFG['ENDS']; NP = len(PIECES)
 LAP = lambda d: int(math.ceil(61 * d / 10.0) * 10)
@@ -20,7 +20,7 @@ A = lambda d: math.pi * d * d / 400
 DS = [12, 14, 16, 18, 20, 22, 25, 28]
 CELLS = [c for c in json.load(open('arm/wall_cells.json')) if c['pl'] == CFG['PLANE']]
 KX = ('x0', 'x1') if CFG['PLANE'][0] == 'y' else ('y0', 'y1')
-LEV = [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7]
+LEV = CFG.get('LEV', [-4.65, -0.1, 3.95, 7.1, 10.25, 13.4, 16.55, 19.7])
 v = lambda c: max(c['As'][2], c['As'][3])
 
 def split(lo, hi, st):
@@ -84,7 +84,7 @@ def run(go=False):
             tx_ = [p[0] - AX1 for p in n['pts'][1:]]; cy = n['pts'][1][1]
             for i_, (a_, b_) in enumerate(PIECES):
                 if a_ - 300 <= min(tx_) and max(tx_) <= b_ + 300:
-                    st_ = next((s_ for s_ in range(7) if L[s_] <= cy < L[s_ + 1]), 7)
+                    st_ = next((s_ for s_ in range(len(L) - 1) if L[s_] <= cy < L[s_ + 1]), len(L) - 1)
                     ANN.setdefault((i_, 'C' if n['l1'].startswith('Ск') else st_), []).append(n)
         NSIDE = {}
         for (i_, k_), lst in ANN.items():
@@ -165,7 +165,7 @@ def run(go=False):
                     src = ANN.get((i, g1 - 1)) or ANN.get((i, g0))
                     if src:
                         n0 = src[0]; k_ = ks.index(kind)
-                        sb = next((L[s_] for s_ in range(7) if L[s_] <= n0['pts'][0][1] < L[s_ + 1]), ys); se = next((L[s_ + 1] for s_ in range(7) if L[s_] <= n0['pts'][0][1] < L[s_ + 1]), ye) - SLAB
+                        sb = next((L[s_] for s_ in range(len(L) - 1) if L[s_] <= n0['pts'][0][1] < L[s_ + 1]), ys); se = next((L[s_ + 1] for s_ in range(len(L) - 1) if L[s_] <= n0['pts'][0][1] < L[s_ + 1]), ye) - SLAB
                         ys_ = [n0['pts'][0][1] + 950 * ((n_ - 1) / 2.0 - j) for j in range(n_)]       # stack centred on the analog note, inside its storey
                         sh = max(0, sb + 450 - min(ys_)) - max(0, max(ys_) - (se - 450))
                         oy = ys_[k_] + sh
@@ -210,20 +210,20 @@ def run(go=False):
         for z in D[i][3]:
             kind, x0, x1, d, st = z[:5]
             if d not in CAPS: CAPS[d] = len(CAPS) + 1 + CFG.get('CK0', 0)
-            yt = L[7] - TOPC; leg = LAP(d)
+            yt = L[-1] - TOPC; leg = LAP(d)
             for x in (x0 - 20, x1 + 20):                                   # analog: legs 20 outside the zone's end bars
                 ops.append(dict(t='pl', p=[W(AX1 + x, yt), W(AX1 + x, yt - leg)], layer='диам%d' % d, lw=40))
             tg += [AX1 + x0 - 20, AX1 + x1 + 20]; nums.append(CAPS[d])
             BARS.append(dict(pos='Ск%d' % CAPS[d], d=d, L=2 * leg + 170, n=len(z[5])))
         ox = AX1 + PIECES[i][0] + (-300 if ENDS[i][0] else 400)
-        yy = SY + L[7] - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
+        yy = SY + L[-1] - SLAB - 80          # analog Ск note: two leaders, to the outermost legs of the piece
         lab_c = 'Ск' + ';'.join(str(n) for n in sorted(set(nums)))
         if AN and ANN.get((i, 'C')):
             n0 = ANN[(i, 'C')][0]
             ops.append(dict(t='spmove', h=n0['h'], items=[[1, SX + min(tg), yy], [2, SX + max(tg), yy]]))
             ops.append(dict(t='mcset', h=n0['h'], set={'FirstLine': lab_c, 'SecondLine': ''}))
         else:
-            note('S1C', lab_c, '', [SX + ox, SY + L[7] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
+            note('S1C', lab_c, '', [SX + ox, SY + L[-1] + 450], [[SX + min(tg), yy], [SX + max(tg), yy]])
     # bottom chain (basement): 50 | 100x4 | steps (leftover in the middle) | 100x4 | 50 — as in the analog;
     # texts: inside when they fit, else beside (outward, off the axes); rows chosen greedily so that no two texts overlap
     AXES = CFG['AXES']; CW = 140; TGAP = 120; RY = [L[0] - 1813, L[0] - 2313, L[0] - 2813]
@@ -255,7 +255,7 @@ def run(go=False):
         if moved or cx != cx0: kw['tx'] = W(cx, ty + 60)
         ops.append(kw)
     ops += [dict(t='erase', h=['S1N', 'S1C']), dict(t='save')]
-    json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open(CFG['OUT'], 'w'), ensure_ascii=False)
+    json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open(CFG['OUT'], 'w', encoding='utf-8'), ensure_ascii=False)
     print('erase', len(er), 'ops', len(ops), 'positions', len(POS))
     for i in range(NP):
         for g in range(4): print('P%d G%d' % (i + 1, g), [(z[0], z[3], z[4], len(z[5]), z[1], z[2]) for z in D[i][g]])

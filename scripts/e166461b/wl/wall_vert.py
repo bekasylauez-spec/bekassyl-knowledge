@@ -255,7 +255,7 @@ def run(go=False):
         if moved or cx != cx0: kw['tx'] = W(cx, ty + 60)
         ops.append(kw)
     ops += [dict(t='erase', h=['S1N', 'S1C']), dict(t='save')]
-    json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open(CFG['OUT'], 'w'), ensure_ascii=False)
+    json.dump(dict(LABELS=LABELS, D=D, POS={'|'.join(map(str, kk)): vv for kk, vv in POS.items()}, BARS=BARS, CAPS=CAPS), open(CFG['OUT'], 'w', encoding='utf-8'), ensure_ascii=False)
     print('erase', len(er), 'ops', len(ops), 'positions', len(POS))
     for i in range(NP):
         for g in range(4): print('P%d G%d' % (i + 1, g), [(z[0], z[3], z[4], len(z[5]), z[1], z[2]) for z in D[i][g]])

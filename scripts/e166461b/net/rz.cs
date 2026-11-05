@@ -374,6 +374,36 @@ namespace GX
                     log.AppendLine("import " + n + " of " + ids.Count);
                 }
             }
+            else if (t == "listfile")
+            {
+                // like "list" but from a side database (file not open): L lines with extents, N lines for no-extent objects
+                var w = L(m["win"]);
+                using (var side = new Database(false, true))
+                {
+                    side.ReadDwgFile(S(m, "file", ""), FileOpenMode.OpenForReadAndAllShare, true, "");
+                    side.CloseInput(true);
+                    using (var st = side.TransactionManager.StartTransaction())
+                    {
+                        var ms = (BlockTableRecord)st.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(side), OpenMode.ForRead);
+                        foreach (ObjectId id in ms)
+                        {
+                            var e = st.GetObject(id, OpenMode.ForRead) as Entity; if (e == null) continue;
+                            Extents3d x;
+                            try { x = e.GeometricExtents; }
+                            catch
+                            {
+                                var pn = new Point3dCollection(); try { e.GetStretchPoints(pn); } catch { }
+                                if (pn.Count > 0 && pn[0].X >= D(w[0]) && pn[0].X <= D(w[2]) && pn[0].Y >= D(w[1]) && pn[0].Y <= D(w[3]))
+                                    log.AppendLine("N\t" + id.ObjectClass.DxfName + "\t" + e.Handle + "\t" + e.Layer + "\t" + pn[0].X.ToString("0", IC) + "," + pn[0].Y.ToString("0", IC));
+                                continue;
+                            }
+                            if (x.MaxPoint.X < D(w[0]) || x.MinPoint.X > D(w[2]) || x.MaxPoint.Y < D(w[1]) || x.MinPoint.Y > D(w[3])) continue;
+                            log.AppendLine("L\t" + id.ObjectClass.DxfName + "\t" + e.Handle + "\t" + e.Layer + "\tE" + x.MinPoint.X.ToString("0", IC) + "," + x.MinPoint.Y.ToString("0", IC) + "," + x.MaxPoint.X.ToString("0", IC) + "," + x.MaxPoint.Y.ToString("0", IC));
+                        }
+                        st.Commit();
+                    }
+                }
+            }
             else if (t == "frames")
             {
                 var ms = MS(db, tr);
