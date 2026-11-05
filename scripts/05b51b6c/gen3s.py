@@ -70,12 +70,16 @@ def dim(p1, p2, at, vertical=False, txt=None, tx=None, lfac=None):
 def chain(vals, at, vertical, fixed, texts=None, smalls=None):
     for k, (a, b) in enumerate(zip(vals, vals[1:])):
         p1 = (fixed, a) if vertical else (a, fixed); p2 = (fixed, b) if vertical else (b, fixed)
-        dim(p1, p2, at, vertical, (texts or {}).get(k), (smalls or {}).get(k))
+        tx = (smalls or {}).get(k)
+        if tx is None and (texts or {}).get(k):
+            off = 170 if at > fixed else -170
+            tx = (at + (-off if vertical else 0) - (0 if not vertical else 0), (a + b) / 2) if vertical else ((a + b) / 2, at + 170)
+            if vertical: tx = (at - 170, (a + b) / 2)
+        dim(p1, p2, at, vertical, (texts or {}).get(k), tx)
 
 
 def title(text):
-    O.append({'t': 'clone', 'h': TTL, 'tag': 'ttl%s' % SHEET, 'base': [0, 0], 'to': [DX, 0]})
-    O.append({'t': 'settext', 'h': 'ttl%s' % SHEET, 's': '{\\L%s}' % text})
+    O.append({'t': 'mtext', 'at': P(16000, 12000 + 1500 + 2800), 'h': 300, 'att': 2, 'style': 'ISOCPEUR.', 'layer': 'Размеры', 's': '{\\L%s}' % text})
 
 
 AXX, AYY = F.AX, F.AY
@@ -131,7 +135,7 @@ if SHEET in ('3.2', '3.3'):
         sm = {}
         for k, (p_, q_) in enumerate(zip(pts, pts[1:])):
             if q_ - p_ < 700:
-                c = p_ - 450 if k == 0 else q_ + 450
+                c = p_ - 750 if k == 0 else q_ + 750
                 sm[k] = (far, c) if vertical else (c, far)
         return sm
     if alongX:
@@ -143,17 +147,17 @@ if SHEET in ('3.2', '3.3'):
             chain(pp, xf + side * off, True, xf, tx, sm_)
     else:
         x, y = AXX[0], AYY[-1]
-        for v_, st, yf, side, off, xc in ((F.P1, 150, y + F.PY / 2, 1, 700, AXX[0]), (F.P3, 200, y + F.PY / 2, 1, 700, AXX[2])):
+        for v_, st, yf, side, off, xc in ((F.P1, 150, y + F.PY / 2, 1, 700, AXX[1]), (F.P3, 200, y + F.PY / 2, 1, 700, AXX[3])):
             pts, tx = steps([0] + v_ + [F.PX], st)
             pp = [xc - F.PX / 2 + v for v in pts]
             sm_ = ends(pp, yf + side * (off + 170), False)
             chain(pp, yf + side * off, False, yf, tx, sm_)
     O.append({'t': 'mtext', 'at': [SLOT + 2300, Y0 + 13300], 'h': 250, 'w': 36000, 'layer': 'Размеры',
-              's': ('1. Подушки Фм-1 (24 шт.) армируются одинаково: нижняя сетка %s, верхняя сетка %s. Позиции и шаг показаны на подушке по оси %s; остальные - аналогично.\P'
+              's': ('1. Подушки Фм-1 (24 шт.) армируются одинаково: нижняя сетка %s, верхняя сетка %s. Позиции и шаг показаны на подушках по оси %s; остальные - аналогично.\P'
                     '2. Продольная арматура балок 350х600: поз. 5 (%%%%C20, 3 верх + 3 низ), поз. 6 (%%%%C12, 2 боковых) - непрерывно через подушки, стыки внахлест %s в пределах подушек, вразбежку.\P'
                     '3. Разрезы и спецификацию см. лист 3.5, хомуты балок - лист 3.4, выпуски - лист 3.6.')
               % (('поз. 2 (%%C20 ш.150)', 'поз. 4 (%%C16 ш.200)', '8/А', '1220 (%%C20), 730 (%%C12)') if alongX else
-                 ('поз. 1 (%%C20 ш.150)', 'поз. 3 (%%C16 ш.200)', '1/В', '1220 (%%C20), 730 (%%C12)'))})
+                 ('поз. 1 (%%C20 ш.150)', 'поз. 3 (%%C16 ш.200)', 'В', '1220 (%%C20), 730 (%%C12)'))})
 
 if SHEET == '3.4':
     seen = {}

@@ -3,6 +3,7 @@ S = os.path.dirname(os.path.abspath(__file__))
 EXE = r"C:\Program Files\Autodesk\AutoCAD 2021\accoreconsole.exe"
 SH = json.load(open(r'D:\РАБОЧКА\От Маке\Завод\АБК\_Инструменты\beka2_v2\sheets.json', encoding='utf-8'))
 SH['4.2'] = [244346.9, -1749172.3, 274046.9, -1728172.3]; SH['4.3'] = [274046.9, -1749172.3, 303746.9, -1728172.3]
+SH.update(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'w','sheets2.json'))))
 def paper(w, h):
     sc = 100 if h == 42000 else 50
     W, H = w / sc, h / sc
