@@ -81,7 +81,7 @@ def need_profile(m, B):
 def design(m, B):
     b, h = B['b'], B['h']
     nm = 3 if b <= 300 else 4
-    dm = 25
+    dm = 28                     # Bekassyl 06.11: «арматурасын тексермей барлығын 28-дік қоя сал»
     B['main'] = dict(top=(nm, dm), bot=(nm, dm))
     prof = need_profile(m, B)
     legs = 2 if b <= 300 else 4
@@ -118,12 +118,8 @@ def design(m, B):
             if u1 - u0 < 1500: c_ = (u0 + u1) / 2; u0, u1 = max(B['END0'] + 20, c_ - 750), min(B['END1'] - 20, c_ + 750)
             need = max(r[1] for r in g)
             dd = dm; n = math.ceil(need / AR(dd) - 1e-9)
-            row = 1
             if slots and n <= slots: row = 1
-            else:
-                row = 2
-                while n > nm and dd < 32:
-                    dd = {25: 28, 28: 32}[dd]; n = math.ceil(need / AR(dd) - 1e-9)
+            else: row = 2; n = min(n, nm)
             dop.append(dict(top=top, n=n, d=dd, u0=round(u0, -1), u1=round(u1, -1), row=row))
     # unify: dop around interior supports get the same n / Ø / row and symmetric length (max) -> one position
     refs = [((sp['a'] + sp['b']) / 2.0, k) for k, sp in enumerate(B['sup'])]

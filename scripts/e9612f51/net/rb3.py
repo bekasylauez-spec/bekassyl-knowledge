@@ -141,7 +141,10 @@ def build(B):
     # ---- callouts «1 (ф28)» (one per span, in the 200 zone), step note
     n1 = [A(x) for x in SPDS['n1']]
     for i, lines in enumerate(ZI):
-        x = X((lines[1] + lines[2]) / 2.0 + (300 if i % 2 == 0 else -300))
+        avoid = [c for g in B['spT'] + B['spB'] for c in g[:2]] + [d['nx'] for d in B['dop']] + [x for _, x in B['secs']]
+        cand = [lines[1] + 200 + 100 * k for k in range(int((lines[2] - lines[1] - 400) // 100) + 1)] or [(lines[1] + lines[2]) / 2.0]
+        xb = max(cand, key=lambda c: min([abs(c - a) for a in avoid] + [1e9]))
+        x = X(xb)
         hh = n1.pop(0) if n1 else clone(A(SPDS['n1'][0]), 'N1')
         add(t='spmove', h=hh, items=[[0, x, 469238.6 + dY], [1, x, YBB], [2, x, YTB]])
         add(t='mcset', h=hh, set={'SecondLine': '(ф%d)' % DIA})
@@ -163,6 +166,68 @@ def build(B):
     return ops, NH, spans, ZI
 
 
+def text_ops(B, NH):
+    SX, P = B['SX'], B['P']; D = SX - 172179.0; A = lambda hh: P + hh
+    b, h = B['b'], B['h']
+    n = 4 if b > 300 else 3
+    s = (b - 100) / (n - 1.0)
+    yy = h - 30 - 50
+    bot = int(round((2 * s + DIA + B['hoopd']) / 5.0) * 5) if b > 300 else int(round(((n - 1) * s + DIA + B['hoopd']) / 5.0) * 5)
+    top = bot + 100; p1 = int(round((yy + DIA + B['hoopd'] - 18) / 5.0) * 5); p2 = p1 + 100
+    LX = bot + top + p1 + p2
+    sk = yy - 2 * 20 + 20     # Ск1 height between bar axes (as fasad)
+    LS = sk + 2 * 10 * DIA
+    T = {'406493': str(top), '40648A': str(bot), '40648B': str(p1), '40648D': str(p2), '406499': str(LX),
+         '4064A7': str(sk), '4064A8': str(10 * DIA), '4064AB': str(10 * DIA), '4064B0': str(LS)}
+    ops = [dict(t='settext', h=A(k), s=v) for k, v in T.items()]
+    ops += [dict(t='settext', h=A('4038B1'), s='Ригель ' + B['mark']),
+            dict(t='settext', h=A(SPDS['notes']), s=r'\pxi-3.3333,l3.3333,t3.3333;1.	Общие указания см. л. - 1.1\P2.	Данный лист читать '
+                 r'совместно с л. КЖ-2.1 ... 2.4\P3.	Стержни, указанные в "Ведомости деталей", должны гнуться механическим способом '
+                 'в холодном состоянии с радиусом гиба 3d - 5d, где d - диаметр стержня')]
+    # stamp: the analog «крпкер» block reference is pointed at the scheme stamp Штамп№1 (×0.5 kept), fields re-texted
+    to = [203429 + D, 456026]
+    ops.append(dict(t='setblock', h=A('40443F'), name='Штамп№1', at=to))
+    ops.append(dict(t='settext', h=A(SPDS['no']), s=B['no']))
+    ops.append(dict(t='move', h=[A(SPDS['no'])], d=[-106, -226]))
+    ops.append(dict(t='settext', h=A(SPDS['name']), s='Ригель %s на отм. %s' % (B['mark'], B['level'])))
+    ops.append(dict(t='move', h=[A(SPDS['name'])], d=[0, -164]))
+    return ops, dict(LX=LX, LS=LS)
+
+
+def tables(B, NH, spans, L):
+    P = B['P']; E0, E1 = B['E']; A = lambda hh: P + hh
+    sp, stl = A(SPDS['spec']), A(SPDS['steel'])
+    m = gx.tagmap()
+    F, I = '%lu2%pr2', '%lu2%pr0'
+    b, h = B['b'], B['h']; n = 4 if b > 300 else 3; nh = 2 if b > 300 else 1
+    clear = sum(q - p for p, q in spans)
+    ng = len(B['spT']) + len(B['spB'])
+    c0 = 20 if B['ends'][0] == 'sk' else 0; c1 = 20 if B['ends'][1] == 'sk' else 0
+    cells_t = [[2, 2, 'Ригель ' + B['mark']], [6, 0, 'Н4']]
+    nums = [[3, 3, B['hoopd'], I], [3, 9, L['LX'], I], [4, 3, 16, I], [4, 9, L['LS'], I], [5, 3, DIA, I], [6, 3, DIA, I], [6, 9, 10 * DIA, I]]
+    forms = [[3, 10, '%d*%d' % (NH, nh), I], [3, 11, 'D4*D4*3.1415926/4*0.00785*J4/1000', F], [3, 12, 'L4*K4', F],
+             [4, 10, '%d*%d' % (n, (B['ends'].count('sk'))), I], [4, 11, 'D5*D5*3.1415926/4*0.00785*J5/1000', F], [4, 12, 'L5*K5', F],
+             [5, 10, '%.2f*%d' % ((E1 - E0 - c0 - c1) / 1000.0, 2 * n), F], [5, 11, 'D6*D6*3.1415926/4*0.00785*1', F], [5, 12, 'L6*K6', F],
+             [6, 10, '%d*%d*2' % (ng, n), I], [6, 11, 'D7*D7*3.1415926/4*0.00785*J7/1000', F], [6, 12, 'L7*K7', F]]
+    ops = []
+    nd = len(B['dop'])
+    if nd > 1: ops.append({'t': 'trows', 'h': sp, 'mode': 'ins', 'at': 8, 'n': nd - 1, 'from': 7})
+    for i, d in enumerate(B['dop']):
+        r = 7 + i; R = r + 1
+        cells_t += [[r, 0, d['pos']], [r, 1, 'ГОСТ 34028-2016'], [r, 2, '%%C'], [r, 4, 'A'], [r, 5, '500С'], [r, 8, 'L=']]
+        nums += [[r, 3, DIA, I], [r, 9, d['b'] - d['a'], I]]
+        forms += [[r, 10, '%d' % d['n'], I], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R, R, R), F], [r, 12, 'L%d*K%d' % (R, R), F]]
+    last = 6 + max(nd, 1)          # last item row (0-based) before «Материалы»
+    rc = last + 2                  # concrete row
+    forms += [[2, 12, 'Sum(M4:M%d)' % (last + 1), F], [rc, 12, '%.2f*%.2f*%.2f' % (b / 1000.0, (h - 200) / 1000.0, clear / 1000.0), F]]
+    ops += [dict(t='tnum', h=sp, cells=nums), dict(t='tset', h=sp, cells=cells_t), dict(t='tformula', h=sp, cells=forms),
+            dict(t='tset', h=stl, cells=[[5, 1, '%%%%C%d' % B['hoopd'], ], [6, 0, 'Ригель ' + B['mark']]]),
+            dict(t='tformula', h=stl, cells=[[6, 1, 'Table({T:%s}).M4' % m[sp], F], [6, 2, 'Sum(B7:B7)', F],
+                 [6, 3, 'TEXT:---'], [6, 4, 'Table({T:%s}).M5' % m[sp], F], [6, 5, 'TEXT:---'], [6, 6, 'TEXT:---'],
+                 [6, 7, 'Table({T:%s}).Evaluate(Sum(M6:M%d))' % (m[sp], last + 1), F], [6, 8, 'Sum(D7:H7)', F], [6, 9, 'I7+C7', F]])]
+    return ops
+
+
 if __name__ == '__main__':
     B = json.load(open(sys.argv[1], encoding='utf-8'))
     if '--import' in sys.argv:
@@ -173,3 +238,13 @@ if __name__ == '__main__':
         ops, NH, spans, ZI = build(B)
         out = gx.run(ops + [dict(t='save')], 'rb' + B['P'][:-1])
         print('geom', [l for l in out.splitlines() if 'ERR' in l or 'done' in l][:20], 'NH', NH)
+        import sec3
+        sops = []
+        for j, s_ in enumerate(B['secdefs']):
+            sops += sec3.section(s_['w'], [B['SX'] + 13300 + 5600 * j, 462700], '%sS%d_' % (B['P'].rstrip(':'), j), B['b'], B['h'],
+                                 s_['nT'], s_['nB'], DIA, B['hoopd'], 4, B['level'])
+        tops, L = text_ops(B, NH)
+        out = gx.run(sops + tops + [dict(t='save')], 'rs' + B['P'][:-1])
+        print('sec+text', [l for l in out.splitlines() if 'ERR' in l or 'done' in l][:20])
+        out = gx.run(tables(B, NH, spans, L) + [dict(t='tform', h=B['P'] + SPDS['spec']), dict(t='save')], 'rt' + B['P'][:-1])
+        print('tables', [l[:140] for l in out.splitlines() if 'ERR' in l or 'done' in l or l.startswith('F 2,12')][:12])

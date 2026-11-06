@@ -34,7 +34,7 @@ TPLFILE = r'R:\Шаблон для Кж.dwg'
 if '--imp' in sys.argv:
     H = json.load(open('tpl_h.json'))['ins']
     print(gx.run([{'t': 'import', 'file': TPLFILE, 'h': H, 'base': [264717, 271898], 'to': [SX, SY], 'pre': PRE},
-                  {'t': 'import', 'file': TPLFILE, 'h': ['19EC6'], 'base': [304063, 294024], 'to': [SX + 40000, SY], 'pre': PRE + 'PIN:'},
+                  {'t': 'import', 'file': TPLFILE, 'h': ['19EC6'], 'base': [304063, 294024], 'to': [SX + 1000, SY - 6000], 'pre': PRE + 'PIN:'},
                   {'t': 'save'}], 'imp_' + PRE[:-1])[-300:])
     sys.exit()
 
@@ -50,7 +50,7 @@ FL = TY['floors']                                       # [[z, beam h], ...] bot
 L = [Y(TY['L0'])] + [Y(z) for z, h in FL]; BEAMS = [float(h) for z, h in FL]
 TOP = L[-1] - 20
 NAK, NW = 10 * D, 2 * D
-SPLV = [Y(z) for z, h in FL[:-1]]                       # splice above every floor except the roof
+SPLV = [Y(z) for z in TY.get('splice', [z for z, h in FL[:-1]])]   # splice above the main floors only
 SPL = []
 for lv in SPLV: SPL += [(lv + 600, XC), (lv + 1200, XO)]
 keep = set()
@@ -63,6 +63,7 @@ def zz(x, y0, y1):
     ym = (y0 + y1) / 2
     return dict(t='pl', p=[W(x, y1), W(x, ym + 40), W(x - 60, ym + 15), W(x + 60, ym - 15), W(x, ym - 40), W(x, y0)], layer='Размеры')
 for lv, bh in zip(L[1:], BEAMS):
+    if bh <= 0: continue
     for x0, x1 in ((CX - 450, CX), (CR, CR + 450)):
         add(t='pl', p=[W(x0, lv), W(x1, lv)], layer='Размеры'); add(t='pl', p=[W(x0, lv - bh), W(x1, lv - bh)], layer='Размеры')
     add(**zz(CX - 450, lv - bh - 75, lv + 75)); add(**zz(CR + 450, lv - bh - 75, lv + 75))
@@ -96,6 +97,7 @@ for (p, z) in per:
 DL = CR + 1446.0
 short_k = 0
 for (y1, y2, st, k) in segs:
+    if y2 - y1 < 1: continue
     o = dict(t='dim', h=T('111219'), p1=W(CR, L[0] + y1), p2=W(CR, L[0] + y2), dl=W(DL, L[0] + (y1 + y2) / 2), rot=math.pi / 2,
              txt=('%dх%d' % (round(st), k)) if k > 1 else '')
     if (y2 - y1) < 300 and y1 < 1e-6:                  # first short segment: text outside, below the chain start
@@ -118,20 +120,35 @@ for i, lv in enumerate(SPLV):
     add(t='dimpts', h=T(h1), p1=W(4093, lv), p2=W(XC[0], lv + 600))
     add(t='dimpts', h=T(h2), p1=W(4093, lv + 600), p2=W(XO[0], lv + 1200))
 for i in range(len(SPLV), 2): add(t='erase', h=[T(spl_d[i][0]), T(spl_d[i][1])])
-# level marks: template marks at y 9700 / 11700 / 15500 / 19300 (values follow from the template zero)
-marks = [('18C36', 9700.0), ('18C37', 11700.0), ('18C3A', 15500.0), ('18C39', 19300.0)]
-use = [marks[0], marks[1]] + ([marks[2]] if len(L) == 4 else []) + [marks[3]]
+# level marks: L0 -> base 18C36, top -> 18C39, intermediates -> 18C37, 18C3A, clones of 18C37; values by levelset after a regen
 def lvs(v): return ('+' if v > 0 else '-') + ('%.3f' % abs(v)).replace('.', ',')
-for i, ((h_, y0), y) in enumerate(zip(use, L)):
-    KR(h_); add(t='movegrp', h=[R_(h_)], d=[0, y - y0])
-LVOPS = []                                             # applied after a regen: base mark 18C36 keeps '-2.000', the others show -2.000 + (y - L0)
-for i, ((h_, y0), y) in enumerate(zip(use, L)):
-    z = TY['L0'] if i == 0 else FL[i - 1][0]
-    old = '-2.000' if i == 0 else lvs(-2.0 + (y - L[0]) / 1000.0)
-    LVOPS.append(dict(t='levelval', h=R_(h_), old=old, value=lvs(z), tag=R_(h_)))
+ZS = [TY['L0']] + [z for z, hh_ in FL]
+mk = [(R_('18C36'), 9700.0)] + [None] * (len(L) - 2) + [(R_('18C39'), 19300.0)]
+spare = [(R_('18C37'), 11700.0), (R_('18C3A'), 15500.0)]
+for i in range(1, len(L) - 1):
+    if spare: mk[i] = spare.pop(0)
+    else:
+        tg = PRE + 'LVC%d' % i
+        add(t='clone', h=R_('18C37'), base=[0, 0], to=[0, 0], tag=tg); mk[i] = (tg, 11700.0)
+for hh_, y0 in spare: add(t='erase', h=[hh_])
+LVOPS = []
+for i, ((h_, y0), y) in enumerate(zip(mk, L)):
+    if h_.startswith(PRE) and h_[len(PRE):] in ('18C36', '18C37', '18C3A', '18C39'): KR(h_[len(PRE):])
+    add(t='movegrp', h=[h_], d=[0, y - y0])
+    LVOPS.append(dict(t='levelset', h=h_, value=lvs(ZS[i]), tag=h_))
 # section marks 1-1 (in the main storey) and 2-2 (above the top)
 K('111913', '111911', '111910')
-s1y = [SPLV[0] + 2450] + ([(SPLV[1] + 1250 + L[-1] - BEAMS[-1]) / 2] if len(SPLV) > 1 else [])
+def zone_mid(lo_y, hi_y=1e9):
+    best = None
+    for i in range(len(L) - 1):
+        a_ = max(L[i], lo_y); b2 = min(L[i + 1] - BEAMS[i], hi_y)
+        if b2 - a_ > (best[1] - best[0] if best else 0): best = (a_, b2)
+    return best
+ZN = []
+for k_, sp in enumerate(SPLV):
+    nxt = SPLV[k_ + 1] if k_ + 1 < len(SPLV) else 1e9
+    ZN.append(zone_mid(sp + 1200, nxt))
+s1y = [(a_ + b2) / 2 for a_, b2 in ZN]
 add(t='movegrp', h=[T('111913')], d=[0, s1y[0] - 13418])
 if len(s1y) > 1: add(t='movegrp', h=[T('111911')], d=[0, s1y[1] - 17535])
 else: add(t='erase', h=[T('111911')])
@@ -146,11 +163,11 @@ add(t='spmove', h=T('111912'), items=[[1, SX + XM, SY + TOP], [0, SX + XM + 200,
 DIA = '(%%%%C%d)' % D
 if len(SPLV) == 1:
     POS = [('1', XC, 0), ('2', XO, 1)]
-    ynote = [SPLV[0] + 3000, SPLV[0] + 3800]
+    ynote = [s1y[0] - 700, s1y[0] + 700]
     for (lab, xs, gi), yy in zip(POS, ynote):
         add(t='note', l1=lab, l2=DIA, origin=W(CX - 355, yy), targets=[W(x, yy) for x in xs], angle=math.pi, **NOTEo)
 else:
-    y1 = SPLV[0] + 2400; add(t='note', l1='1', l2=DIA, origin=W(CX - 355, y1), targets=[W(x, y1) for x in XF], angle=math.pi, **NOTEo)
+    y1 = s1y[0] - 700; add(t='note', l1='1', l2=DIA, origin=W(CX - 355, y1), targets=[W(x, y1) for x in XF], angle=math.pi, **NOTEo)
     room = (L[-1] - BEAMS[-1]) - (SPLV[1] + 1200)
     if room >= 1100:
         y2 = SPLV[1] + 1200 + room * 0.3; add(t='note', l1='2', l2=DIA, origin=W(CX - 355, y2), targets=[W(x, y2) for x in XC], angle=math.pi, **NOTEo)
@@ -163,9 +180,9 @@ for lv in SPLV:
     add(t='note', l1=NM, l2=DIA, origin=W(CR + 420, y + 260), targets=[W(XC[1] + NW / 2, y), W(XO[-1] + NW / 2, y + 600)], **NOTEo)
 p, (n1, nm, n3) = max(per, key=lambda q: q[0][-1] - q[0][0])
 HLAB = 'Х1;Х2' if NPIN == 0 else ('Х1;Шп1;Шп2' if (NPB and NPH and abs(b - h) > 1) else 'Х1;Шп1')
-add(t='note', l1=HLAB, l2='', origin=W(CR + 420, L[0] + p[n1 + 1] + 350),
+add(t='note', l1=HLAB, l2='', origin=W(CR + (420 if len(HLAB) <= 6 else 250), L[0] + p[n1 + 1] + 350),
     targets=[W(CR - 40, L[0] + p[n1]), W(CR - 40, L[0] + p[n1 + 1])], **NOTEo)
-NODE_LV = L[1]; NODE_BH = BEAMS[0]
+NODE_LV, NODE_BH = next((lv, bh) for lv, bh in zip(L[1:], BEAMS) if bh > 0)
 c = W(XM, NODE_LV - NODE_BH / 2); add(t='mcset', h=T('1118C7'), set={'Center': c, 'Rack': [c[0] - 880 - (b - 400) / 2, c[1] - 150], 'Knot': 'Б', 'XRadius': 420 + (b - 400) / 2})
 c = W(XC[1], SPL[0][0]); add(t='mcset', h=T('1118D0'), set={'Center': c, 'Rack': [c[0] + 345, c[1] - 369], 'Knot': 'А'})
 add(t='settext', h=T('11116E'), s='{\\L' + 'Колонна ' + MARK + '}')
@@ -220,7 +237,7 @@ else:
     PINS += [(W(ox + Kx * e, oy + Kx * fph[k]), 0.0, Kx * (b - 2 * e), 'h%d' % k) for k in range(1, nh - 1)]
     for ins, ang, span, nm_ in PINS:
         tg = PRE + 'PIN' + nm_
-        add(t='clone', h=PRE + 'PIN:19EC6', base=[SX + 40000, SY], to=ins, tag=tg)
+        add(t='clone', h=PRE + 'PIN:19EC6', base=[SX + 1000, SY - 6000], to=ins, tag=tg)
         if ang: add(t='xform', h=tg, base=ins, to=ins, ang=ang)
         add(t='dyn', h=tg, prop='Расстояние1', value=span + 1)
 B = bars(ox, oy)
@@ -356,7 +373,7 @@ fill(r_h, hoop_rows, HD)
 fill(r_sk, sk_rows, 16)
 fill(r_pos, [(lab, list(ls)[0], q) for lab, ls, q in pos_rows], D)
 fill([r_N], [(NM, 10 * D, 2 * n * len(SPLV))], D)
-NMESH_TOT = NMESH * NODES
+NMESH_TOT = sum(int(round((bh - 100) / 100)) + 1 for bh in BEAMS if bh > 0)
 cells += [[r_C1, 10, '%d' % NMESH_TOT], [r_conc, 12, '%.2f' % (b * h / 1e6 * Ltot)]]
 fill(r_mesh, mesh_rows, 10)
 add(t='tset', h=SPM, cells=cells)
@@ -429,7 +446,7 @@ for k, (labr, Lr, q) in enumerate(hoop_rows[1:], start=1):
         yc = 18327.0 - 1000.0 * (k - 1)
         add(t='erase', h=[r['pl']])
         tg = PRE + 'VPIN%d' % k
-        add(t='clone', h=PRE + 'PIN:19EC6', base=[SX + 40000, SY], to=W(17998, yc), tag=tg)
+        add(t='clone', h=PRE + 'PIN:19EC6', base=[SX + 1000, SY - 6000], to=W(17998, yc), tag=tg)
         add(t='dyn', h=tg, prop='Расстояние1', value=700)
 for k in range(len(hoop_rows), 2): pass
 # Ск rows (П-elements Ø16): width text + legs + L

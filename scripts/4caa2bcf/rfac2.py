@@ -98,7 +98,7 @@ def facade2(s, B, part, secmarks):
         add(t='dimpts', h=A('4038F1'), p1=[X(c - 250), YTB, 0], p2=[X(ax), YT, 0], dl=[X(ax), yu(469559), 0])
         add(t='dimpts', h=A('4038F5'), p1=[X(c + 250), YTB, 0], p2=[X(c - 250), YTB, 0], dl=[X(c - 250), yu(469559), 0])
         add(t='move', h=[A(SPDS['comb'][0])], d=[X(c - 250) - (185182 + D), 0])
-        add(t='mcset', h=A(SPDS['comb'][0]), set={'FirstLine': 'Н3'})
+        add(t='mcset', h=A(SPDS['comb'][0]), set={'FirstLine': 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[B['main']['top'][1]]})
         used += ['4038F3', '4038F2', '4038F1', '4038F5', SPDS['comb'][0]]
     for (p1, p2, d1, d2, cb, ax0), c in zip([('403948', '403947', '403992', '40394A', SPDS['comb'][1], 183682),
                                             ('4039A0', '40399F', '4039A5', '4039A2', SPDS['comb'][2], 192482)], bot):
@@ -108,7 +108,7 @@ def facade2(s, B, part, secmarks):
         add(t='dimpts', h=A(d1), p1=[X(c - 250), YB, 0], p2=[X(ax), YB, 0], dl=[X(ax), yb(467665), 0])
         add(t='dimpts', h=A(d2), p1=[X(c + 250), YBB, 0], p2=[X(c - 250), YBB, 0], dl=[X(c - 250), yb(467665), 0])
         add(t='move', h=[A(cb)], d=[X(c - 250) - (ax0 + D), -150])
-        add(t='mcset', h=A(cb), set={'FirstLine': 'Н3'})
+        add(t='mcset', h=A(cb), set={'FirstLine': 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[B['main']['top'][1]]})
         used += [p1, p2, d1, d2, cb]
     add(t='erase', h=[A(h) for h in PLATES + SPLD + SPDS['comb'] if h not in used])
     s.splices = (top, bot)

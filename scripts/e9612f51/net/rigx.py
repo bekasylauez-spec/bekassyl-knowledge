@@ -33,7 +33,7 @@ def handles_in(x0, y0, x1, y1):
         elif l.startswith('N\t'):
             x, y = map(float, r[4].split(','))
             if x0 <= x <= x1 and y0 <= y <= y1: hs.append(r[2])
-    return hs + ['407C02']
+    return hs + ['407C02', '40647F']
 
 
 def build(mark, no, SX, P):

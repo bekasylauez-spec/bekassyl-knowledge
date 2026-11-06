@@ -36,7 +36,7 @@ def table_ops(s, B, q, nsplice):
         cells += [[6 + i, 3, d['d'], F0], [6 + i, 9, round(d['u1'] - d['u0']), F0]]
     cells += [[rH, 3, dm, F0], [rH, 9, 10 * dm, F0]]
     ops.append(dict(t='tnum', h=sp, cells=cells))
-    tx = [[2, 2, 'Ригель ' + B['mark']], [rH, 0, 'Н3']]
+    tx = [[2, 2, 'Ригель ' + B['mark']], [rH, 0, 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[dm]]]
     for i, d in enumerate(dop):
         tx += [[6 + i, 0, str(d['pos'])], [6 + i, 8, 'L='], [6 + i, 4, 'A'], [6 + i, 5, '500С'], [6 + i, 1, 'ГОСТ 34028-2016'], [6 + i, 2, '%%C']]
     tx += [[3, 5, '240']]

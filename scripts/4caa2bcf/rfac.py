@@ -63,8 +63,8 @@ def facade(s, B, part):
     s.geo['segs'] = segs
     # main bars pos 1, Ск1 at the real ends
     ea = X(u0) + (0 if part['brkL'] else 20); eb = X(u1) - (0 if part['brkR'] else 20)
-    add(t='plset', h=A('4015A8'), p=[[ea, YTB], [eb, YTB]], layer='диам25')
-    add(t='plset', h=A('4015AE'), p=[[ea, YBB], [eb, YBB]], layer='диам25')
+    add(t='plset', h=A('4015A8'), p=[[ea, YTB], [eb, YTB]], layer='диам%d' % B['main']['top'][1])
+    add(t='plset', h=A('4015AE'), p=[[ea, YBB], [eb, YBB]], layer='диам%d' % B['main']['top'][1])
     L = 250; yk = (YBB + 20 + YTB - 20) / 2
     if not part['brkL']:
         add(t='plset', h=A('4015C1'), p=[[ea + L, YBB + 20], [ea + 25, YBB + 20], [ea, YBB + 45], [ea, YTB - 45], [ea + 25, YTB - 20], [ea + L, YTB - 20]], layer='диам16')
