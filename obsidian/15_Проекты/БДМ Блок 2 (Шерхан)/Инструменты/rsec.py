@@ -1,5 +1,6 @@
 # rigel cross-sections: analog section 1-1 (1:20) imported to a staging place, edited in real mm, cloned x2 (1:25) onto the sheet
 from rgen import *
+import math
 
 XLA, YBA = -211276.0, 428183.0          # analog section: beam left face / bottom
 SC = 2.0                                 # 1:50 sheet, section drawn 1:25
@@ -17,7 +18,7 @@ def bar_x(b, n_main, n_dop):
     return main, [slots[i] for i in dsl], '%dх6=%d' % (round(st), round(6 * st))
 
 
-def build_stage(B, sec, OX, OY, P):
+def build_stage(B, sec, OX, OY, P, withML=True):
     """sec = dict(word, top_dop=(pos, n), bot_dop=(pos, n)); returns ops, handle tags to clone, base point"""
     ops = []; add = lambda **k: ops.append(k)
     S = lambda h: P + h
@@ -35,22 +36,61 @@ def build_stage(B, sec, OX, OY, P):
     else:
         add(t='plset', h=S(SEC['outl']), p=[[xR, yb], [xR, yt], [xL, yt], [xL, yb]], closed=True)
         add(t='erase', h=[S(x) for x in SEC['brk']])
-    nt = sec.get('top_dop', (0, 0))[1]; nb = sec.get('bot_dop', (0, 0))[1]
-    mT, dT, chT = bar_x(b, 4, nt); mB, dB, chB = bar_x(b, 4, nb)
+    nm = B['main']['top'][0]
+    def lay(lst):
+        r1 = [x for x in lst if x[3] == 1]; r2 = [x for x in lst if x[3] == 2]
+        return r1, r2
+    t1, t2 = lay([tuple(x) for x in sec.get('top', [])]); b1, b2 = lay([tuple(x) for x in sec.get('bot', [])])
+    def xs(n1):
+        if nm == 3:
+            st = (b - 110) / 2.0
+            return [55 + st * i for i in range(3)], [], '%dх2=%d' % (round(st), round(2 * st))
+        return bar_x(b, 4, n1)
+    mT, dT, chT = xs(sum(x[1] for x in t1)); mB, dB, chB = xs(sum(x[1] for x in b1))
+    def row2x(n):
+        if n >= nm: return list(mB)
+        if n == 1: return [mB[len(mB) // 2]]
+        if n == 2: return [mB[0], mB[-1]]
+        return [mB[0], mB[1], mB[-1]]
     dia = B['main']['top'][1]
-    for hh, x in zip(SEC['bot'], mB):
-        add(t='insat', h=S(hh), at=[xL + x, YBOT]); add(t='dyn', h=S(hh), prop='Вид', value='Ø%d' % B['main']['bot'][1])
-    for hh, x in zip(SEC['top'], mT):
-        add(t='insat', h=S(hh), at=[xL + x, YTOP]); add(t='dyn', h=S(hh), prop='Вид', value='Ø%d' % dia)
     extra = []
-    for i, x in enumerate(dT + dB):
-        tg = '%sD%d' % (P, i); y = YTOP if i < len(dT) else YBOT
-        add(t='clone', h=S(SEC['bot'][0]), base=[0, 0], to=[0, 0], tag=tg); add(t='insat', h=tg, at=[xL + x, y]); extra.append(tg)
-    # two hoops, each over 3 main bars (shared middle)
-    for hh, x in zip(SEC['hoop'], mB[:2]):
-        add(t='insat', h=S(hh), at=[xL + x, YBOT + 11])
-        add(t='dyn', h=S(hh), prop='Расстояние1', value=mB[2] - mB[0])
-        add(t='dyn', h=S(hh), prop='Расстояние2', value=YTOP - YBOT)
+    nb_ = [0]
+    def bar(xx, y, dd_):
+        # bar dot: circle + solid hatch (the analog bar block renders empty in this drawing)
+        r = dd_ / 2.0; tg = '%sB%d' % (P, nb_[0]); th = '%sH%d' % (P, nb_[0]); nb_[0] += 1
+        add(t='circle', c=[xL + xx, y], r=r, layer='диам%d' % dd_, tag=tg)
+        poly = [[xL + xx + r * math.cos(a_ * math.pi / 12), y + r * math.sin(a_ * math.pi / 12)] for a_ in range(24)]
+        add(t='hatch', pat='SOLID', loops=[poly], layer='диам%d' % dd_, tag=th)
+        extra.extend([tg, th])
+    for x in mB: bar(x, YBOT, B['main']['bot'][1])
+    for x in mT: bar(x, YTOP, dia)
+    add(t='erase', h=[S(h_) for h_ in SEC['bot'] + SEC['top']])
+    groups = []
+    k_ = [0]
+    def put(xx, y, dd_): bar(xx, y, dd_)
+    for grp, y, top in ((t1, YTOP, True), (b1, YBOT, False)):
+        xx = dT if top else dB; i = 0
+        for (pos, n, dd_, row) in grp:
+            sel = xx[i:i + n]; i += n
+            for x in sel: put(x, y, dd_)
+            groups.append((top, 1, pos, dd_, sel, y))
+    for grp, y, top in ((t2, YTOP - 95, True), (b2, YBOT + 95, False)):
+        for (pos, n, dd_, row) in grp:
+            sel = row2x(n)
+            for x in sel: put(x, y, dd_)
+            groups.append((top, 2, pos, dd_, sel, y))
+    # hoops: two (each over 3 bars) for 4 main bars, one for 3
+    if nm == 4:
+        for hh, x in zip(SEC['hoop'], mB[:2]):
+            add(t='insat', h=S(hh), at=[xL + x, YBOT + 11])
+            add(t='dyn', h=S(hh), prop='Расстояние1', value=mB[2] - mB[0])
+            add(t='dyn', h=S(hh), prop='Расстояние2', value=YTOP - YBOT)
+    else:
+        add(t='insat', h=S(SEC['hoop'][0]), at=[xL + mB[0], YBOT + 11])
+        add(t='dyn', h=S(SEC['hoop'][0]), prop='Расстояние1', value=mB[2] - mB[0])
+        add(t='dyn', h=S(SEC['hoop'][0]), prop='Расстояние2', value=YTOP - YBOT)
+        add(t='erase', h=[S(SEC['hoop'][1])])
+    nt = len(t1) + len(t2); nb = len(b1) + len(b2)
     # bottom chain: 55 | step x n | 55 (dop slots define the step), total width
     allx = sorted(mB + dB)
     yd = yb - 306
@@ -59,7 +99,7 @@ def build_stage(B, sec, OX, OY, P):
     add(t='dimtx', h=S(d[0]), at=[xL - 75, yd + 40, 0])
     add(t='dimpts', h=S(d[1]), p1=[xL + allx[-1], yb, 0], p2=[xL + allx[0], yb, 0], dl=[xL + allx[0], yd, 0])
     add(t='dimtext', h=S(d[1]), s=chB)
-    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yd + 40, 0])
+    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yd - 90, 0], tmove=2)
     add(t='erase', h=[S(d[2]), S(d[3])])
     add(t='dimpts', h=S(d[4]), p1=[xR, yb, 0], p2=[xL + allx[-1], yb, 0], dl=[xL + allx[-1], yd, 0])
     add(t='dimtx', h=S(d[4]), at=[xR + 75, yd + 40, 0])
@@ -77,25 +117,27 @@ def build_stage(B, sec, OX, OY, P):
     add(t='combsegs', h=S(SEC['cbot']), segs=[[[xL + x, YBOT - 2], [xL + x + 70, yk]] for x in mB],
         start=[xR + 330, yk], end=[xL + mB[0] + 70, yk])
     add(t='mcset', h=S(SEC['cbot']), set={'FirstLine': '1', 'SecondLine': '(ф%d)' % B['main']['bot'][1]})
-    # dop combs: shelf at the side of the section, at the height of their row (analog 2-2 «2 (ф12)»)
-    for flag, lst, y0, ysh, src, nm, dd_ in ((nt, dT, YTOP, YTOP - 170, SEC['ctop'], 'CDT', dia), (nb, dB, YBOT, YBOT + 170, SEC['cbot'], 'CDB', B['main']['bot'][1])):
-        if not flag: continue
-        tg = P + nm; add(t='clone', h=S(src), base=[0, 0], to=[0, 0], tag=tg); extra.append(tg)
-        sg = [[[xL + x + 14, y0 + (ysh - y0) * 14.0 / (xR + 120 - xL - x)], [xR + 120, ysh]] for x in lst]
+    # dop combs: shelf at the side of the section at the height of their row (analog 2-2 «2 (ф12)»)
+    off = {(True, 1): -170, (True, 2): -300, (False, 1): 170, (False, 2): 300}
+    for gi, (top, row, pos, dd_, sel, y0) in enumerate(groups):
+        ysh = (YTOP if top else YBOT) + off[(top, row)]
+        tg = '%sC%d' % (P, gi); add(t='clone', h=S(SEC['ctop'] if top else SEC['cbot']), base=[0, 0], to=[0, 0], tag=tg); extra.append(tg)
+        sg = [[[xL + x + 14, y0 + (ysh - y0) * 14.0 / max(1.0, (xR + 120 - xL - x))], [xR + 120, ysh]] for x in sel]
         add(t='combsegs', h=tg, segs=sg, start=[xR + 560, ysh], end=[xR + 120, ysh])
-        add(t='mcset', h=tg, set={'FirstLine': str((sec['top_dop'] if nm == 'CDT' else sec['bot_dop'])[0]), 'SecondLine': '(ф%d)' % dd_})
+        add(t='mcset', h=tg, set={'FirstLine': str(pos), 'SecondLine': '(ф%d)' % dd_})
     ym = (YBOT + YTOP) / 2
-    add(t='combsegs', h=S(SEC['cx1']), segs=[[[xL + mB[2] + 15, ym], [xR + 175, ym]], [[xL + mB[3] + 15, ym], [xR + 175, ym]]])
+    add(t='combsegs', h=S(SEC['cx1']), segs=[[[xL + mB[-2] + 15, ym], [xR + 175, ym]], [[xL + mB[-1] + 15, ym], [xR + 175, ym]]])
     add(t='spmove', h=S(SEC['cx1']), items=[[0, xR + 175, ym]])
     add(t='mcset', h=S(SEC['cx1']), set={'FirstLine': 'Х1', 'SecondLine': '(ф%d)' % B['hoop']['d']})
     # level: single-line multilayer from the analog 6.6 section, title
     add(t='erase', h=[S(SEC['ml']), S(SEC['lev'])])
-    tl = P + 'ML'
-    add(t='clone', h='A:4308C2', base=[2936684, 428802], to=[xL - 619, yt + 120], tag=tl); extra.append(tl)
-    add(t='levelval', h=tl, old='+4.395', value=B['levels'][0], tag=tl)
+    if withML:
+        tl = P + 'ML'
+        add(t='clone', h='A:4308C2', base=[2936684, 428802], to=[xL - 619, yt + 120], tag=tl); extra.append(tl)
+        add(t='levelval', h=tl, old='+4.395', value=B['levels'][0], tag=tl)
     add(t='settext', h=S(SEC['title']), s='Разрез %s - %s' % (sec['word'], sec['word']))
     add(t='move', h=[S(SEC['title'])], d=[(xL + xR) / 2.0 - (OX + 43), h - 400])
-    tags = [S(x) for x in hs if x not in SEC['brk'] or slab] + extra
+    tags = [S(x) for x in hs if (x not in SEC['brk'] or slab) and x not in SEC['bot'] + SEC['top'] and not (nm == 3 and x == SEC['hoop'][1])] + extra
     tags = [t_ for t_ in tags if t_ not in (S(SEC['ml']), S(SEC['lev']), S(SEC['dimb'][2]), S(SEC['dimb'][3]))]
     return ops, tags, [OX + b / 2.0, OY]
 
