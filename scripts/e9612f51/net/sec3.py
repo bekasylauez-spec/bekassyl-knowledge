@@ -55,11 +55,16 @@ def section(word, T, pre, b, h, nT, nB, dia, hoopd, legs, level, sx=2.5):
     # bottom chain: face | bars | face (by the main 4 / 3 bars), total width
     yd = 431078 - 160
     mb = m4
-    pts = [xL] + mb + [xR]
     cd = ['404452', '40498B', '4049B4', '40499A', '404465']
-    for i, (p, q) in enumerate(zip(pts, pts[1:])):
+    stp = (mb[-1] - mb[0]) / (len(mb) - 1.0)
+    chain = [(xL, mb[0], None), (mb[0], mb[-1], '%dх%d=%d' % (round(stp), len(mb) - 1, round(mb[-1] - mb[0]))), (mb[-1], xR, None)]
+    for i, (p, q, txt) in enumerate(chain):
         add(t='dimpts', h=A(cd[i]), p1=F((q, yb)) + [0], p2=F((p, yb)) + [0], dl=F((p, yd)) + [0])
-    if len(pts) - 1 < len(cd): add(t='erase', h=[A(x) for x in cd[len(pts) - 1:]])
+        add(t='dimtext', h=A(cd[i]), s=txt or '')
+        if i == 0: add(t='dimtx', h=A(cd[i]), at=F((xL - 45, yd + 18)) + [0])
+        elif i == 2: add(t='dimtx', h=A(cd[i]), at=F((xR + 45, yd + 18)) + [0])
+        else: add(t='dimtx', h=A(cd[i]), at=F(((p + q) / 2.0, yd + 18)) + [0])
+    add(t='erase', h=[A(x) for x in cd[3:]])
     add(t='dimpts', h=A('4044EF'), p1=F((xL, yb)) + [0], p2=F((xR, yb)) + [0], dl=F((xR, 430736 - 160)) + [0])
     xv = 173476 - (b - 450) / 2.0
     for hh, (p, q) in zip(['404455', '404458', '40445B'], [(yb, YBOT), (YBOT, YTOP), (YTOP, yt)]):
@@ -84,5 +89,5 @@ def section(word, T, pre, b, h, nT, nB, dia, hoopd, legs, level, sx=2.5):
     add(t='spmove', h=A('406008'), items=[[0] + F((xR + 175, ym))])
     add(t='mcset', h=A('406008'), set={'SecondLine': '(ф%d)' % hoopd})
     add(t='settext', h=A('4044B4'), s='Разрез %s - %s' % (word, word))
-    add(t='move', h=[A('4044B4')], d=[0, (h - 400) * sx])
+    add(t='moveto', h=A('4044B4'), to=F((xC, yt + 400)) + [0])
     return ops

@@ -156,6 +156,13 @@ for k_, sp in enumerate(SPLV):
     nxt = SPLV[k_ + 1] if k_ + 1 < len(SPLV) else 1e9
     ZN.append(zone_mid(sp + 1200, nxt))
 s1y = [(a_ + b2) / 2 for a_, b2 in ZN]
+CHP = sorted({L[0] + y for a_, b2, st_, k_ in segs for y in (a_, b2)})       # chain points (extension lines run there)
+def clear_y(y):
+    for _ in range(20):
+        if all(abs(y - q) > 160 for q in CHP): return y
+        y += 100
+    return y
+s1y = [clear_y(y) for y in s1y]
 add(t='movegrp', h=[T('111913')], d=[0, s1y[0] - 13418])
 if len(s1y) > 1: add(t='movegrp', h=[T('111911')], d=[0, s1y[1] - 17535])
 else: add(t='erase', h=[T('111911')])
@@ -190,10 +197,11 @@ HLAB = 'Х1;Х2' if NPIN == 0 else ('Х1;Шп1;Шп2' if (NPB and NPH and abs(b 
 add(t='note', l1=HLAB, l2='', origin=W(CR + (420 if len(HLAB) <= 6 else 250), L[0] + p[n1 + 1] + 350),
     targets=[W(CR - 40, L[0] + p[n1]), W(CR - 40, L[0] + p[n1 + 1])], **NOTEo)
 _cand = [(lv, bh) for lv, bh in zip(L[1:], BEAMS) if bh > 0]
-_far = [(lv, bh) for lv, bh in _cand if lv - bh > SPLV[0] + 1200 + 900 or lv < SPLV[0] - 600]   # knot Б clear of the splice detail А
-NODE_LV, NODE_BH = (_far or _cand)[0]
+_below = [(lv, bh) for lv, bh in _cand if lv <= SPLV[0] + 1]                  # node at/below the splice floor (knot clear of detail А)
+_far = [(lv, bh) for lv, bh in _cand if lv - bh > SPLV[0] + 2100 and lv < L[-1] - 1]
+NODE_LV, NODE_BH = (_below or _far or _cand)[0]
 c = W(XM, NODE_LV - NODE_BH / 2); add(t='mcset', h=T('1118C7'), set={'Center': c, 'Rack': [c[0] - 880 - (b - 400) / 2, c[1] - 150], 'Knot': 'Б', 'XRadius': 420 + (b - 400) / 2})
-c = W(XC[1], SPL[0][0]); add(t='mcset', h=T('1118D0'), set={'Center': c, 'Rack': [c[0] + 345, c[1] - 369], 'Knot': 'А'})
+c = W(XC[1], SPL[0][0]); add(t='mcset', h=T('1118D0'), set={'Center': c, 'Rack': [SX + CR + 291 + 240, c[1] - 369], 'Knot': 'А'})
 add(t='settext', h=T('11116E'), s='{\\L' + 'Колонна ' + MARK + '}')
 OLD = [r['h'] for r in R if r['x1'] < 8200 and r['y0'] > 8000 and r['h'].upper() not in keep]
 OLD += [r['h'] for r in R if r['t'] == 'INSERT' and r['x1'] < 8200 and 7500 < r['y0'] < 8500]
@@ -280,7 +288,9 @@ for h_, s_ in (('111534', '%d' % NODE_BH), ('111583', '50'), ('111563', '100х%d
 LMb, LMh = 2 * (b - 40), 2 * (h - 40)
 rodsf = lambda w: [35 + 100 * i for i in range(int((w - 40 - 35 - 100) // 100) + 1)]
 rods, rodsh = rodsf(b), rodsf(h)
-x0, y0 = 13769.0, 11403.0 - (LMh - LMb)
+DYM = LMh - LMb                                         # rectangular: meshes taller, top kept -> bottom dims/notes go down
+x0, y0 = 13769.0, 11403.0 - DYM
+if DYM > 1: add(t='movegrp', h=[T(x) for x in ('111417', '11147A', '111468', '111428', '11148B', '11190E')], d=[0, -DYM])
 rx = [x0 + 2 * v for v in rods]
 for x in rx: add(t='lineset', h=T('111466'), s=W(x, y0), e=W(x, y0 + LMh))
 yc = y0 + LMh - 70
@@ -288,7 +298,7 @@ add(t='lineset', h=T('111467'), s=W(x0, yc), e=W(x0 + LMb, yc))
 add(t='erase', h=[T('111466'), T('111478'), T('111479'), T('111467')])
 add(t='dimpts', h=T('111417'), p1=W(rx[0], y0), p2=W(x0, y0))
 add(t='dimpts', h=T('11147A'), p1=W(rx[0], y0), p2=W(rx[-1], y0)); add(t='dimtext', h=T('11147A'), s='100х%d' % (len(rods) - 1))
-add(t='dimtx', h=T('11147A'), at=W((rx[0] + rx[-1]) / 2, 11150))
+add(t='dimtx', h=T('11147A'), at=W((rx[0] + rx[-1]) / 2, 11150 - DYM))
 add(t='dimpts', h=T('111468'), p1=W(rx[-1], y0), p2=W(x0 + LMb, yc))
 add(t='dimpts', h=T('111428'), p1=W(x0 + LMb, yc), p2=W(x0, yc))
 add(t='dimpts', h=T('111437'), p1=W(x0 + LMb, yc), p2=W(rx[-1], y0 + LMh))
@@ -296,7 +306,7 @@ add(t='dimpts', h=T('111448'), p1=W(x0 + LMb, yc), p2=W(rx[-1], y0))
 add(t='dimpts', h=T('111457'), p1=W(rx[-1], y0 + LMh), p2=W(rx[-1], y0))
 add(t='erase', h=[T('11190B')])
 ya = y0 + 389 + (LMh - LMb) * 0.5
-add(t='note', l1='10', l2='ш.100', origin=W(12980, ya), targets=[W(x, ya) for x in rx], arrow='oblique', **NOTE)
+add(t='note', l1='10', l2='ш.100', origin=W(rx[0] - 600, ya), targets=[W(x, ya) for x in rx], arrow='oblique', angle=math.pi, **NOTE)
 add(t='spmove', h=T('11190C'), items=[[1, SX + 14144, SY + yc]]); add(t='mcset', h=T('11190C'), set={'FirstLine': '10'})
 xa, yb = 17797.0, 11121.0 - (LMh - LMb)
 ry = [yb + 2 * v for v in rodsh]
@@ -313,7 +323,7 @@ add(t='dimpts', h=T('1114AB'), p1=W(xr, yb + LMh), p2=W(xa + LMb, ry[-1]))
 add(t='dimpts', h=T('1114BC'), p1=W(xr, yb + LMh), p2=W(xa, ry[-1]))
 add(t='dimpts', h=T('1114CB'), p1=W(xa + LMb, ry[-1]), p2=W(xa, ry[-1]))
 add(t='erase', h=[T('11190D')])
-add(t='note', l1='10', l2='ш.100', origin=W(18186, 10698 - (LMh - LMb)), targets=[W(18186, y) for y in ry], arrow='oblique', **NOTE)
+add(t='note', l1='10', l2='ш.100', origin=W(18186, 10698 - (LMh - LMb)), targets=[W(18186, y) for y in ry], arrow='oblique', angle=math.pi, **NOTE)
 add(t='spmove', h=T('11190E'), items=[[1, SX + xr, SY + 11686 - (LMh - LMb)]]); add(t='mcset', h=T('11190E'), set={'FirstLine': '10'})
 add(t='spmove', h=T('1114FD'), items=[[1, SX + xr, SY + ry[0]]])
 

@@ -11,6 +11,7 @@ def storey_hoops(lo, beam_bot):
     if S < 2000:                                       # end zones X would meet: the whole storey at step <= 100
         n = int(S // 100 + 1e-9); r = S - 100.0 * n
         steps = [100.0] * n
+        if S <= 200 + 1e-6: steps, r = [S / 2.0] * 2, 0.0
         if r > 1e-6:
             if r < 50 and n: steps[n // 2] += r            # tiny leftover joins one step (<= 150)
             else: steps.insert(n // 2, r)

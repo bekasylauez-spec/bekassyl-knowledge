@@ -90,7 +90,7 @@ def build(B):
         for s0, s1, txt in segs:
             hh = zd.pop(0) if zd else clone(A(ZD[0]), 'ZD')
             add(t='dimpts', h=hh, p1=[X(s0), YB, 0], p2=[X(s1), YB, 0], dl=[X(s1), 467342, 0])
-            add(t='dimtext', h=hh, s=txt if 'х' in txt else '')
+            add(t='dimtext', h=hh, s=('%s=%d' % (txt, round(s1 - s0))) if 'х' in txt else '')
         for kk, (p, q) in enumerate(((ref[i][0], lines[0]), (lines[-1], ref[i][1]))):
             hh = ed.pop(0) if ed else clone(A(ED[0]), 'ED')
             add(t='dimpts', h=hh, p1=[X(q), YB, 0], p2=[X(p), YB, 0], dl=[X(p), 467342, 0])
@@ -184,6 +184,11 @@ def text_ops(B, NH):
             dict(t='settext', h=A(SPDS['notes']), s=r'\pxi-3.3333,l3.3333,t3.3333;1.	Общие указания см. л. - 1.1\P2.	Данный лист читать '
                  r'совместно с л. КЖ-2.1 ... 2.4\P3.	Стержни, указанные в "Ведомости деталей", должны гнуться механическим способом '
                  'в холодном состоянии с радиусом гиба 3d - 5d, где d - диаметр стержня')]
+    # oc.py fixes of analog content: node «А» lists only our splice plate, shelf texts lifted off their lines, right column in
+    ops += [dict(t='settext', h=A('407B8C'), s='Н4-%%%%C%d' % DIA), dict(t='erase', h=[A('407B8E'), A('407B8F'), A('407B8D')]),
+            dict(t='move', h=[A('407B95')], d=[-70, 0]), dict(t='move', h=[A('407BBE')], d=[0, -60]), dict(t='settext', h=A('407BC3'), s='Н4'),
+            dict(t='move', h=[A('406499'), A('4064A4'), A('4064B0'), A('4064B9')], d=[-200, 0]),
+            dict(t='move', h=[A(SPDS['notes'])], d=[-250, 0])]
     # stamp: the analog «крпкер» block reference is pointed at the scheme stamp Штамп№1 (×0.5 kept), fields re-texted
     to = [203429 + D, 456026]
     ops.append(dict(t='setblock', h=A('40443F'), name='Штамп№1', at=to))

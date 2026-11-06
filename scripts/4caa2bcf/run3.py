@@ -72,6 +72,11 @@ def run(mark, pi, log=print):
         out = gx.run(rtab.steel_ops(P + rgen.SPDS['steel'], m[P + rgen.SPDS['spec']], rH, B) +
                      [dict(t='theight', h=P + rgen.SPDS['spec'], rows=[[rH + 1, 400], [rH + 3, 400]])], 'stl%d' % k)
         errs += [l for l in out.splitlines() if 'ERR' in l]
+        if len(B.get('dop', [])) > 2:
+            # spec taller than the analog: notes go to the free bottom-left corner (or above the steel table title)
+            if not keep_nodes:
+                out = gx.run([dict(t='moveto', h=P + rgen.SPDS['notes'], to=[SX + 800, rgen.FY + 2900])], 'nt%d' % k)
+            errs += [l for l in out.splitlines() if 'ERR' in l]
     else:
         # continuation sheet: tables and ведомость деталей are on the first sheet of the mark
         ops += [dict(t='erase', h=[P + rgen.SPDS['spec'], P + rgen.SPDS['steel']]),

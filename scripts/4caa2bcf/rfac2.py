@@ -49,7 +49,7 @@ def facade2(s, B, part, secmarks):
         shelves.append((pref - L0, pref + L1)); return pref
     s.place_x = place_x
     # dop bars (clones of analog pos 2) drawn 50 inside the main bar, callout + end dims
-    k = 0
+    k = 0; ev_end = []
     for dp in B.get('dop', []):
         a, b = max(dp['u0'], u0), min(dp['u1'], u1)
         if b <= a + 1: continue
@@ -64,19 +64,7 @@ def facade2(s, B, part, secmarks):
         xc = X(uc)
         add(t='spmove', h=tn, items=[[0, xc, yu(469289)], [1, xc, y]])
         add(t='mcset', h=tn, set={'FirstLine': str(dp['pos']), 'SecondLine': '(ф%d)' % dp['d']})
-        # dims of the bar ends from the nearest axis
-        for e, real in ((a, dp['u0'] >= u0 - 1), (b, dp['u1'] <= u1 + 1)):
-            if not real: continue
-            axs = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
-            ax = min(axs, key=lambda q: abs(q - e))
-            if abs(ax - e) < 300: continue
-            td = '%sDOPD%d_%d' % (s.P, k, int(e))
-            if dp['top']:
-                add(t='clone', h=A('4038F1'), base=[0, 0], to=[0, 0], tag=td)
-                add(t='dimpts', h=td, p1=[X(e), y, 0], p2=[X(ax), YT, 0], dl=[X(ax), yu(469559) + 0, 0])
-            else:
-                add(t='clone', h=A('403992'), base=[0, 0], to=[0, 0], tag=td)
-                add(t='dimpts', h=td, p1=[X(e), y, 0], p2=[X(ax), YB, 0], dl=[X(ax), yb(467665), 0])
+        ev_end.append((dp['top'], a, y, dp['u0'] >= u0 - 1)); ev_end.append((dp['top'], b, y, dp['u1'] <= u1 + 1))
     add(t='erase', h=[A(h) for h in POS2['bar'] + POS2['note']])
     # «1 (ф25)» per clear segment (shelf above the beam), placed clear of dims / other shelves
     take, rest = pool(SPDS['n1'], s, 'N1')
@@ -95,23 +83,39 @@ def facade2(s, B, part, secmarks):
         c = top[0]; plate(A('4038F3'), c - 250, YTB); plate(A('4038F2'), c + 250, YTB)
         ev = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']] + [e for dp in B.get('dop', []) if dp['top'] for e in (dp['u0'], dp['u1'])]
         ax = max([e for e in ev if e < c - 250 - 1])
-        add(t='dimpts', h=A('4038F1'), p1=[X(c - 250), YTB, 0], p2=[X(ax), YT, 0], dl=[X(ax), yu(469559), 0])
-        add(t='dimpts', h=A('4038F5'), p1=[X(c + 250), YTB, 0], p2=[X(c - 250), YTB, 0], dl=[X(c - 250), yu(469559), 0])
         add(t='move', h=[A(SPDS['comb'][0])], d=[X(c - 250) - (185182 + D), 0])
         add(t='mcset', h=A(SPDS['comb'][0]), set={'FirstLine': 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[B['main']['top'][1]]})
-        used += ['4038F3', '4038F2', '4038F1', '4038F5', SPDS['comb'][0]]
+        used += ['4038F3', '4038F2', SPDS['comb'][0]]
     for (p1, p2, d1, d2, cb, ax0), c in zip([('403948', '403947', '403992', '40394A', SPDS['comb'][1], 183682),
                                             ('4039A0', '40399F', '4039A5', '4039A2', SPDS['comb'][2], 192482)], bot):
         plate(A(p1), c - 250, YBB); plate(A(p2), c + 250, YBB)
         ev = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']] + [e for dp in B.get('dop', []) if not dp['top'] for e in (dp['u0'], dp['u1'])]
         ax = max([e for e in ev if e < c - 250 - 1])
-        add(t='dimpts', h=A(d1), p1=[X(c - 250), YB, 0], p2=[X(ax), YB, 0], dl=[X(ax), yb(467665), 0])
-        add(t='dimpts', h=A(d2), p1=[X(c + 250), YBB, 0], p2=[X(c - 250), YBB, 0], dl=[X(c - 250), yb(467665), 0])
         add(t='move', h=[A(cb)], d=[X(c - 250) - (ax0 + D), -150])
         add(t='mcset', h=A(cb), set={'FirstLine': 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[B['main']['top'][1]]})
-        used += [p1, p2, d1, d2, cb]
-    add(t='erase', h=[A(h) for h in PLATES + SPLD + SPDS['comb'] if h not in used])
+        used += [p1, p2, cb]
+    add(t='erase', h=[A(h) for h in PLATES + SPDS['comb'] if h not in used])
     s.splices = (top, bot)
+    # one dimension chain above (dop top ends + top splice plates) and one below, closed on the nearest axes
+    refs = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
+    for face in (True, False):
+        ev = [(u, y) for f_, u, y, real in ev_end if f_ == face and real]
+        ev += [(c + d_, YTB if face else YBB) for c in (top if face else bot) for d_ in (-250, 250)]
+        if not ev: continue
+        pts = {round(u): (u, y, 'e') for u, y in ev}
+        for r in refs:
+            if u0 - 1 <= r <= u1 + 1 and round(r) not in pts: pts[round(r)] = (r, YT if face else YB, 'a')
+        L_ = [pts[k_] for k_ in sorted(pts)]
+        keep = [p for i, p in enumerate(L_) if p[2] == 'e' or (i > 0 and L_[i - 1][2] == 'e') or (i + 1 < len(L_) and L_[i + 1][2] == 'e')]
+        for i, (p, q) in enumerate(zip(keep, keep[1:])):
+            if p[2] == 'a' and q[2] == 'a': continue
+            if q[0] - p[0] < 1: continue
+            td = '%sCH%d_%d' % (s.P, 1 if face else 0, i)
+            src = '4038F1' if face else '403992'
+            row = yu(469559) if face else yb(467665)
+            add(t='clone', h=A(src), base=[0, 0], to=[0, 0], tag=td)
+            add(t='dimpts', h=td, p1=[X(q[0]), q[1], 0], p2=[X(p[0]), p[1], 0], dl=[X(p[0]), row, 0])
+    add(t='erase', h=[A(h) for h in SPLD])
     # step note, height dim «55» at the top
     add(t='move', h=[A(SPDS['step'])], d=[g['eb'] + 20 - (196582 + D), -150])
     add(t='mcset', h=A(SPDS['step']), set={'FirstLine': 'Шаг хомута', 'SecondLine': 'Х1(ф%d)' % B['hoop']['d']})
