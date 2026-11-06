@@ -114,8 +114,9 @@ def build(X0, Y0, T, num):
     # ---------- callouts on the facade ----------
     DIA = '(%%%%C%d)' % D
     H1 = Lb - TL0
-    lib.note('1', DIA, A(XL - 900, TL0 + min(2400, H1 * 0.35)), A(XC0, TL0 + min(2400, H1 * 0.35)), 50, arrow='oblique')
-    lib.note('2', DIA, A(XL - 900, TL0 + H1 * 0.62), A(MIDS[0], TL0 + H1 * 0.62), 50, arrow='oblique')
+    for l1_, yy_, xt_ in (('1', TL0 + min(2400, H1 * 0.35), XC0), ('2', TL0 + H1 * 0.62, MIDS[0])):
+        op(t='note', l1=l1_, l2=DIA, origin=A(XL - 355, yy_), targets=[A(xt_, yy_)], angle=math.pi, scale=50, ts=2.5, style='ГОСТ 2.304',
+           layer='Размеры', arrow='oblique', fixed=True)
     op(t='note', l1='Х1;Шп1;Шп2', l2='', origin=A(XR + 250, zmid + 600), target=A(XC1, zmid + 300), scale=50, ts=2.5, arrow='oblique', layer='Размеры', align='Center', fixed=True)
     op(t='movegrp', h=[R('18E5B')], d=[0, zmid - 13418.0])
     op(t='mcset', h=R('18E52'), set={'Center': A(XM, (Lb + LT) / 2), 'Rack': A(XM - 900 - dw / 2, Lb - 700)})
@@ -150,11 +151,12 @@ def build(X0, Y0, T, num):
         sx_, sy_ = (b - 2 * E) / (nb - 1), (h - 2 * E) / (nh - 1)
         op(t='dim', h=R(b1l), p1=A(ox + K * fx[0], oy + K * h), p2=A(ox + K * fx[-1], oy + K * h), dl=A(ox + K * b / 2, oy + K * h + 230), rot=0,
            txt='%dх%d=%d' % (round(sx_), nb - 1, round(sx_ * (nb - 1))))
-        op(t='dim', h=R(l1b), p1=A(ox + K * b, oy + K * fy[0]), p2=A(ox + K * b, oy + K * fy[-1]), dl=A(ox + K * b + 230, oy + K * h / 2), rot=math.pi / 2,
-           txt='%dх%d=%d' % (round(sy_), nh - 1, round(sy_ * (nh - 1))))
+        if tag == 's1':
+            op(t='dim', h=R(l1b), p1=A(ox, oy + K * fy[0]), p2=A(ox, oy + K * fy[-1]), dl=A(ox - 1300, oy + K * h / 2), rot=math.pi / 2,
+               txt='%dх%d=%d' % (round(sy_), nh - 1, round(sy_ * (nh - 1))))
         av, ah = axes; cx, cy = ox + K * b / 2, oy + K * h / 2
         op(t='spmove', h=R(av), items=[[0, X0 + cx, Y0 + oy + K * h + 900], [1, X0 + cx, Y0 + oy - 1060]])
-        op(t='spmove', h=R(ah), items=[[0, X0 + ox + K * b + 900, Y0 + cy], [1, X0 + ox - 1090, Y0 + cy]])
+        op(t='spmove', h=R(ah), items=[[0, X0 + ox + K * b + 900, Y0 + cy], [1, X0 + ox - (1750 if tag == 's1' else 1090), Y0 + cy]])
         op(t='movegrp', h=[R(title)], d=[(ox + K * b / 2) - tcx, 0])
     section(ox1, '18CB9', ['18CBA', '18CC1', '18CC8', '18CCF', '18CD6', '18CDD', '18CE4', '18CEB'], (9422, 18267, '18CBA'),
             (('18CF2', '18D12', '18D13', '18CF3', '18CF6', '18CF7'), ('18CF5', '18D14', '18D15', '18CF4', '18CF9', '18CF8')),
@@ -217,8 +219,8 @@ def build(X0, Y0, T, num):
     op(t='dimpts', h=R('18D20'), p1=A(x0 + LX, yc), p2=A(rx[-1], y0))
     op(t='dimpts', h=R('18D23'), p1=A(rx[-1], y0 + LY), p2=A(rx[-1], y0))
     op(t='erase', h=[R('18D30')])
-    lib.note('10', 'ш.100', A(12980, 11792), A(rx[0], 11792), 50, arrow='oblique')
-    op(t='spmove', h=R('18D31'), items=[[1, X0 + 14144, Y0 + yc]]); op(t='mcset', h=R('18D31'), set={'FirstLine': '11'})
+    lib.note('11', 'ш.100', A(12980, 11792), A(rx[0], 11792), 50, arrow='oblique')
+    op(t='spmove', h=R('18D31'), items=[[1, X0 + 14144, Y0 + yc]]); op(t='mcset', h=R('18D31'), set={'FirstLine': '10'})
     xa2 = max(17797.0, x0 + LX + 1600); yb_ = 11121.0
     ry = [yb_ + K * v for v in ry_]
     for y in ry: op(t='lineset', h=R('18D43'), s=A(xa2, y), e=A(xa2 + LX, y))
@@ -234,8 +236,8 @@ def build(X0, Y0, T, num):
     op(t='dimpts', h=R('18D3D'), p1=A(xr, yb_ + LY), p2=A(xa2, ry[-1]))
     op(t='dimpts', h=R('18D40'), p1=A(xa2 + LX, ry[-1]), p2=A(xa2, ry[-1]))
     op(t='erase', h=[R('18D4D')])
-    lib.note('11', 'ш.100', A(xa2 + 389, 10698), A(xa2 + 389, ry[0]), 50, arrow='oblique')
-    op(t='spmove', h=R('18D4E'), items=[[1, X0 + xr, Y0 + 11686]]); op(t='mcset', h=R('18D4E'), set={'FirstLine': '10'})
+    lib.note('10', 'ш.100', A(xa2 + 389, 10698), A(xa2 + 389, ry[0]), 50, arrow='oblique')
+    op(t='spmove', h=R('18D4E'), items=[[1, X0 + xr, Y0 + 11686]]); op(t='mcset', h=R('18D4E'), set={'FirstLine': '11'})
     op(t='spmove', h=R('18D4F'), items=[[1, X0 + xr, Y0 + ry[0]]])
     # ---------- ведомость деталей ----------
     sxh, syh = b - 80, h - 80
@@ -247,7 +249,7 @@ def build(X0, Y0, T, num):
             '18D9F': LEG, '18D9E': SK1, '18DA2': LEG, '18DA7': '%d' % (2 * LEG + SK1),
             '18DB5': LEG, '18DB4': SK2, '18DB8': LEG, '18DBD': '%d' % (2 * LEG + SK2),
             '18DF1': ('%d' % PL1) if PL1 == PL2 else '%d; %d' % (PL1, PL2), '18DE9': '', '18DEB': '', '18DE8': '',
-            '18DF7': ('%d' % PL1) if PL1 == PL2 else '%d; %d' % (PL1, PL2), '18DCC': 'Шп1;\PШп2'}
+            '18DF7': ('%d' % PL1) if PL1 == PL2 else '%d; %d' % (PL1, PL2), '18DCC': 'Шп1;\\PШп2'}
     for hh, v in vals.items(): op(t='settext', h=R(hh), s='%s' % v)
     op(t='erase', h=[R('18E00')])
     pin = A(17973, 18250)
