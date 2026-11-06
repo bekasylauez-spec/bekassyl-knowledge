@@ -6,7 +6,9 @@ class Stuck(Exception): pass
 
 
 def R(ops, name, wait=300):
-    out = gx.run(ops, name, wait=wait)
+    for _ in range(3):
+        out = gx.run(ops, name, wait=wait)
+        if 'IOException' not in out: break          # listener could not read job.txt -> nothing ran, send again
     if out.strip().startswith('timeout') or 'eAtMaxReaders' in out: raise Stuck(name + ': ' + out[-300:])
     return out
 X0, Y0, PITCH = 133817.0, -1840000.0, 31500.0

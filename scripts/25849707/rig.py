@@ -178,7 +178,7 @@ def build(S, F):
     add(t='erase', h=hl + zd + ed)
     # ---- axis chain + total
     cp2 = S.pool(CH)
-    axu = [ua for ua, lab in axes]
+    axu = sorted(set([s[4] for s in sup]))          # every support: its axis, or its centre when it is not on an axis
     for p, q in zip(axu, axu[1:]):
         add(t='dimpts', h=S.take(cp2, CH[0], 'CH'), p1=[X(p), YL(422221), 0], p2=[X(q), YL(422221), 0], dl=[X(q), YL(422633), 0])
     add(t='erase', h=cp2)
