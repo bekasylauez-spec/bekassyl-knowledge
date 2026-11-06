@@ -4,6 +4,7 @@ import json, math, os, sys, pickle, gx, prep, stamp2
 sys.path.insert(0, prep.LIRA)
 import design as DS
 K = 0.25
+DEBUG = False
 SY = prep.SY
 SHEETS = [('6.1', [-0.05, 4.0]), ('6.2', [4.8, 6.95]), ('6.3', [10.5])]
 SX = {'6.1': prep.SX0 - 4 * 31500.0, '6.2': prep.SX0 - 3 * 31500.0, '6.3': prep.SX0 - 2 * 31500.0}
@@ -51,30 +52,40 @@ def plan(z, ox, oy, P, title):
                 ops.append(dict(t='pl', p=[q(a, sg), q(b, sg)], layer='0', lw=30, ltype='ACAD_ISO02W100', ltscale=25, tag=tag('B')))
                 obst.append(LineString([P_(a, sg), P_(b, sg)]))
         geo.append((r, A, ux, uy, nx, ny, hb, spans))
+    from shapely.geometry import box as _b
+    global PLANBOX
+    PLANBOX = _b(min(DS.AXX) - 700, min(DS.AXY) - 700, max(DS.AXX) + 700, max(DS.AXY) + 700)
     placed = []
     for r, A, ux, uy, nx, ny, hb, spans in geo:
         txt = RM[(r['z'], tuple(r['A']), tuple(r['B']))]
         ang = math.atan2(uy, ux)
         rot = ang + math.pi if (ang > math.pi / 2 + 0.01 or ang < -math.pi / 2 + 0.01) else ang
-        tw, th = 0.62 * 500 * len(txt), 500.0          # text box, real mm (2.5 mm at 1:200)
+        tw, th = 0.86 * 500 * len(txt), 620.0          # text box incl. spacing, real mm (2.5 mm at 1:200)
         cands = []
         E0, E1 = r['E0'], r['E1']
         tl = [a + (b - a) * f for a, b in sorted(spans, key=lambda s_: -(s_[1] - s_[0])) for f in (0.5, 0.3, 0.7, 0.2, 0.8)]
         tl += [E0 + (E1 - E0) * k / 10.0 for k in range(1, 10)]
+        outs = [E0 - tw / 2 - d_ for d_ in (700, 1300, 2000)] + [E1 + tw / 2 + d_ for d_ in (700, 1300, 2000)]
+        tl += outs
         for t in tl:
+                tout = t < E0 or t > E1
                 inspan = any(a + 100 <= t - tw / 2 and t + tw / 2 <= b - 100 for a, b in spans)
                 f = 0.0 if inspan else 1.0
                 for sd, lvl in ((1, 1.0), (-1, 1.0), (1, 2.1), (-1, 2.1), (1, 3.4), (-1, 3.4), (1, 4.8), (-1, 4.8), (1, 6.2), (-1, 6.2)):
                     off = sd * (hb + 120 + th / 2 * lvl)
                     cx, cy = A[0] + ux * t + nx * off, A[1] + uy * t + ny * off
                     bx = affinity.rotate(box(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2), ang, origin=(cx, cy), use_radians=True)
-                    bad = sum(1 for o in obst + placed if bx.buffer(40).intersects(o))
-                    cands.append((bad, f + (lvl > 1) * 0.5 + (lvl > 2.5) * 2, (cx, cy), bx, (A[0] + ux * t + nx * sd * hb, A[1] + uy * t + ny * sd * hb) if lvl > 2.5 else None))
+                    bad = sum(1 for o in obst + placed if bx.buffer(60).intersects(o))
+                    if not PLANBOX.contains(bx): bad += 5
+                    tb = min(max(t, E0 + 200), E1 - 200)
+                    lead = (A[0] + ux * tb + nx * sd * hb, A[1] + uy * tb + ny * sd * hb) if (lvl > 2.5 or tout) else None
+                    cands.append((bad, f + (lvl > 1) * 0.5 + (lvl > 2.5) * 2 + tout * 3, (cx, cy), bx, lead))
         if not cands:
             a, b = max(spans, key=lambda s_: s_[1] - s_[0]); t = (a + b) / 2; off = hb + 120 + th / 2
             cx, cy = A[0] + ux * t + nx * off, A[1] + uy * t + ny * off
             cands = [(99, 0, (cx, cy), box(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2), None)]
         bad, _, (cx, cy), bx, lead = min(cands, key=lambda c_: (c_[0], c_[1]))
+        if DEBUG: print(txt, "bad", bad, "lead", bool(lead), len(cands))
         placed.append(bx)
         if lead:      # far mark: thin leader from the rigel edge to the text box
             ex, ey = bx.exterior.interpolate(bx.exterior.project(__import__('shapely.geometry', fromlist=['Point']).Point(*lead))).coords[0]
