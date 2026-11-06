@@ -38,7 +38,7 @@ def chain(levels, beams):
     segs = []; k = 0
     while k < len(d):
         m = k
-        while m + 1 < len(d) and abs(d[m + 1] - d[k]) < 1e-6 and d[k] in (100.0, 200.0): m += 1
+        while m + 1 < len(d) and abs(d[m + 1] - d[k]) < 1e-6 and d[k] in (80.0, 100.0, 200.0): m += 1
         segs.append((pts[k], pts[m + 1], d[k], m - k + 1)); k = m + 1
     return P, segs
 

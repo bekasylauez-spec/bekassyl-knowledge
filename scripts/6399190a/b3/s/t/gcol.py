@@ -3,12 +3,16 @@
 import json, math, sys
 import mb, colgeo
 _sh = colgeo.storey_hoops
+STEP = [None]                                   # None: 100|200|100 by rule; 100 / 80: uniform step (Asw)
 def _short(lo, bb):
     a, b = lo + 50.0, bb - 50.0; S_ = b - a
-    if S_ >= 1800: return _sh(lo, bb)
-    n = int(S_ // 100); r = S_ - 100 * n
-    steps = [100.0] * n
-    if r > 1e-6: steps.insert(n // 2, r)
+    st_ = STEP[0] or 100.0
+    if S_ >= 1800 and STEP[0] is None: return _sh(lo, bb)
+    n = int(S_ // st_); r = S_ - st_ * n
+    steps = [st_] * n
+    if r > 1e-6:
+        if r < st_ / 2 and n >= 1: steps[n // 2] = st_ + r
+        else: steps.insert(n // 2, r)
     pos = [a]
     for st in steps: pos.append(pos[-1] + st)
     return pos, (n, 0, 0), steps
@@ -90,7 +94,7 @@ def build(T, k, sheetno):
     drop2 = (len(levels) == 1 and Hc < 3000)
     i0 = 0
     _P, _segs = colgeo.chain([0.0] + list(levels), list(beams))
-    y11 = [y2 for (y1, y2, st, c) in _segs if st == 100 and c > 1][0]
+    y11 = [y2 for (y1, y2, st, c) in _segs if st in (100, 80) and c > 1][0]
     DY = {'4E95AC': topd, '4E95AA': (YB + Htop - beams[-1]) - 12850, '4E95A8': 0, '4E95A6': (YB - Df) - 5950,
           '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + (1 if drop2 else (2 if drop1 else 3)) * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
           '4E95AF': topd, '4E95B2': 0, '4E95B3': 0, '4E8F9B': topd, '4E8F97': (YB + Htop - beams[-1] / 2) - 13250, '4E8F98': topd,
