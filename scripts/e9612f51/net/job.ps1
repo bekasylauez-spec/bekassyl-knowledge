@@ -15,7 +15,7 @@ $jd = "$env:TEMP\acadjob_b3"; Remove-Item "$jd\done.txt" -ErrorAction SilentlyCo
 [IO.File]::WriteAllText("$jd\job.txt", "$dll|RG.Cmds|Apply|$Doc", [Text.Encoding]::UTF8)
 for ($i = 0; $i -lt $Wait -and -not (Test-Path "$jd\done.txt"); $i++) {
   Start-Sleep 1
-  if ($i % 10 -eq 9) { $al = Get-Process acad -ErrorAction SilentlyContinue | ? { $_.MainWindowTitle -like '*b3w.dwg*' }; if (-not $al) { $dead++ } else { $dead = 0 }; if ($dead -ge 3) { break } }
+  if ($i % 10 -eq 9) { $me = Get-CimInstance Win32_Process -Filter "Name='acad.exe'" | ? { $_.CommandLine -like '*e9612f51*b3w.dwg*' }; $al = $me | % { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue } | ? { $_.Responding }; if (-not $al) { $dead++ } else { $dead = 0 }; if ($dead -ge 6) { $me | % { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }; "hung - killed"; break } }
 }
 if (Test-Path "$jd\done.txt") { Get-Content "$jd\done.txt" -Encoding UTF8 | Select-Object -First 3 } else { "timeout" }
 Get-Content "$env:TEMP\b3_log.txt" -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 25

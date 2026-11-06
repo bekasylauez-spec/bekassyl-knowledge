@@ -43,7 +43,7 @@ def facade2(s, B, part, secmarks):
     obst += [g['u1'] - d_ for d_ in range(0, 900, 100)] if not part['brkR'] else []
     shelves = []
     def place_x(lo, hi, pref, left=False, strict=False):
-        L0, L1 = (800, 100) if left else (100, 850)
+        L0, L1 = (800, 150) if left else (300, 850)
         cand = sorted(set([pref] + [pref + d_ for d_ in range(100, 6000, 100)] + [pref - d_ for d_ in range(100, 6000, 100)]), key=lambda v: abs(v - pref))
         for x in cand:
             if not (lo <= x <= hi): continue
@@ -51,6 +51,9 @@ def facade2(s, B, part, secmarks):
             if any(not (x + L1 < a or x - L0 > b) for a, b in shelves): continue
             shelves.append((x - L0, x + L1)); return x
         if strict: return None
+        for x in cand:
+            if lo <= x <= hi and not any(not (x + L1 < a or x - L0 > b) for a, b in shelves):
+                shelves.append((x - L0, x + L1)); return x
         shelves.append((pref - L0, pref + L1)); return pref
     s.place_x = place_x
     # dop bars (clones of analog pos 2) drawn 50 inside the main bar, callout + end dims
@@ -82,6 +85,7 @@ def facade2(s, B, part, secmarks):
         add(t='mcset', h=tn, set={'FirstLine': str(dp['pos']), 'SecondLine': '(ф%d)' % dp['d']})
         ev_end.append((dp['top'], a, y, dp['u0'] >= u0 - 1)); ev_end.append((dp['top'], b, y, dp['u1'] <= u1 + 1))
     add(t='erase', h=[A(h) for h in POS2['bar'] + POS2['note']])
+    for c in top_ + bot_: shelves.append((c - 250 - 150, c - 250 + 1250))
     # «1 (ф25)» per clear segment (shelf above the beam), placed clear of dims / other shelves
     take, rest = pool(SPDS['n1'], s, 'N1')
     longest = max(g['segs'], key=lambda t: t[1] - t[0]) if g['segs'] else None
@@ -163,7 +167,7 @@ def facade2(s, B, part, secmarks):
     add(t='move', h=[A(SPDS['lm'])], d=[xl + 500 - (175582 + D), YT - 468700])
     add(t='levelval', h=A(SPDS['lm']), old='-0.100', value=B['levels'][0], tag=A(SPDS['lm']))
     # title centred over the drawing
-    add(t='move', h=[A(SPDS['title'])], d=[(X(u0) + X(u1)) / 2.0 - (185336 + D), 0])
+    add(t='move', h=[A(SPDS['title'])], d=[(X(u0) + X(u1)) / 2.0 - (185336 + D), 350])
     ttl = 'Ригель ' + B['mark']
     if len(B['parts']) > 1:
         an = [sp.get('axn') for sp in g['sup'] if sp.get('axn')]
