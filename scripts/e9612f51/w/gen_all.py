@@ -20,7 +20,9 @@ def supports(p):
         if q['sec'][1] > p['sec'][1] or (q['sec'][1] == p['sec'][1] and q['e'] - q['s'] > L):
             if not any(r['a'] <= q['c'] <= r['b'] for r in res):
                 res.append(dict(k='b', a=q['c'] - q['sec'][0] // 2, b=q['c'] + q['sec'][0] // 2, h=q['sec'][1]))
-    return sorted(res, key=lambda r: r['a'])
+    u = {}
+    for r in res: u.setdefault((r['a'], r['b']), r)
+    return sorted(u.values(), key=lambda r: r['a'])
 
 def perp_at(p, x):
     return any(q['z'] == p['z'] and q['dir'] != p['dir'] and q['s'] <= p['c'] <= q['e'] and abs(q['c'] - x) < 1 for q in P)

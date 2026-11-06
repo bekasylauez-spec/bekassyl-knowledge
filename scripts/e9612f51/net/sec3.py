@@ -63,7 +63,9 @@ def section(word, T, pre, b, h, nT, nB, dia, hoopd, legs, level, sx=2.5):
         add(t='dimtext', h=A(cd[i]), s=txt or '')
         if i == 0: add(t='dimtx', h=A(cd[i]), at=F((xL - 60, yd + 18)) + [0])
         elif i == 2: add(t='dimtx', h=A(cd[i]), at=F((xR + 60, yd + 18)) + [0])
-        else: add(t='dimtx', h=A(cd[i]), at=F(((p + q) / 2.0, yd + 18 if (q - p) * sx >= len(txt or '') * 0.75 * 125 else yd - 75)) + [0])
+        else:
+            fits = (q - p) * sx >= len(txt or '') * 0.8 * 125 + 60
+            add(t='dimtx', h=A(cd[i]), at=F(((p + q) / 2.0, yd + 18)) + [0] if fits else F((xR + 60 + (250 + len(txt) * 0.8 * 125 / 2.0) / sx, yd + 18)) + [0])
     add(t='erase', h=[A(x) for x in cd[3:]])
     add(t='dimpts', h=A('4044EF'), p1=F((xL, yb)) + [0], p2=F((xR, yb)) + [0], dl=F((xR, 430736 - 160)) + [0])
     xv = 173476 - (b - 450) / 2.0
