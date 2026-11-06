@@ -39,10 +39,10 @@ def facade2(s, B, part, secmarks):
     obst += [c + d_ for c in bot_ for d_ in (-250, 250)]          # bottom comb leaders rise through the beam
     obst += [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
     obst += [e for dp in B.get('dop', []) for e in (dp['u0'], dp['u1'])]
-    obst += [g['u0'] + d_ for d_ in range(0, 1300, 100)] if not part['brkL'] else []   # level mark + Ск1 note at the start
+    obst += [g['u0'] + d_ for d_ in range(-200, 1700, 100)] if not part['brkL'] else []   # level mark + Ск1 note at the start
     obst += [g['u1'] - d_ for d_ in range(0, 900, 100)] if not part['brkR'] else []
     shelves = []
-    def place_x(lo, hi, pref, left=False):
+    def place_x(lo, hi, pref, left=False, strict=False):
         L0, L1 = (800, 100) if left else (100, 850)
         cand = sorted(set([pref] + [pref + d_ for d_ in range(100, 6000, 100)] + [pref - d_ for d_ in range(100, 6000, 100)]), key=lambda v: abs(v - pref))
         for x in cand:
@@ -50,6 +50,7 @@ def facade2(s, B, part, secmarks):
             if any(x - L0 <= v <= x + L1 for v in obst): continue
             if any(not (x + L1 < a or x - L0 > b) for a, b in shelves): continue
             shelves.append((x - L0, x + L1)); return x
+        if strict: return None
         shelves.append((pref - L0, pref + L1)); return pref
     s.place_x = place_x
     # dop bars (clones of analog pos 2) drawn 50 inside the main bar, callout + end dims
@@ -68,9 +69,16 @@ def facade2(s, B, part, secmarks):
         noted.add(dp['pos'])
         tn = '%sDOPN%d' % (s.P, k)
         add(t='clone', h=A(POS2['note'][0]), base=[0, 0], to=[0, 0], tag=tn)
-        uc = place_x(a + 700, b - 150, a + 900 if dp['u0'] >= u0 else b - 600, left=True)
-        xc = X(uc)
-        add(t='spmove', h=tn, items=[[0, xc, yu(469289)], [1, xc, y]])
+        uc = place_x(a + 700, b - 150, a + 900 if dp['u0'] >= u0 else b - 600, left=True, strict=True)
+        if uc is not None:
+            xc = X(uc)
+            add(t='spmove', h=tn, items=[[0, xc, yu(469289) - 140], [1, xc, y]])
+        else:
+            add(t='erase', h=[tn]); tn = '%sDOPR%d' % (s.P, k)
+            add(t='clone', h=A(SPDS['n1'][0]), base=[0, 0], to=[0, 0], tag=tn)
+            uc = place_x(a + 150, b - 700, a + 400 if dp['u0'] >= u0 else b - 1100)
+            xc = X(uc)
+            add(t='spmove', h=tn, items=[[0, xc, yu(469238.6) - 140], [1, xc, y], [2, xc, y]])
         add(t='mcset', h=tn, set={'FirstLine': str(dp['pos']), 'SecondLine': '(ф%d)' % dp['d']})
         ev_end.append((dp['top'], a, y, dp['u0'] >= u0 - 1)); ev_end.append((dp['top'], b, y, dp['u1'] <= u1 + 1))
     add(t='erase', h=[A(h) for h in POS2['bar'] + POS2['note']])
@@ -79,7 +87,7 @@ def facade2(s, B, part, secmarks):
     for a, b in g['segs']:
         x = X(place_x(a + 200, b - 900, (a + b) / 2.0))
         hn = take()
-        add(t='spmove', h=hn, items=[[0, x, yu(469238.6)], [1, x, YBB], [2, x, YTB]])
+        add(t='spmove', h=hn, items=[[0, x, yu(469238.6) - 140], [1, x, YBB], [2, x, YTB]])
         add(t='mcset', h=hn, set={'FirstLine': '1', 'SecondLine': '(ф%d)' % dd})
     add(t='erase', h=rest())
     # splices of the main bars (накладки Н3, staggered 2+2 bars, 500 apart)
@@ -123,6 +131,12 @@ def facade2(s, B, part, secmarks):
             row = yu(469559) if face else yb(467665)
             add(t='clone', h=A(src), base=[0, 0], to=[0, 0], tag=td)
             add(t='dimpts', h=td, p1=[X(q[0]), q[1], 0], p2=[X(p[0]), p[1], 0], dl=[X(p[0]), row, 0])
+            zl = [zx for L_z in g['ZI'] for zx in L_z]
+            mid = (p[0] + q[0]) / 2.0
+            if not face and q[0] - p[0] >= 800 and any(abs(mid - zx) < 320 for zx in zl):
+                for dx_ in (400, -400, 650, -650):
+                    if p[0] + 250 < mid + dx_ < q[0] - 250 and all(abs(mid + dx_ - zx) > 320 for zx in zl):
+                        add(t='dimtx', h=td, at=[X(mid + dx_), row + 60, 0], tmove=2); break
             if q[0] - p[0] < 800:
                 nxt = keep[i + 2][0] if i + 2 < len(keep) else None
                 side = 1 if (nxt is None or nxt - q[0] > 1500) else -1

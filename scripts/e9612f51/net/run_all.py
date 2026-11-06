@@ -14,18 +14,12 @@ def my_acad():
     return [int(x) for x in out]
 
 def restart():
-    import gx
-    for pid in my_acad():
-        try: gx.run([dict(t='save')], 'presave')
-        except Exception: pass
+    import shutil
     for pid in my_acad():
         subprocess.run(['powershell', '-NoProfile', '-Command', 'Stop-Process -Id %d -Force' % pid])
     time.sleep(4)
-    try:
-        import shutil; sys.path.insert(0, W); import bis
-        shutil.copy(DWG, os.path.join(W, 'snap.dwg'))
-        log('integrity', bis.tryplot('integ', [], [172179, 430000, 180579, 435940]))
-    except Exception as ex: log('integrity EXC', repr(ex)[:200])
+    if os.path.exists(DWG[:-4] + '_good.dwg'):
+        shutil.copy(DWG[:-4] + '_good.dwg', DWG); shutil.copy(DWG[:-4] + '_good_map.json', os.path.join(os.environ['TEMP'], 'b3_map.json'))
     for ext in ('.dwl', '.dwl2'):
         try: os.remove(DWG[:-4] + ext)
         except OSError: pass
@@ -78,18 +72,15 @@ def keep_good():
     shutil.copy(DWG, DWG[:-4] + '_good.dwg'); shutil.copy(os.path.join(os.environ['TEMP'], 'b3_map.json'), DWG[:-4] + '_good_map.json')
 
 def restore_good():
-    import shutil
-    for pid in my_acad(): subprocess.run(['powershell', '-NoProfile', '-Command', 'Stop-Process -Id %d -Force' % pid])
-    time.sleep(4)
-    shutil.copy(DWG[:-4] + '_good.dwg', DWG); shutil.copy(DWG[:-4] + '_good_map.json', os.path.join(os.environ['TEMP'], 'b3_map.json'))
-    log('restored good copy')
+    log('restore good copy')
     restart()
 
 if __name__ == '__main__':
     if sys.argv[1] == 'list': ks = [int(x) for x in sys.argv[2].split(',')]; a, b = ks[0], ks[-1]
     else: a, b = int(sys.argv[1]), int(sys.argv[2]); ks = list(range(a, b + 1))
     sys.path.insert(0, NET); os.chdir(NET)
-    keep_good()
+    if os.path.exists(DWG[:-4] + '_good.dwg'): restart()
+    else: keep_good()
     i = 0; tries = 0
     while i < len(ks):
         k = ks[i]

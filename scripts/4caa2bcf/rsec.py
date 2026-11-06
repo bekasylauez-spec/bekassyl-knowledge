@@ -99,7 +99,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
     add(t='dimtx', h=S(d[0]), at=[xL - 75, yd + 40, 0])
     add(t='dimpts', h=S(d[1]), p1=[xL + allx[-1], yb, 0], p2=[xL + allx[0], yb, 0], dl=[xL + allx[0], yd, 0])
     add(t='dimtext', h=S(d[1]), s=chB)
-    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yd - 90, 0], tmove=2)
+    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, (yd - 90) if b >= 500 else (yb - 648 - 150), 0], tmove=2)
     add(t='erase', h=[S(d[2]), S(d[3])])
     add(t='dimpts', h=S(d[4]), p1=[xR, yb, 0], p2=[xL + allx[-1], yb, 0], dl=[xL + allx[-1], yd, 0])
     add(t='dimtx', h=S(d[4]), at=[xR + 75, yd + 40, 0])
@@ -118,7 +118,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
         start=[xR + 330, yk], end=[xL + mB[0] + 70, yk])
     add(t='mcset', h=S(SEC['cbot']), set={'FirstLine': '1', 'SecondLine': '(ф%d)' % B['main']['bot'][1]})
     # dop combs: shelf at the side of the section at the height of their row (analog 2-2 «2 (ф12)»)
-    off = {(True, 1): -170, (True, 2): -300, (False, 1): 170, (False, 2): 300}
+    off = {(True, 1): -170, (True, 2): -300, (False, 1): 170, (False, 2): 300} if h > 700 else {(True, 1): -80, (True, 2): -95, (False, 1): 80, (False, 2): 95}
     for gi, (top, row, pos, dd_, sel, y0) in enumerate(groups):
         ysh = (YTOP if top else YBOT) + off[(top, row)]
         tg = '%sC%d' % (P, gi); add(t='clone', h=S(SEC['ctop'] if top else SEC['cbot']), base=[0, 0], to=[0, 0], tag=tg); extra.append(tg)

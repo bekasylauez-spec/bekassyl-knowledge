@@ -26,6 +26,15 @@ def run(mark, pi, log=print):
         on = [u for u in sc['at'] if u0 + 200 <= u <= u1 - 200]
         if not on: continue
         ok = [u for u in on if abs(u - ut) > 2300]
+        if not ok:
+            key = (tuple(map(tuple, sc['top'])), tuple(map(tuple, sc['bot'])))
+            for u in on:
+                for du in range(300, 4000, 200):
+                    for v in (u + du, u - du):
+                        if u0 + 300 < v < u1 - 300 and abs(v - ut) > 2300 and arr(B, v) == key and not in_col(B, v):
+                            ok = [v]; break
+                    if ok: break
+                if ok: break
         marks.append(((ok or on)[0], sc['word'])); secs.append(sc)
     rfac2.facade2(s, B, part, marks)
     out = gx.run(s.ops, 'f%d' % k)
@@ -91,6 +100,16 @@ def run(mark, pi, log=print):
     if 'ERR' in out: raise RuntimeError('save failed ' + out[-200:])
     log('%s part %d -> %s slot %d  errors %d %s' % (mark, pi, part['no'], k, len(errs), errs[:5]))
     return k
+
+
+def arr(B, u):
+    t = [x for x in B['dop'] if x['top'] and x['u0'] <= u <= x['u1']]
+    b = [x for x in B['dop'] if not x['top'] and x['u0'] <= u <= x['u1']]
+    return (tuple((x['pos'], x['n'], x['d'], x['row']) for x in t), tuple((x['pos'], x['n'], x['d'], x['row']) for x in b))
+
+
+def in_col(B, u):
+    return any(sp['a'] - 200 <= u <= sp['b'] + 200 for sp in B['sup'])
 
 
 def total_hoops(B):
