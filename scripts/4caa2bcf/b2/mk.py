@@ -22,6 +22,6 @@ for key,rs in sorted(G.items(),key=lambda kv:(-kv[0][0] if False else ({-0.05:0,
     z,s,d,L,sp=key
     axes=[r['c'] for r in rs]
     b=max(r['bot'] for r in rs); t=max(r['top'] for r in rs); w=max(r['asw'] for r in rs)
-    out.append(dict(mark=m,z=z,s=s,d=d,L=L,n=len(rs),lines=axes,sup=list(sp),bot=b,top=t,asw=w,onbeam=any(r.get('onbeam') for r in rs)))
-    print(m,lev[z],s,d,'L=%.2f'%L,'x%d'%len(rs),'lines',axes,'spans',len(sp)-1 if sp else 0,'beam' if out[-1]['onbeam'] else 'col','низ %.1f верх %.1f Asw %.1f'%(b,t,w))
+    out.append(dict(mark=m,pts=[sorted([(round(q[0]-r['x0'],3),)+tuple(q[1:]) for q in r['pts']]) for r in rs],x0s=[r['x0'] for r in rs],z=z,s=s,d=d,L=L,n=len(rs),lines=axes,sup=list(sp),bot=b,top=t,asw=w,onbeam=any(r.get('onbeam') for r in rs)))
+    print(m,lev[z],s,d,'L=%.2f'%L,'x%d'%len(rs),'x0',[r['x0'] for r in rs],'lines',axes,'spans',len(sp)-1 if sp else 0,'beam' if out[-1]['onbeam'] else 'col','низ %.1f верх %.1f Asw %.1f'%(b,t,w))
 json.dump(out,open('marks.json','w'),ensure_ascii=False)

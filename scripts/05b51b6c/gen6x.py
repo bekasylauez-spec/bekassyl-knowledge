@@ -160,6 +160,9 @@ bnd = sorted(set([spL[0], spL[1]] + [r[0] for r in runs_all if spL[0] <= r[0] <=
 gaps = [(q_ - p_, (p_ + q_) / 2) for p_, q_ in zip(bnd, bnd[1:])]
 if len(sp2) == 1: gaps = [g for g in gaps if spL[0] + (spL[1] - spL[0]) * 0.75 < g[1] < spL[0] + (spL[1] - spL[0]) * 0.9] or gaps
 sm = max(gaps)[1]
+allb = sorted(set([r[0] for r in runs_all] + [r[1] for r in runs_all]))
+g_all = [(q_ - p_, (p_ + q_) / 2) for p_, q_ in zip(allb, allb[1:]) if q_ - p_ > 700]
+if g_all and max(gaps)[0] < 700: sm = max(g_all)[1]
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
 s2a, s2c = sp2[1] if len(sp2) > 2 else sp2[0]
 hz2 = LN['hz'][LN['spans'].index((s2a, s2c))]
