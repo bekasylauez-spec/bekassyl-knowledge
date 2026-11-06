@@ -64,10 +64,9 @@ def zones2(fL, fR, sEnd, sMid):
     if sEnd == sMid or Lp < 4 * sEnd * 2:
         n = int(round(Lp / sEnd)); r = Lp - n * sEnd
         segs = [(h0, h4, '%dх%d' % (sEnd, n) if abs(r) < 0.5 else '')]
-        if abs(r) >= 0.5:      # not divisible: n*s + r
-            n = int(Lp // sEnd); r = Lp - n * sEnd
-            segs = [(h0, h0 + sEnd * n, '%dх%d' % (sEnd, n)), (h0 + sEnd * n, h4, '%d' % round(r))]
-            return segs, [h0, h0 + sEnd * n, h4], n + 2
+        if abs(r) >= 0.5:      # not divisible: remainder goes into the edge distance
+            n = int(Lp // sEnd)
+            return [(h0, h0 + sEnd * n, '%dх%d' % (sEnd, n))], [h0, h0 + sEnd * n], n + 1
         return segs, [h0, h4], n + 1
     n1 = int(round(Lp / 4.0 / sEnd)); n3 = n1
     rest = Lp - sEnd * (n1 + n3)

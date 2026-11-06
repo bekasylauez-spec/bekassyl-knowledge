@@ -943,6 +943,8 @@ namespace B2R
                     var rx = new System.Text.RegularExpressions.Regex(@"\{T:([0-9A-Fa-f]+)\}");
                     f = rx.Replace(f, mm => "%<\\_ObjId " + H(db, mm.Groups[1].Value).OldIdPtr.ToInt64() + ">%");
                     double th = 0; try { th = cell.Contents[0].TextHeight; } catch { }
+                    ObjectId tsx = ObjectId.Null; try { tsx = cell.Contents[0].TextStyleId; } catch { }
+                    if (tsx.IsNull) try { var t0 = cell.TextStyleId; if (t0.HasValue) tsx = t0.Value; } catch { }
                     string fmt = null; try { fmt = cell.DataFormat; } catch { }
                     if (a.Count >= 4 && a[3] != null && a[3].ToString() != "") fmt = a[3].ToString();   // per-cell format, e.g. "%lu2%pr0"
                     else if (Has(m, "fmt")) fmt = S(m, "fmt", "");                                    // forced format, e.g. "%lu2%pr2"
@@ -961,6 +963,7 @@ namespace B2R
                         if (fmt != null) try { cell.DataFormat = fmt; } catch { }
                     }
                     if (th > 0) try { cell.Contents[0].TextHeight = th; } catch { }
+                    if (!tsx.IsNull) try { cell.Contents[0].TextStyleId = tsx; } catch { }
                 }
                 tb.GenerateLayout();
             }

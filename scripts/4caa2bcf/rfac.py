@@ -6,7 +6,7 @@ def facade(s, B, part):
     """B: beam (beams.py); part: dict(i0, i1, brkL, brkR) — supports i0..i1 drawn on this sheet"""
     A, add, D = s.A, s.add, s.D
     h = B['h']
-    dU = min(h - 550, 300) if h > 550 else h - 550
+    dU = 0
     dD = (h - 550) - dU
     YB = 468150.0 - dD; YT = YB + h
     YTB, YBB = YT - 55, YB + 55
@@ -106,8 +106,11 @@ def facade(s, B, part):
     pts = [u for u, _ in axes]
     if not part['brkL'] and abs(B['END0'] - pts[0]) > 1: pts = [B['END0']] + pts
     if not part['brkR'] and abs(B['END1'] - pts[-1]) > 1: pts = pts + [B['END1']]
-    for p, q in zip(pts, pts[1:]):
-        add(t='dimpts', h=takeD(), p1=[X(p), yb(466361), 0], p2=[X(q), yb(466361), 0], dl=[X(q), yb(466773), 0])
+    for i_, (p, q) in enumerate(zip(pts, pts[1:])):
+        hd = takeD()
+        add(t='dimpts', h=hd, p1=[X(p), yb(466361), 0], p2=[X(q), yb(466361), 0], dl=[X(q), yb(466773), 0])
+        if abs(q - p) < 800:
+            add(t='dimtx', h=hd, at=[X(p) - 330 if i_ == 0 else X(q) + 330, yb(466773) + 60, 0])
     add(t='erase', h=restD())
     add(t='dimpts', h=A('401292'), p1=[X(pts[0]), yb(466361), 0], p2=[X(pts[-1]), yb(466361), 0], dl=[X(pts[-1]), yb(466411), 0])
     xl = X(u0)

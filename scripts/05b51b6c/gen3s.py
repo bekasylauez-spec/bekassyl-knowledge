@@ -93,15 +93,16 @@ def cell_org(i, j, dx=1300, dy=1950):
 
 def steps(vals, step):
     """chain of bar positions -> (points, texts) with a «step x n = total» run"""
-    pts = [vals[0]]; texts = {}
-    i = 0
-    while i < len(vals) - 1:
+    pts = [vals[0], vals[1]]; texts = {}          # edge -> first bar and last bar -> edge are separate segments
+    i = 1
+    while i < len(vals) - 2:
         j = i
-        while j + 1 < len(vals) - 1 and abs((vals[j + 1] - vals[j]) - step) < 1e-6 and abs((vals[j + 2] - vals[j + 1]) - step) < 1e-6: j += 1
+        while j + 1 < len(vals) - 2 and abs((vals[j + 1] - vals[j]) - step) < 1e-6 and abs((vals[j + 2] - vals[j + 1]) - step) < 1e-6: j += 1
         if j > i:
             texts[len(pts) - 1] = '%dх%d=%d' % (step, j + 1 - i, vals[j + 1] - vals[i]); pts.append(vals[j + 1]); i = j + 1
         else:
             pts.append(vals[i + 1]); i += 1
+    pts.append(vals[-1])
     return pts, texts
 
 
@@ -113,23 +114,29 @@ if SHEET in ('3.2', '3.3'):
                 for v in F.P2: ln([(x - F.PX / 2 + 50, y - F.PY / 2 + v), (x + F.PX / 2 - 50, y - F.PY / 2 + v)], 'диам28', 40)
                 for v in F.P4: ln([(x - F.PX / 2 + 50, y - F.PY / 2 + v), (x + F.PX / 2 - 50, y - F.PY / 2 + v)], 'диам28', 40)
                 if (i, j) == (len(AXX) - 1, 0):
-                    note('2(%%C28) ш.150', '4(%%C28) ш.200', (x + F.PX / 2 - 300, y - F.PY / 2 + F.P2[2]), (x + F.PX / 2 + 2600, y - F.PY / 2 - 900))
+                    note('2(%%C28)', 'ш.150', (x + F.PX / 2 - 300, y - F.PY / 2 + F.P2[2]), (x + F.PX / 2 + 2600, y - F.PY / 2 - 900))
+                    note('4(%%C28)', 'ш.200', (x + F.PX / 2 - 500, y - F.PY / 2 + F.P4[1]), (x + F.PX / 2 + 2600, y - F.PY / 2 - 2300))
             else:
                 for v in F.P1: ln([(x - F.PX / 2 + v, y - F.PY / 2 + 50), (x - F.PX / 2 + v, y + F.PY / 2 - 50)], 'диам28', 40)
                 for v in F.P3: ln([(x - F.PX / 2 + v, y - F.PY / 2 + 50), (x - F.PX / 2 + v, y + F.PY / 2 - 50)], 'диам28', 40)
                 if (i, j) == (0, len(AYY) - 1):
-                    note('1(%%C28) ш.150', '3(%%C28) ш.200', (x - F.PX / 2 + F.P1[2], y + F.PY / 2 - 300), (x - F.PX / 2 - 2200, y + F.PY / 2 + 1900))
+                    note('1(%%C28)', 'ш.150', (x - F.PX / 2 + F.P1[2], y + F.PY / 2 - 300), (x - F.PX / 2 - 2200, y + F.PY / 2 + 1900))
+                    note('3(%%C28)', 'ш.200', (x - F.PX / 2 + F.P3[1], y + F.PY / 2 - 500), (x - F.PX / 2 - 2200, y + F.PY / 2 + 1100))
     # beam bars
     if alongX:
         for j, y in enumerate(AYY):
             for b in F.BAR_B: ln([(AXX[0] - F.PX / 2 + 50, y + b), (AXX[-1] + F.PX / 2 - 50, y + b)], 'диам28', 40)
             xm = (AXX[5] + AXX[6]) / 2
-            if j == 0: note('5(%%C28) 4+4', '6(%%C12) 2', (AXX[5] + F.PX / 2 + 800, y + F.BAR_B[2]), (AXX[5] + F.PX / 2 + 1100, y + 900))
+            if j == 0:
+                note('5(%%C28)', '4+4', (AXX[5] + F.PX / 2 + 800, y + F.BAR_B[-1]), (AXX[5] + F.PX / 2 + 1100, y + 900))
+                note('6(%%C12)', '2 шт.', (AXX[5] + F.PX / 2 + 2300, y + F.BAR_B[-1]), (AXX[5] + F.PX / 2 + 2600, y + 900))
     else:
         for i, x in enumerate(AXX):
             for b in F.BAR_B: ln([(x + b, AYY[0] - F.PY / 2 + 50), (x + b, AYY[-1] + F.PY / 2 - 50)], 'диам28', 40)
             ym = (AYY[0] + AYY[1]) / 2
-            if i == 0: note('5(%%C28) 4+4', '6(%%C12) 2', (x + F.BAR_B[2], ym), (x + (900 if i < len(AXX) - 1 else -900), ym - 600))
+            if i == 0:
+                note('5(%%C28)', '4+4', (x + F.BAR_B[-1], ym), (x + 900, ym - 600))
+                note('6(%%C12)', '2 шт.', (x + F.BAR_B[-1], ym + 1300), (x + 900, ym + 700))
     # typical pad dims (pad 1/А): bar steps
     def ends(pts, far, vertical):
         sm = {}
