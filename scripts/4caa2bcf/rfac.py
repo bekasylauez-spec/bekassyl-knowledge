@@ -25,10 +25,14 @@ def facade(s, B, part):
     takeC, restC = pool(COLS, s, 'COL')
     for k, sp in enumerate(sup):
         hC = takeC()
-        top = YT + 97 if sp['kind'] == 'col' else YB
-        add(t='plset', h=hC, p=[[X(sp['a']), top], [X(sp['b']), top], [X(sp['b']), yb(467970)], [X(sp['a']), yb(467970)]], closed=True)
-        for src, y, kk in (('A:42F9FB', top + 0.4, 't'), ('A:42F9FC', yb(467970.4), 'b')):
+        if sp['kind'] == 'col': top, bot = YT + 97, yb(467970)
+        else:
+            hs = 900 if sp['b'] - sp['a'] >= 450 else 600
+            top, bot = YT, YT - hs - (170 if hs > h else 0)
+        add(t='plset', h=hC, p=[[X(sp['a']), top], [X(sp['b']), top], [X(sp['b']), bot], [X(sp['a']), bot]], closed=True)
+        for src, y, kk in (('A:42F9FB', top + 0.4, 't'), ('A:42F9FC', bot + 0.4, 'b')):
             if kk == 't' and sp['kind'] != 'col': continue
+            if kk == 'b' and sp['kind'] != 'col' and bot >= YB - 1: continue
             tg = '%sBR%d%s' % (s.P, k, kk)
             add(t='clone', h=src, base=[0, 0], to=[0, 0], tag=tg)
             add(t='mcset', h=tg, set={'StartPoint': [X(sp['a']) - 30, y], 'EndPoint': [X(sp['b']) + 30, y],
@@ -48,7 +52,7 @@ def facade(s, B, part):
     # outlines of the clear parts
     segs = []; cur = u0
     for sp in sup:
-        if sp['kind'] != 'col': continue
+        if sp['kind'] not in ('col', 'beam'): continue
         if sp['a'] > cur + 1: segs.append((cur, sp['a']))
         cur = max(cur, sp['b'])
     if u1 > cur + 1: segs.append((cur, u1))
@@ -79,7 +83,7 @@ def facade(s, B, part):
     def ref(u):
         for sp in sup:
             if abs(sp['b'] - u) < 1 or abs(sp['a'] - u) < 1:
-                return sp['ax'] if sp.get('ax') is not None else u
+                return sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0
         return u
     for a, b in segs:
         free_a = abs(a - u0) < 1; free_b = abs(b - u1) < 1
@@ -103,7 +107,7 @@ def facade(s, B, part):
     s.geo['ZI'] = ZI; s.NH = NH
     # axis chain (+ beam ends) and total
     takeD, restD = pool(AXD, s, 'AXD')
-    pts = [u for u, _ in axes]
+    pts = [sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0 for sp in sup if sp['kind'] in ('col', 'beam')]
     if not part['brkL'] and abs(B['END0'] - pts[0]) > 1: pts = [B['END0']] + pts
     if not part['brkR'] and abs(B['END1'] - pts[-1]) > 1: pts = pts + [B['END1']]
     for i_, (p, q) in enumerate(zip(pts, pts[1:])):

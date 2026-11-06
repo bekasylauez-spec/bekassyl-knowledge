@@ -6,7 +6,7 @@ def splices(B):
     """main-bar splice points (scheme coords) so that every piece <= 11700: top in mid-span, bottom near supports"""
     L = B['END1'] - B['END0'] - 40
     if L <= 11700: return [], []
-    cols = [sp for sp in B['sup'] if sp['kind'] == 'col']
+    cols = [sp for sp in B['sup'] if sp['kind'] in ('col', 'beam')]
     spans = [(cols[i]['b'], cols[i + 1]['a']) for i in range(len(cols) - 1)]
     def pick(cands):
         out = []; last = B['END0'] + 20
@@ -20,7 +20,8 @@ def splices(B):
             c = max(ok); res.append(c); pos = c - 250
         return res
     top = pick([(a + b) / 2.0 for a, b in spans])
-    bot = pick([sp['ax'] + 1100 + 250 for sp in cols if sp.get('ax') is not None] + [sp['ax'] - 1100 - 250 for sp in cols if sp.get('ax') is not None])
+    rf = [sp.get('ax', (sp['a'] + sp['b']) / 2.0) for sp in cols]
+    bot = pick([r + 1100 + 250 for r in rf] + [r - 1100 - 250 for r in rf])
     return top, bot
 
 
@@ -32,7 +33,7 @@ def facade2(s, B, part, secmarks):
     dd = B['main']['top'][1]
     # obstacles above the beam (vertical dim extension lines, axes) and placed shelves
     top_, bot_ = splices(B)
-    obst = [sp['ax'] for sp in g['sup'] if sp.get('ax') is not None]
+    obst = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
     obst += [e for dp in B.get('dop', []) if dp['top'] for e in (dp['u0'], dp['u1'])]
     obst += [c + d_ for c in top_ for d_ in (-250, 250)]
     obst += [c + d_ for c in bot_ for d_ in (-250, 250)]          # bottom comb leaders rise through the beam
@@ -53,7 +54,7 @@ def facade2(s, B, part, secmarks):
         a, b = max(dp['u0'], u0), min(dp['u1'], u1)
         if b <= a + 1: continue
         k += 1
-        y = (YTB - 50) if dp['top'] else (YBB + 50)
+        y = ((YTB - 50) if dp['top'] else (YBB + 50)) if dp.get('row', 1) == 1 else ((YTB - 95) if dp['top'] else (YBB + 95))
         tg = '%sDOP%d' % (s.P, k)
         add(t='clone', h=A(POS2['bar'][0]), base=[0, 0], to=[0, 0], tag=tg)
         add(t='plset', h=tg, p=[[X(a), y], [X(b), y]], layer='диам%d' % dp['d'])
@@ -66,7 +67,7 @@ def facade2(s, B, part, secmarks):
         # dims of the bar ends from the nearest axis
         for e, real in ((a, dp['u0'] >= u0 - 1), (b, dp['u1'] <= u1 + 1)):
             if not real: continue
-            axs = [sp['ax'] for sp in g['sup'] if sp.get('ax') is not None]
+            axs = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
             ax = min(axs, key=lambda q: abs(q - e))
             if abs(ax - e) < 300: continue
             td = '%sDOPD%d_%d' % (s.P, k, int(e))
@@ -92,7 +93,7 @@ def facade2(s, B, part, secmarks):
     used = []
     if top:
         c = top[0]; plate(A('4038F3'), c - 250, YTB); plate(A('4038F2'), c + 250, YTB)
-        ev = [sp['ax'] for sp in g['sup'] if sp.get('ax') is not None] + [e for dp in B.get('dop', []) if dp['top'] for e in (dp['u0'], dp['u1'])]
+        ev = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']] + [e for dp in B.get('dop', []) if dp['top'] for e in (dp['u0'], dp['u1'])]
         ax = max([e for e in ev if e < c - 250 - 1])
         add(t='dimpts', h=A('4038F1'), p1=[X(c - 250), YTB, 0], p2=[X(ax), YT, 0], dl=[X(ax), yu(469559), 0])
         add(t='dimpts', h=A('4038F5'), p1=[X(c + 250), YTB, 0], p2=[X(c - 250), YTB, 0], dl=[X(c - 250), yu(469559), 0])
@@ -102,7 +103,7 @@ def facade2(s, B, part, secmarks):
     for (p1, p2, d1, d2, cb, ax0), c in zip([('403948', '403947', '403992', '40394A', SPDS['comb'][1], 183682),
                                             ('4039A0', '40399F', '4039A5', '4039A2', SPDS['comb'][2], 192482)], bot):
         plate(A(p1), c - 250, YBB); plate(A(p2), c + 250, YBB)
-        ev = [sp['ax'] for sp in g['sup'] if sp.get('ax') is not None] + [e for dp in B.get('dop', []) if not dp['top'] for e in (dp['u0'], dp['u1'])]
+        ev = [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']] + [e for dp in B.get('dop', []) if not dp['top'] for e in (dp['u0'], dp['u1'])]
         ax = max([e for e in ev if e < c - 250 - 1])
         add(t='dimpts', h=A(d1), p1=[X(c - 250), YB, 0], p2=[X(ax), YB, 0], dl=[X(ax), yb(467665), 0])
         add(t='dimpts', h=A(d2), p1=[X(c + 250), YBB, 0], p2=[X(c - 250), YBB, 0], dl=[X(c - 250), yb(467665), 0])
@@ -130,6 +131,11 @@ def facade2(s, B, part, secmarks):
     add(t='levelval', h=A(SPDS['lm']), old='-0.100', value=B['levels'][0], tag=A(SPDS['lm']))
     # title centred over the drawing
     add(t='move', h=[A(SPDS['title'])], d=[(X(u0) + X(u1)) / 2.0 - (185336 + D), 0])
-    add(t='settext', h=A(SPDS['title']), s='Ригель ' + B['mark'] + (' (%d шт.)' % B['qty'] if B.get('qty', 1) > 1 else ''))
+    ttl = 'Ригель ' + B['mark']
+    if len(B['parts']) > 1:
+        an = [sp.get('axn') for sp in g['sup'] if sp.get('axn')]
+        if an: ttl += ' (оси %s - %s)' % (an[0], an[-1])
+    if B.get('qty', 1) > 1: ttl += ', %d шт.' % B['qty']
+    add(t='settext', h=A(SPDS['title']), s=ttl)
     # «Узел А» group lower, clear of the axis bubbles
     add(t='movewin', win=[172179 + D, 461900, 181979 + D, 465600], d=[0, -400])

@@ -6,18 +6,19 @@ F2, F0 = '%lu2%pr2', '%lu2%pr0'
 
 def quantities(B, NH):
     h = B['h']; dm = B['main']['top'][1]; dh = B['hoop']['d']
-    hw = round((B['b'] - 110) / 3.0 * 2 + dm + dh, -1)          # hoop over 3 bars, wire axis
+    nm = B['main']['top'][0]
+    hw = round((B['b'] - 110) / (3.0 if nm == 4 else 1.0) * (2 if nm == 4 else 1) + dm + dh, -1)   # hoop over 3 bars, wire axis
     hh = round(h - 110 + dm + dh, -1)
     hook = 10 * dh
     xl = dict(bot=hw, top=hw + hook, hl=hh, hr=hh + hook)
     xl['L'] = xl['bot'] + xl['top'] + xl['hl'] + xl['hr']
     sk_v = h - 110; sk = dict(v=sk_v, l=250, L=250 + sk_v + 250)
-    ends = (0 if B.get('contL') else 1) + (0 if B.get('contR') else 1)
+    ends = 2
     Lm = (B['END1'] - B['END0'] - 40) / 1000.0
-    cols = [sp for sp in B['sup'] if sp['kind'] == 'col']
+    cols = [sp for sp in B['sup'] if sp['kind'] in ('col', 'beam')]
     clear = (B['END1'] - B['END0']) - sum(sp['b'] - sp['a'] for sp in cols if B['END0'] <= sp['a'] and sp['b'] <= B['END1'])
     conc = B['b'] / 1000.0 * (h - B.get('slab', 0)) / 1000.0 * clear / 1000.0
-    return dict(xl=xl, sk=sk, nsk=4 * ends, Lm=Lm, nH=NH * 2, conc=conc)
+    return dict(xl=xl, sk=sk, nsk=nm * ends, Lm=Lm, nH=NH * (2 if nm == 4 else 1), conc=conc, nm=nm)
 
 
 def table_ops(s, B, q, nsplice):
@@ -43,11 +44,11 @@ def table_ops(s, B, q, nsplice):
     R = lambda r: r + 1
     fm = [[3, 10, '%d' % q['nH'], F0], [3, 11, 'D4*D4*3.1415926/4*0.00785*J4/1000', F2], [3, 12, 'L4*K4', F2],
           [4, 10, '%d' % q['nsk'], F0], [4, 11, 'D5*D5*3.1415926/4*0.00785*J5/1000', F2], [4, 12, 'L5*K5', F2],
-          [5, 10, '%.2f*8' % q['Lm'], F2], [5, 11, 'D6*D6*3.1415926/4*0.00785*1', F2], [5, 12, 'L6*K6', F2]]
+          [5, 10, '%.2f*%d' % (q['Lm'], 2 * q['nm']), F2], [5, 11, 'D6*D6*3.1415926/4*0.00785*1', F2], [5, 12, 'L6*K6', F2]]
     for i, d in enumerate(dop):
         r = 6 + i
         fm += [[r, 10, '%d' % d['n'], F0], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(r), R(r), R(r)), F2], [r, 12, 'L%d*K%d' % (R(r), R(r)), F2]]
-    fm += [[rH, 10, '%d*4*2' % nsplice, F0], [rH, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(rH), R(rH), R(rH)), F2], [rH, 12, 'L%d*K%d' % (R(rH), R(rH)), F2],
+    fm += [[rH, 10, '%d*%d*2' % (nsplice, q['nm']), F0], [rH, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(rH), R(rH), R(rH)), F2], [rH, 12, 'L%d*K%d' % (R(rH), R(rH)), F2],
            [2, 12, 'Sum(M4:M%d)' % R(rH), F2], [rC, 12, '%.3f' % q['conc'], F2]]
     ops.append(dict(t='tformula', h=sp, cells=fm))
     # steel: A240 Øhoop | Итого | A500C Ø12 Ø16 Ø20 Ø25 Ø28 | Итого | Всего
@@ -56,12 +57,25 @@ def table_ops(s, B, q, nsplice):
     return ops
 
 
-def steel_ops(stl, sp_handle, rH):
-    return dict(t='tformula', h=stl, cells=[[6, 1, 'Table({T:%s}).M4' % sp_handle, F2], [6, 2, 'Sum(B7:B7)', F2],
-                [6, 3, 'TEXT:---'], [6, 4, 'Table({T:%s}).M5' % sp_handle, F2], [6, 5, 'TEXT:---'],
-                [6, 6, 'Table({T:%s}).Evaluate(Sum(M6:M%d))' % (sp_handle, rH + 1), F2], [6, 7, 'TEXT:---'],
-                [6, 8, 'Sum(D7:H7)', F2], [6, 9, 'I7+C7', F2]])
-
+def steel_ops(stl, sp_handle, rH, B):
+    """A500C columns 3..7 get the diameters actually used; each column = sum of the spec rows of that Ø"""
+    dop = sorted(B.get('dop', []), key=lambda d: d['pos'])
+    rows = {16: [5]}                                     # Ск1 (spec row 5 in 1-based = M5)
+    dm = B['main']['top'][1]
+    rows.setdefault(dm, []).extend([6, rH + 1])          # pos 1, Н3
+    for i, d in enumerate(dop): rows.setdefault(d['d'], []).append(7 + i)
+    used = sorted(rows)
+    if len(used) > 5: raise Exception('too many diameters')
+    rest = [x for x in (12, 20, 28, 32, 22) if x not in used]
+    cols = sorted(used + rest[:5 - len(used)])
+    cells = [[6, 1, 'Table({T:%s}).M4' % sp_handle, F2], [6, 2, 'Sum(B7:B7)', F2]]
+    hdr = []
+    for j, dd in enumerate(cols):
+        c = 3 + j; hdr.append([5, c, '%%%%C%d' % dd])
+        if dd in rows: cells.append([6, c, '+'.join('Table({T:%s}).M%d' % (sp_handle, r) for r in rows[dd]), F2])
+        else: cells.append([6, c, 'TEXT:---'])
+    cells += [[6, 8, 'Sum(D7:H7)', F2], [6, 9, 'I7+C7', F2]]
+    return [dict(t='tset', h=stl, cells=hdr), dict(t='tformula', h=stl, cells=cells)]
 
 
 def detail_texts(s, B, q):

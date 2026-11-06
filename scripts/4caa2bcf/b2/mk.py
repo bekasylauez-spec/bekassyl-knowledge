@@ -7,7 +7,7 @@ for r in rows:
     pts=set()
     for q in rows:
         if q['z']!=r['z'] or q['d']==r['d'] or q is r: continue
-        if q['x0']-1e-3<=r['c']<=q['x1']+1e-3 and r['x0']-1e-3<=q['c']<=r['x1']+1e-3 and hh(q['s'])>=hh(r['s']):
+        if q['x0']-1e-3<=r['c']<=q['x1']+1e-3 and r['x0']-1e-3<=q['c']<=r['x1']+1e-3 and (hh(q['s'])>hh(r['s']) or (hh(q['s'])==hh(r['s']) and q['L']>r['L']+1.0)):
             pts.add(round(q['c'],3))
     r['sup']=sorted(pts); r['onbeam']=True
 G=collections.OrderedDict()
