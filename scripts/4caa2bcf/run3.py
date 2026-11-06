@@ -48,7 +48,8 @@ def run(mark, pi, log=print):
         for t_ in tags:
             h0 = t_.split(':', 1)[1]
             if h0 in types: ty[t_] = types[h0]
-            elif h0.startswith('D'): ty[t_] = 'INSERT'
+            elif h0.startswith('B'): ty[t_] = 'CIRCLE'
+            elif h0.startswith('H'): ty[t_] = 'HATCH'
             elif h0.startswith('C'): ty[t_] = 'SPDSNOTECOMB'
             elif h0 == 'ML': ty[t_] = 'SPDSNOTEMULTILAYER'
             else: ty[t_] = ''

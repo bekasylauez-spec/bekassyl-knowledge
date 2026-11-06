@@ -106,10 +106,12 @@ for (y1, y2, st, k) in segs:
     if y2 - y1 < 1: continue
     o = dict(t='dim', h=T('111219'), p1=W(CR, L[0] + y1), p2=W(CR, L[0] + y2), dl=W(DL, L[0] + (y1 + y2) / 2), rot=math.pi / 2,
              txt=('%dх%d' % (round(st), k)) if k > 1 else '')
-    if (y2 - y1) < 300 and y1 < 1e-6:                  # first short segment: text outside, below the chain start
+    lab_ = o['txt'] or '%d' % round(y2 - y1)
+    need = len(lab_) * 95 + 120                         # text (2.5 mm at 1:50) must fit between the ticks
+    if (y2 - y1) < need and y1 < 1e-6:                 # first short segment: text outside, below the chain start
         o['tx'] = W(DL, L[0] + y1 - 230)
-    elif (y2 - y1) < 300:
-        o['tx'] = W(DL + (362, 760)[short_k % 2], L[0] + (y1 + y2) / 2); short_k += 1
+    elif (y2 - y1) < need:
+        o['tx'] = W(DL + (362, 760, 1158)[short_k % 3], L[0] + (y1 + y2) / 2); short_k += 1
     else: short_k = 0
     add(**o)
 # left chain: total, storeys
@@ -290,7 +292,7 @@ rodsf = lambda w: [35 + 100 * i for i in range(int((w - 40 - 35 - 100) // 100) +
 rods, rodsh = rodsf(b), rodsf(h)
 DYM = LMh - LMb                                         # rectangular: meshes taller, top kept -> bottom dims/notes go down
 x0, y0 = 13769.0, 11403.0 - DYM
-if DYM > 1: add(t='movegrp', h=[T(x) for x in ('111417', '11147A', '111468', '111428', '11148B', '11190E')], d=[0, -DYM])
+if DYM > 1: add(t='movegrp', h=[T(x) for x in ('111417', '11147A', '111468', '111428', '11148B', '1114FD')], d=[0, -DYM])
 rx = [x0 + 2 * v for v in rods]
 for x in rx: add(t='lineset', h=T('111466'), s=W(x, y0), e=W(x, y0 + LMh))
 yc = y0 + LMh - 70
@@ -324,7 +326,7 @@ add(t='dimpts', h=T('1114BC'), p1=W(xr, yb + LMh), p2=W(xa, ry[-1]))
 add(t='dimpts', h=T('1114CB'), p1=W(xa + LMb, ry[-1]), p2=W(xa, ry[-1]))
 add(t='erase', h=[T('11190D')])
 add(t='note', l1='10', l2='ш.100', origin=W(18186, 10698 - (LMh - LMb)), targets=[W(18186, y) for y in ry], arrow='oblique', angle=math.pi, **NOTE)
-add(t='spmove', h=T('11190E'), items=[[1, SX + xr, SY + 11686 - (LMh - LMb)]]); add(t='mcset', h=T('11190E'), set={'FirstLine': '10'})
+add(t='spmove', h=T('11190E'), items=[[1, SX + xr, SY + 11686 - (LMh - LMb) / 2]]); add(t='mcset', h=T('11190E'), set={'FirstLine': '10'})
 add(t='spmove', h=T('1114FD'), items=[[1, SX + xr, SY + ry[0]]])
 
 # ================= 4. tables, ведомость деталей, notes, stamp =================

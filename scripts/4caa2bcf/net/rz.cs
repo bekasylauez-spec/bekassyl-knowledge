@@ -1041,6 +1041,16 @@ namespace B2R
                     else if (!Has(m, "prop")) log.AppendLine("DYN " + p.PropertyName + " = " + Convert.ToString(p.Value, IC));
                 }
             }
+            else if (t == "dynlist")
+            {
+                var br = (BlockReference)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForRead);
+                foreach (DynamicBlockReferenceProperty p in br.DynamicBlockReferencePropertyCollection)
+                {
+                    var sb = new StringBuilder("DYNL " + p.PropertyName + " = " + Convert.ToString(p.Value, IC) + " :");
+                    try { foreach (var a in p.GetAllowedValues()) sb.Append(" | " + Convert.ToString(a, IC)); } catch { }
+                    log.AppendLine(sb.ToString());
+                }
+            }
             else if (t == "evalf")
             {
                 db.EvaluateFields();

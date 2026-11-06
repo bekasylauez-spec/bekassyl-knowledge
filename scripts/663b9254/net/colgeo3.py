@@ -13,7 +13,7 @@ def storey_hoops(lo, beam_bot):
         steps = [100.0] * n
         if S <= 200 + 1e-6: steps, r = [S / 2.0] * 2, 0.0
         if r > 1e-6:
-            if r < 50 and n: steps[n // 2] += r            # tiny leftover joins one step (<= 150)
+            if r <= 50 + 1e-6 and n: steps[n // 2] += r            # tiny leftover joins one step (<= 150)
             else: steps.insert(n // 2, r)
         pos = [a]
         for st in steps: pos.append(pos[-1] + st)

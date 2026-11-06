@@ -1,5 +1,6 @@
 # rigel cross-sections: analog section 1-1 (1:20) imported to a staging place, edited in real mm, cloned x2 (1:25) onto the sheet
 from rgen import *
+import math
 
 XLA, YBA = -211276.0, 428183.0          # analog section: beam left face / bottom
 SC = 2.0                                 # 1:50 sheet, section drawn 1:25
@@ -52,17 +53,21 @@ def build_stage(B, sec, OX, OY, P, withML=True):
         if n == 2: return [mB[0], mB[-1]]
         return [mB[0], mB[1], mB[-1]]
     dia = B['main']['top'][1]
-    for hh, x in zip(SEC['bot'], mB):
-        add(t='insat', h=S(hh), at=[xL + x, YBOT]); add(t='dyn', h=S(hh), prop='Вид', value='Ø%d' % B['main']['bot'][1])
-    for hh, x in zip(SEC['top'], mT):
-        add(t='insat', h=S(hh), at=[xL + x, YTOP]); add(t='dyn', h=S(hh), prop='Вид', value='Ø%d' % dia)
-    if nm == 3: add(t='erase', h=[S(SEC['bot'][3]), S(SEC['top'][3])])
-    extra = []; groups = []
+    extra = []
+    nb_ = [0]
+    def bar(xx, y, dd_):
+        # bar dot: circle + solid hatch (the analog bar block renders empty in this drawing)
+        r = dd_ / 2.0; tg = '%sB%d' % (P, nb_[0]); th = '%sH%d' % (P, nb_[0]); nb_[0] += 1
+        add(t='circle', c=[xL + xx, y], r=r, layer='диам%d' % dd_, tag=tg)
+        poly = [[xL + xx + r * math.cos(a_ * math.pi / 12), y + r * math.sin(a_ * math.pi / 12)] for a_ in range(24)]
+        add(t='hatch', pat='SOLID', loops=[poly], layer='диам%d' % dd_, tag=th)
+        extra.extend([tg, th])
+    for x in mB: bar(x, YBOT, B['main']['bot'][1])
+    for x in mT: bar(x, YTOP, dia)
+    add(t='erase', h=[S(h_) for h_ in SEC['bot'] + SEC['top']])
+    groups = []
     k_ = [0]
-    def put(xx, y, dd_):
-        tg = '%sD%d' % (P, k_[0]); k_[0] += 1
-        add(t='clone', h=S(SEC['bot'][0]), base=[0, 0], to=[0, 0], tag=tg); add(t='insat', h=tg, at=[xL + xx, y])
-        add(t='dyn', h=tg, prop='Вид', value='Ø%d' % dd_); extra.append(tg)
+    def put(xx, y, dd_): bar(xx, y, dd_)
     for grp, y, top in ((t1, YTOP, True), (b1, YBOT, False)):
         xx = dT if top else dB; i = 0
         for (pos, n, dd_, row) in grp:
@@ -132,7 +137,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
         add(t='levelval', h=tl, old='+4.395', value=B['levels'][0], tag=tl)
     add(t='settext', h=S(SEC['title']), s='Разрез %s - %s' % (sec['word'], sec['word']))
     add(t='move', h=[S(SEC['title'])], d=[(xL + xR) / 2.0 - (OX + 43), h - 400])
-    tags = [S(x) for x in hs if x not in SEC['brk'] or slab] + extra
+    tags = [S(x) for x in hs if (x not in SEC['brk'] or slab) and x not in SEC['bot'] + SEC['top']] + extra
     tags = [t_ for t_ in tags if t_ not in (S(SEC['ml']), S(SEC['lev']), S(SEC['dimb'][2]), S(SEC['dimb'][3]))]
     return ops, tags, [OX + b / 2.0, OY]
 

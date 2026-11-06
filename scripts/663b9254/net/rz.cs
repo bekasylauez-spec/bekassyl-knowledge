@@ -179,6 +179,113 @@ namespace K3
                     log.AppendLine("BI\t" + id.ObjectClass.DxfName + "\t" + hs + "\t" + e.Layer + "\t" + ex + "\t" + txt.Replace("\n", " "));
                 }
             }
+            else if (t == "mklayout")
+            {
+                // one layout per sheet: name, media (full-bleed), page w/h (mm), model frame win, scale sc -> one locked viewport = whole page at 1:sc
+                string name = S(m, "name", "");
+                log.AppendLine("ml1");
+                var lm = LayoutManager.Current;
+                log.AppendLine("ml2");
+                var dict = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                log.AppendLine("ml3");
+                if (dict.Contains(name)) lm.DeleteLayout(name);
+                log.AppendLine("ml4");
+                var lid = lm.CreateLayout(name);
+                log.AppendLine("ml5");
+                var lo = (Layout)tr.GetObject(lid, OpenMode.ForWrite);
+                log.AppendLine("ml6");
+                var v = Autodesk.AutoCAD.DatabaseServices.PlotSettingsValidator.Current;
+                log.AppendLine("ml7");
+                v.SetPlotConfigurationName(lo, "DWG To PDF.pc3", null); v.RefreshLists(lo);
+                log.AppendLine("ml8");
+                string media = S(m, "media", ""); string found = null;
+                log.AppendLine("ml9");
+                foreach (string mn in v.GetCanonicalMediaNameList(lo)) { if (mn == media || v.GetLocaleMediaName(lo, mn) == media) { found = mn; break; } }
+                if (found == null) { log.AppendLine("media? " + media); return; }
+                v.SetPlotConfigurationName(lo, "DWG To PDF.pc3", found);
+                log.AppendLine("ml10");
+                v.SetPlotPaperUnits(lo, PlotPaperUnit.Millimeters);
+                log.AppendLine("ml11");
+                v.SetPlotRotation(lo, PlotRotation.Degrees000);
+                log.AppendLine("ml12");
+                v.SetPlotType(lo, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
+                log.AppendLine("ml13");
+                v.SetUseStandardScale(lo, true); v.SetStdScaleType(lo, StdScaleType.StdScale1To1);
+                log.AppendLine("ml14");
+                try { v.SetPlotCentered(lo, false); } catch { } try { v.SetPlotOrigin(lo, new Point2d(0, 0)); } catch { }
+                log.AppendLine("ml15");
+                v.SetCurrentStyleSheet(lo, "monochrome.ctb");
+                log.AppendLine("ml16");
+                lm.CurrentLayout = name;
+                log.AppendLine("ml17");
+                var ps = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForWrite);
+                log.AppendLine("ml18");
+                foreach (ObjectId id in ps) { var en = tr.GetObject(id, OpenMode.ForWrite) as Viewport; if (en != null && en.Number != 1) en.Erase(); }
+                double W = D(m["w"]), Hh = D(m["h"]), sc = D(m["sc"]); var w = L(m["win"]);
+                log.AppendLine("ml19");
+                var vp = new Viewport();
+                log.AppendLine("ml20");
+                ps.AppendEntity(vp); tr.AddNewlyCreatedDBObject(vp, true);
+                log.AppendLine("ml21");
+                vp.CenterPoint = new Point3d(W / 2, Hh / 2, 0); vp.Width = W; vp.Height = Hh;
+                log.AppendLine("ml22");
+                vp.ViewTarget = Point3d.Origin; vp.ViewDirection = Vector3d.ZAxis;
+                log.AppendLine("ml23");
+                vp.ViewCenter = new Point2d((D(w[0]) + D(w[2])) / 2, (D(w[1]) + D(w[3])) / 2);
+                log.AppendLine("ml24");
+                vp.CustomScale = 1.0 / sc;
+                log.AppendLine("ml25");
+                vp.Layer = "0";
+                log.AppendLine("ml26");
+                try
+                {
+                    var occ = db.ObjectContextManager.GetContextCollection("ACDB_ANNOTATIONSCALES");
+                    AnnotationScale best = null;
+                    foreach (ObjectContext oc in occ) { var asx = oc as AnnotationScale; if (asx == null) continue; if (Math.Abs(asx.DrawingUnits / asx.PaperUnits - sc) < 1e-6) { best = asx; break; } }
+                    if (best != null) { vp.AnnotationScale = best; log.AppendLine("annoscale " + best.Name); } else log.AppendLine("annoscale 1:" + sc + " not found");
+                }
+                catch (System.Exception ex) { log.AppendLine("annoscale fail " + ex.Message); }
+                try
+                {
+                    var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
+                    var lids = new List<ObjectId>(); foreach (ObjectId li in lt) lids.Add(li);
+                    vp.ThawLayersInViewport(lids.GetEnumerator());
+                    log.AppendLine("thawed " + lids.Count);
+                }
+                catch (System.Exception ex) { log.AppendLine("thaw fail " + ex.Message); }
+                vp.On = true; vp.Locked = true;
+                log.AppendLine("ml27");
+                log.AppendLine("mklayout " + name + " " + found + " 1:" + sc);
+            }
+            else if (t == "plotlayout")
+            {
+                // plot a layout 1:1 (its page setup) to PDF
+                string name = S(m, "name", "");
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable("BACKGROUNDPLOT", 0);
+                var lm = LayoutManager.Current; lm.CurrentLayout = name;
+                var lo = (Layout)tr.GetObject(lm.GetLayoutId(name), OpenMode.ForRead);
+                var pi = new Autodesk.AutoCAD.PlottingServices.PlotInfo(); pi.Layout = lo.ObjectId;
+                var piv = new Autodesk.AutoCAD.PlottingServices.PlotInfoValidator(); piv.MediaMatchingPolicy = Autodesk.AutoCAD.PlottingServices.MatchingPolicy.MatchEnabled; piv.Validate(pi);
+                using (var pe = Autodesk.AutoCAD.PlottingServices.PlotFactory.CreatePublishEngine())
+                {
+                    var ppi = new Autodesk.AutoCAD.PlottingServices.PlotPageInfo();
+                    pe.BeginPlot(null, null);
+                    pe.BeginDocument(pi, "doc", null, 1, true, S(m, "file", ""));
+                    pe.BeginPage(ppi, pi, true, null); pe.BeginGenerateGraphics(null); pe.EndGenerateGraphics(null);
+                    pe.EndPage(null); pe.EndDocument(null); pe.EndPlot(null);
+                }
+                log.AppendLine("plotlayout " + name + " -> " + S(m, "file", ""));
+            }
+            else if (t == "dellayout")
+            {
+                var lm = LayoutManager.Current; string name = S(m, "name", "");
+                var dict = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
+                if (dict.Contains(name)) { lm.CurrentLayout = "Model"; lm.DeleteLayout(name); log.AppendLine("dellayout " + name); }
+            }
+            else if (t == "tomodel")
+            {
+                LayoutManager.Current.CurrentLayout = "Model";
+            }
             else if (t == "einfo")
             {
                 foreach (var hh in L(m["h"]))

@@ -4,6 +4,17 @@
 # Analog entities are addressed by tags <P><old handle>. Coordinates: beam coordinate x (mm) -> sheet X(x).
 import gx, json, sys
 from rg import zones
+from rigg import zones_any as _za
+
+
+def zones_any(a, b):
+    # spans / cantilevers shorter than 3 m: one zone ш.100 (analog-style chain stays readable)
+    if b - a - 100 >= 3000: return zones(a, b)
+    h0, h4 = a + 50, b - 50; Lp = h4 - h0
+    n = int(Lp // 100); rr = Lp - 100 * n
+    if 0 < rr < 100 and n > 0: n -= 1; rr += 100
+    segs = [(h0, h0 + 100 * n, '100х%d' % n)] + ([(h0 + 100 * n, h4, '%d' % round(rr))] if rr else [])
+    return segs, ([h0, h0 + 100 * n, h4] if rr else [h0, h4]), n + 1 + (1 if rr else 0)
 from brk import breaks
 import rigx
 from rigx import SPDS, AN0, SRC
@@ -28,11 +39,16 @@ def build(B):
     sup = B['sup']
     # ---- columns + breaks
     pool = [A(x) for x in ['40159B', '4018B7', '4018BA', '4018BD', '4018C0', '4018C3']]
-    for (a, b) in sup:
+    kinds = B.get('supk') or [['c', 0]] * len(sup)
+    cols = []
+    for (a, b), (kd, hg) in zip(sup, kinds):
         hh = pool.pop(0) if pool else clone(A('40159B'), 'COL')
-        add(t='plset', h=hh, p=[[X(a), COLT + dY], [X(b), COLT + dY], [X(b), COLB], [X(a), COLB]], closed=True)
+        if kd == 'c':
+            add(t='plset', h=hh, p=[[X(a), COLT + dY], [X(b), COLT + dY], [X(b), COLB], [X(a), COLB]], closed=True); cols.append((a, b))
+        else:   # supporting girder in section: top flush with the beam top, its own height, no break marks
+            add(t='plset', h=hh, p=[[X(a), YT], [X(b), YT], [X(b), YT - hg], [X(a), YT - hg]], closed=True)
     add(t='erase', h=pool + [A(x) for x in SPDS['brk']])
-    ops.extend(breaks(sup, X, COLT + dY + 0.4, COLB + 0.4, P.rstrip(':')))
+    ops.extend(breaks(cols, X, COLT + dY + 0.4, COLB + 0.4, P.rstrip(':')))
     # ---- axes
     axp = [A(x) for x in SPDS['ax']]
     for (x, v) in B['axes']:
@@ -84,7 +100,7 @@ def build(B):
     NH = 0; ZI = []
     ref = B['refs']                       # per span: (left ref, right ref) = axis or free end coordinate
     for i, (a, b) in enumerate(spans):
-        segs, lines, cnt = zones(a, b); NH += cnt; ZI.append(lines)
+        segs, lines, cnt = zones_any(a, b); NH += cnt; ZI.append(lines)
         for x in lines:
             add(t='plset', h=hl.pop(0) if hl else clone(A(HL[0]), 'HL'), p=[[X(x), YBB], [X(x), YTB]], layer='диам10')
         for s0, s1, txt in segs:
@@ -141,8 +157,9 @@ def build(B):
     # ---- callouts «1 (ф28)» (one per span, in the 200 zone), step note
     n1 = [A(x) for x in SPDS['n1']]
     for i, lines in enumerate(ZI):
-        avoid = [c for g in B['spT'] + B['spB'] for c in g[:2]] + [d['nx'] for d in B['dop']] + [x for _, x in B['secs']]
-        cand = [lines[1] + 200 + 100 * k for k in range(int((lines[2] - lines[1] - 400) // 100) + 1)] or [(lines[1] + lines[2]) / 2.0]
+        avoid = [c for g in B['spT'] + B['spB'] for c in g[:2]] + [g[0] - 600 for g in B['spT'] + B['spB']] + [d['nx'] for d in B['dop']] + [x for _, x in B['secs']]
+        l1, l2 = (lines[1], lines[2]) if len(lines) >= 4 else (lines[0], lines[-1])
+        cand = [l1 + 200 + 100 * k for k in range(max(0, int((l2 - l1 - 400) // 100) + 1))] or [(l1 + l2) / 2.0]
         xb = max(cand, key=lambda c: min([abs(c - a) for a in avoid] + [1e9]))
         x = X(xb)
         hh = n1.pop(0) if n1 else clone(A(SPDS['n1'][0]), 'N1')
@@ -162,7 +179,6 @@ def build(B):
     add(t='move', h=[A(SPDS['lm'])], d=[0, dY])
     add(t='levelval', h=A(SPDS['lm']), old='-0.100', value=B['level'], tag=P.rstrip(':') + '_LM')
     # lift everything above the beam that is not set explicitly (title, ведомость деталей stays)
-    add(t='move', h=[A('4038B1')], d=[0, dY])
     return ops, NH, spans, ZI
 
 
@@ -194,24 +210,28 @@ def text_ops(B, NH):
     ops.append(dict(t='setblock', h=A('40443F'), name='Штамп№1', at=to))
     ops.append(dict(t='settext', h=A(SPDS['no']), s=B['no']))
     ops.append(dict(t='move', h=[A(SPDS['no'])], d=[-106, -226]))
-    ops.append(dict(t='settext', h=A(SPDS['name']), s='Ригель %s на отм. %s' % (B['mark'], B['level'])))
+    ops.append(dict(t='settext', h=A(SPDS['name']), s='Ригель %s на отм. %s' % (B['mark'], B['level']) + (' (ч.%d из %d)' % tuple(B['part']) if B['part'][1] > 1 else '')))
     ops.append(dict(t='move', h=[A(SPDS['name'])], d=[0, -164]))
     return ops, dict(LX=LX, LS=LS)
 
 
 def tables(B, NH, spans, L):
-    P = B['P']; E0, E1 = B['E']; A = lambda hh: P + hh
+    P = B['P']; A = lambda hh: P + hh
     sp, stl = A(SPDS['spec']), A(SPDS['steel'])
+    if B['part'][0] < B['part'][1]:
+        return [dict(t='erase', h=[sp, stl])]
+    E0, E1 = B['full']; spans = B['spans_full']
+    NH = sum(zones_any(a, b)[2] for a, b in spans)
     m = gx.tagmap()
     F, I = '%lu2%pr2', '%lu2%pr0'
     b, h = B['b'], B['h']; n = 4 if b > 300 else 3; nh = 2 if b > 300 else 1
     clear = sum(q - p for p, q in spans)
-    ng = len(B['spT']) + len(B['spB'])
-    c0 = 20 if B['ends'][0] == 'sk' else 0; c1 = 20 if B['ends'][1] == 'sk' else 0
+    ng = B['nspl']
+    c0 = c1 = 20
     cells_t = [[2, 2, 'Ригель ' + B['mark']], [6, 0, 'Н4']]
     nums = [[3, 3, B['hoopd'], I], [3, 9, L['LX'], I], [4, 3, 16, I], [4, 9, L['LS'], I], [5, 3, DIA, I], [6, 3, DIA, I], [6, 9, 10 * DIA, I]]
     forms = [[3, 10, '%d*%d' % (NH, nh), I], [3, 11, 'D4*D4*3.1415926/4*0.00785*J4/1000', F], [3, 12, 'L4*K4', F],
-             [4, 10, '%d*%d' % (n, (B['ends'].count('sk'))), I], [4, 11, 'D5*D5*3.1415926/4*0.00785*J5/1000', F], [4, 12, 'L5*K5', F],
+             [4, 10, '%d*2' % n, I], [4, 11, 'D5*D5*3.1415926/4*0.00785*J5/1000', F], [4, 12, 'L5*K5', F],
              [5, 10, '%.2f*%d' % ((E1 - E0 - c0 - c1) / 1000.0, 2 * n), F], [5, 11, 'D6*D6*3.1415926/4*0.00785*1', F], [5, 12, 'L6*K6', F],
              [6, 10, '%d*%d*2' % (ng, n), I], [6, 11, 'D7*D7*3.1415926/4*0.00785*J7/1000', F], [6, 12, 'L7*K7', F]]
     ops = []
@@ -225,6 +245,9 @@ def tables(B, NH, spans, L):
     last = 6 + max(nd, 1)          # last item row (0-based) before «Материалы»
     rc = last + 2                  # concrete row
     forms += [[2, 12, 'Sum(M4:M%d)' % (last + 1), F], [rc, 12, '%.2f*%.2f*%.2f' % (b / 1000.0, (h - 200) / 1000.0, clear / 1000.0), F]]
+    if ng == 0:     # no splices: the Н4 row is emptied
+        nums = [c for c in nums if c[0] != 6]; forms = [c for c in forms if c[0] != 6]
+        cells_t = [c for c in cells_t if c[0] != 6] + [[6, k, ''] for k in range(13)]
     ops += [dict(t='tnum', h=sp, cells=nums), dict(t='tset', h=sp, cells=cells_t), dict(t='tformula', h=sp, cells=forms),
             dict(t='tset', h=stl, cells=[[5, 1, '%%%%C%d' % B['hoopd'], ], [6, 0, 'Ригель ' + B['mark']]]),
             dict(t='tformula', h=stl, cells=[[6, 1, 'Table({T:%s}).M4' % m[sp], F], [6, 2, 'Sum(B7:B7)', F],
@@ -251,5 +274,5 @@ if __name__ == '__main__':
         tops, L = text_ops(B, NH)
         out = gx.run(sops + tops + [dict(t='save')], 'rs' + B['P'][:-1])
         print('sec+text', [l for l in out.splitlines() if 'ERR' in l or 'done' in l][:20])
-        out = gx.run(tables(B, NH, spans, L) + [dict(t='tform', h=B['P'] + SPDS['spec']), dict(t='save')], 'rt' + B['P'][:-1])
+        out = gx.run(tables(B, NH, spans, L) + ([dict(t='tform', h=B['P'] + SPDS['spec'])] if B['part'][0] == B['part'][1] else []) + [dict(t='save')], 'rt' + B['P'][:-1])
         print('tables', [l[:140] for l in out.splitlines() if 'ERR' in l or 'done' in l or l.startswith('F 2,12')][:12])
