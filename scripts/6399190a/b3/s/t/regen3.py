@@ -7,7 +7,7 @@ def restart():
     print('RESTART', r.stdout.decode('utf-8', 'replace').strip()[-60:], flush=True)
     mb.run([{'t': 'sysvar', 'n': 'SAVETIME', 'v': 0}], 'sv', 120)
 
-def run_ops(ops, name, CH=80, wait=75):
+def run_ops(ops, name, CH=80, wait=300):
     i = 0
     while i < len(ops):
         t0 = time.time(); out = mb.run(ops[i:i + CH], '%s_%d' % (name, i), wait)

@@ -27,7 +27,7 @@ def rows(first_no=5):
     R = []
     for m in marks:
         ls = L[m['mark']]
-        R.append([m['mark'], '%dх%d' % (m['b'], m['h']), spans_txt(m), m['level'], str(m['count']), ls[0] if len(ls) == 1 else '%s…%s' % (ls[0], ls[-1])])
+        R.append([m['mark'], '%dх%d' % (m['b'], m['h']), spans_txt(m), '; '.join(m.get('levels') or [m['level']]), str(m['count']), ls[0] if len(ls) == 1 else '%s…%s' % (ls[0], ls[-1])])
     return R
 
 

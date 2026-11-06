@@ -5,10 +5,15 @@ sys.path.insert(0, prep.LIRA)
 import design as DS
 K = 0.25
 SY = prep.SY
-SHEETS = [('6.1', [-0.05, 4.0]), ('6.2', [4.8, 6.95]), ('6.3', [10.5])]
+# (level, window in LIRA mm or None = whole plan, sheet-relative origin of axis 14 / axis А)
+SHEETS = [('6.1', [(-0.05, None, (3200, 2300))]),
+          ('6.2', [(4.45, None, (3200, 2300)), (1.65, (128000, -2000, 136000, 9600), (19300, 9400)),
+                   (3.45, (128000, -2000, 136000, 9600), (25300, 9400)), (5.15, (128000, -2000, 136000, 9600), (19300, 4900))]),
+          ('6.3', [(6.95, None, (3200, 2300)), (9.9, (110000, 9000, 118500, 27000), (19300, 7300)),
+                   (12.7, (110000, 9000, 118500, 27000), (24300, 7300))])]
 SX = {'6.1': prep.SX0 - 4 * 31500.0, '6.2': prep.SX0 - 3 * 31500.0, '6.3': prep.SX0 - 2 * 31500.0}
-X9, YA = 53850.0, -1350.0
-PW = 32 * 250 + 400               # plan width incl. columns
+X9, YA = 86500.0, -1350.0
+XMAX, YMAX = 135100.0, 38150.0
 marks = json.load(open(os.path.join(prep.LIRA, 'marks.json'), encoding='utf-8'))
 rr, _g = pickle.load(open(os.path.join(prep.LIRA, 'groups.pkl'), 'rb'))
 groups = pickle.load(open(os.path.join(prep.LIRA, 'groups_u.pkl'), 'rb'))
@@ -18,13 +23,17 @@ for m, (sg, rs) in zip(marks, groups):
     for r, rev in rs: RM[(r['z'], tuple(r['A']), tuple(r['B']))] = m['mark']
 
 
-def plan(z, ox, oy, P, title):
+def plan(z, ox, oy, P, title, win=None):
     """ox, oy: sheet coordinates of axis 9 / axis А"""
     ops = []; n = [0]
-    T = lambda x, y: [ox + (x - X9) * K, oy + (y - YA) * K]
+    wx0, wy0, wx1, wy1 = win if win else (X9 - 2000, YA - 2000, XMAX + 2000, YMAX + 2000)
+    bx0 = max(wx0, X9) if win is None else wx0; by0 = YA if win is None else wy0
+    T = lambda x, y: [ox + (x - bx0) * K, oy + (y - by0) * K]
+    inw = lambda x, y: wx0 <= x <= wx1 and wy0 <= y <= wy1
+    COLS = [c for c in DS.cols_at(z) if inw((c[0] + c[2]) / 2, (c[1] + c[3]) / 2)]
     def tag(s): n[0] += 1; return '%s_%s%d' % (P, s, n[0])
     # columns
-    for c in DS.cols_at(z):
+    for c in COLS:
         x0, y0, x1, y1 = c
         p = [T(x0, y0), T(x1, y0), T(x1, y1), T(x0, y1)]
         ops.append(dict(t='pl', p=p, closed=True, layer='0', lw=30, tag=tag('C')))
@@ -32,11 +41,15 @@ def plan(z, ox, oy, P, title):
     # rigels: outline per span between supports, hidden line
     from shapely.geometry import LineString, Polygon, box
     from shapely import affinity
-    runs = [r for r in rr if abs(r['z'] - z) < 0.01]
-    obst = [box(*c) for c in DS.cols_at(z)]
-    for c, v in DS.AXX.items(): obst.append(LineString([(c, -3000), (c, 31000)]))
-    for c, v in DS.AXY.items():
-        if v not in ('В', 'Г', 'Е', 'И'): obst.append(LineString([(50000, c), (90000, c)]))
+    runs = [r for r in rr if abs(r['z'] - z) < 0.01 and inw(*r['A']) and inw(*r['B'])]
+    obst = [box(*c) for c in COLS]
+    XS = [(c, v) for c, v in sorted(DS.AXX.items()) if wx0 <= c <= wx1]
+    YS = [(c, v) for c, v in sorted(DS.AXY.items()) if wy0 <= c <= wy1]
+    if win:     # fragment: axes of the columns inside
+        XS = [(c, v) for c, v in XS if any(abs((q[0] + q[2]) / 2 - c) < 500 for q in COLS)] or XS
+        YS = [(c, v) for c, v in YS if any(abs((q[1] + q[3]) / 2 - c) < 700 for q in COLS)] or YS
+    for c, v in XS: obst.append(LineString([(c, wy0 - 3000), (c, wy1 + 3000)]))
+    for c, v in YS: obst.append(LineString([(wx0 - 3000, c), (wx1 + 3000, c)]))
     geo = []
     for r in runs:
         A, B, L = r['A'], r['B'], r['L']
@@ -81,20 +94,25 @@ def plan(z, ox, oy, P, title):
             ops.append(dict(t='pl', p=[T(*lead), T(ex, ey)], layer='0', lw=5, tag=tag('LD')))
         ops.append(dict(t='mtext', at=T(cx, cy), h=125, att=5, rot=rot, s=txt, layer='TEXT 2.5', tag=tag('M')))
     # axes (kit SPDS axis), chains
-    xs = sorted(DS.AXX.items()); ys = sorted(DS.AXY.items())
-    ybot = oy - 1000; xleft = ox - 1000
-    ytop = oy + 29000 * K + 400; xright = ox + 31200 * K + 400
+    xs = XS; ys = YS
+    gx0 = min(T(c, 0)[0] for c, _ in xs); gx1 = max(T(c, 0)[0] for c, _ in xs)
+    gy0 = min(T(0, c)[1] for c, _ in ys); gy1 = max(T(0, c)[1] for c, _ in ys)
+    cb = [T(q[0], q[1]) + T(q[2], q[3]) for q in COLS]
+    if cb:
+        gx0 = min(gx0, min(q[0] for q in cb)); gx1 = max(gx1, max(q[2] for q in cb))
+        gy0 = min(gy0, min(q[1] for q in cb)); gy1 = max(gy1, max(q[3] for q in cb))
+    ybot = gy0 - 1000; xleft = gx0 - 1000
+    ytop = gy1 + 400; xright = gx1 + 400
     for c, v in xs:
         h = tag('AX'); ops.append(dict(t='clone', h='A5:401290', tag=h)); ops.append(dict(t='axis', h=h, s=[T(c, 0)[0], ytop], e=[T(c, 0)[0], ybot], val=v))
     for c, v in ys:
-        if v in ('В', 'Г', 'Е', 'И'): continue      # architectural axes without columns of block 2
         h = tag('AY'); ops.append(dict(t='clone', h='A5:401290', tag=h)); ops.append(dict(t='axis', h=h, s=[xright, T(0, c)[1]], e=[xleft, T(0, c)[1]], val=v))
     yd = ybot + 450
     for (c0, _), (c1, _) in zip(xs, xs[1:]):
         h = tag('DX'); ops.append(dict(t='clone', h='A5:401292', tag=h))
         ops.append(dict(t='dimpts', h=h, p1=[T(c0, 0)[0], yd, 0], p2=[T(c1, 0)[0], yd, 0], dl=[T(c1, 0)[0], yd, 0]))
         ops.append(dict(t='dimset', h=[h], lfac=1.0 / K)); ops.append(dict(t='dimtext', h=h, s=''))
-    yk = [(c, v) for c, v in ys if v not in ('В', 'Г', 'Е', 'И')]
+    yk = list(ys)
     xd = xleft + 450
     for (c0, _), (c1, _) in zip(yk, yk[1:]):
         h = tag('DY')
@@ -102,8 +120,8 @@ def plan(z, ox, oy, P, title):
         ops.append(dict(t='dimtext', h=h, s=''))
     # title
     h = tag('T'); ops.append(dict(t='clone', h='A5:4038B1', tag=h))
-    ops.append(dict(t='moveto', h=h, idx=0, to=[ox + 31200 * K / 2, ytop + 700]))
-    ops.append(dict(t='settext', h=h, s=title, w=9000))
+    ops.append(dict(t='moveto', h=h, idx=0, to=[(xleft + xright) / 2.0, ytop + 700]))
+    ops.append(dict(t='settext', h=h, s=title, w=9000 if not win else 4200))
     return ops
 
 
@@ -115,10 +133,9 @@ def run(no):
     dx, dy = sx - 298179.0, SY - prep.KY
     for r in ['A5:401330', 'A5:404440', 'A5:404442', 'A5:40443F']:
         ops.append(dict(t='clone', h=r, base=[0, 0], to=[dx, dy], tag=P + ':' + r[3:]))
-    lv = [z for n_, zz in SHEETS if n_ == no for z in zz]
-    for i, z in enumerate(lv):
-        ox = sx + 2700 + i * 15300
-        ops += plan(z, ox, SY + 5200, P + 'L%d' % i, 'Схема расположения ригелей на отм. %s' % DS.LEVEL[z])
+    lv = [q for n_, zz in SHEETS if n_ == no for q in zz]
+    for i, (z, win, (rx, ry)) in enumerate(lv):
+        ops += plan(z, sx + rx, SY + ry, P + 'L%d' % i, 'Схема расположения ригелей на отм. %s' % DS.LEVEL[z], win)
     ops.append(dict(t='settext', h=P + ':404442', s='Схемы расположения ригелей'))
     ops.append(dict(t='settext', h=P + ':404440', s=no))
     out = gx.run(ops, 'sch' + P)

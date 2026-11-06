@@ -38,6 +38,16 @@ def level_ops(s, h, base, value, off1, off2):
     s.add(t='erase', h=[h])
 
 
+def level_multi(s, h, base, values, off1, off2, step=600.0):
+    """marks used on several levels: level marks stacked upwards (Block 1 rule), lowest at base"""
+    for k, v in enumerate(values[1:], 1):
+        t = h + '_S%d' % k
+        s.add(t='clone', h=h, tag=t)
+        if len(v) <= 6: s.add(t='move', h=[t], d=[0, step * k])
+        level_ops(s, t, [base[0], base[1] + step * k], v, off1, off2)
+    level_ops(s, h, base, values[0], off1, off2)
+
+
 class Sheet:
     def __init__(s, M, part):
         s.M = M; s.part = part
@@ -247,7 +257,7 @@ class Sheet:
         s.add(t='erase', h=sp)
         # level: one value (top of rigel) on the analog mark; the two-level note removed
         s.add(t='moveto', h=T('A5:4015A3'), idx=0, to=[x0 + 400, s.YT])
-        level_ops(s, T('A5:4015A3'), [x0 + 400, s.YT], M['level'], -2346.9, -1726.4)
+        level_multi(s, T('A5:4015A3'), [x0 + 400, s.YT], M.get('levels') or [M['level']], -2346.9, -1726.4)
         s.add(t='erase', h=[T('A5_ML')])
         xc = (X(u0) + X(u1)) / 2
         s.add(t='moveto', h=T('A5:4038B1'), idx=0, to=[xc, s.up(470114)])
@@ -265,6 +275,14 @@ class Sheet:
         tops = [p for p in st if p[0] == 'top']; bots = [p for p in st if p[0] == 'bot']
         def plate(hh, c, y):
             s.add(t='plset', h=hh, p=[[X(c) - 140, y - 15], [X(c) - 140, y + 15], [X(c) + 140, y + 15], [X(c) + 140, y - 15]], closed=True)
+        cs = sorted([(a + b) / 2.0 for a, b, _ in s.M['sups']] + [u for u, _ in s.M['axes']])
+        def fixref(ref, c, lo_=None):
+            lo_ = s.u0 if lo_ is None else lo_
+            if lo_ - 1 <= ref <= c: return ref
+            q = [x for x in cs if lo_ - 1 <= x <= c]
+            return max(q) if q else lo_
+        tops = [(k, c, fixref(ref, c - 250)) for k, c, ref in tops]
+        bots = [(k, c, fixref(ref, c)) for k, c, ref in bots]
         for i, (_, c, ref) in enumerate(tops):
             hp = [(s.P + 'N4038F3'), (s.P + 'N4038F2')] if i == 0 else [s.clone((s.P + 'N4038F3'), 'PL'), s.clone((s.P + 'N4038F2'), 'PL')]
             plate(hp[0], c - 250, s.YTB); plate(hp[1], c + 250, s.YTB)
@@ -355,7 +373,7 @@ class Sheet:
             for hh, x in (('2CB014', b + 173), ('2CB015', -173)):
                 s.add(t='mcset', h=Q(hh), set={'StartPoint': g(x, h - sl), 'EndPoint': g(x, h), 'ClipZonePoint': g(x, h), 'Length': SSC * sl})
             s.add(t='moveto', h=Q('2CB018'), idx=0, to=g(-173, h))
-            level_ops(s, Q('2CB018'), g(-173, h), M['level'], -1734.1, -1113.7)
+            level_multi(s, Q('2CB018'), g(-173, h), M.get('levels') or [M['level']], -1734.1, -1113.7, 600.0)
             s.add(t='erase', h=[Q('2CC663')])
             ys = h + 170
             s.add(t='combsegs', h=Q('2CB019'), segs=[[g(x, yT - 1), g(x + 90, ys)] for x in BX], start=g(BX[-1] + 90, ys), end=g(BX[0] + 90, ys), trim=True)

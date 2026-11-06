@@ -39,19 +39,68 @@ def profile(r):
     return pts
 
 
-def cap(legs, d, s): return legs * {10: 0.785, 12: 1.131}[d] * 1000.0 / s
+def cap(legs, d, s): return legs * {10: 0.785, 12: 1.131, 14: 1.539}[d] * 1000.0 / s
 def r100(x): return int(math.ceil(x / 100.0 - 1e-9)) * 100
 
 
+def faces(r, rev):
+    E = r['E1'] - r['E0']
+    f = [0.0] + [c - r['E0'] for a, b, _ in r['sups'] for c in (a, b)] + [E]
+    if rev: f = sorted(E - x for x in f)
+    return f
+
+
 def env(rs):
+    """envelope in the template run's u; members mapped face-to-face (piecewise linear) when their faces differ"""
     P = []
-    E = rs[0][0]['E1'] - rs[0][0]['E0']
+    F0 = faces(*rs[0])
     for r, rev in rs:
+        F = faces(r, rev); E = r['E1'] - r['E0']
+        same = len(F) == len(F0)
         for t, b, tp, w in profile(r):
             u = t - r['E0']
             if rev: u = E - u
+            if same:
+                for i in range(len(F) - 1):
+                    if F[i] - 1e-6 <= u <= F[i + 1] + 1e-6 or (i == 0 and u < F[0]) or (i == len(F) - 2 and u > F[-1]):
+                        d = F[i + 1] - F[i]
+                        u = F0[i] + (F0[i + 1] - F0[i]) * ((u - F[i]) / d if d > 1e-6 else 0.5)
+                        break
             P.append((u, b, tp, w))
     return sorted(P)
+
+
+def spans_of(r, rev):
+    F = faces(r, rev)
+    return [F[i + 1] - F[i] for i in range(0, len(F), 2)], F
+
+
+def unify2(groups, tol=600):
+    """Block 1 rule (Bekassyl): same b x h, same faces count, every span within tol (direct or mirrored), any level ->
+    one mark; template = the longest; kept only if As/Asw of all members are covered"""
+    G = [list(rs) for _, rs in groups]
+    G.sort(key=lambda g: -(g[0][0]['E1'] - g[0][0]['E0']))
+    changed = True
+    while changed:
+        changed = False
+        for i in range(len(G)):
+            for j in range(len(G)):
+                if i == j or not G[i] or not G[j]: continue
+                a, b = G[i][0][0], G[j][0][0]
+                if (a['b'], a['h']) != (b['b'], b['h']): continue
+                if (a['E1'] - a['E0']) < (b['E1'] - b['E0']): continue
+                sa, Fa = spans_of(*G[i][0]); sb, Fb = spans_of(*G[j][0])
+                if len(Fa) != len(Fb) or len(sa) != len(sb): continue
+                # support kinds per face pair must agree only in count; widths within tol
+                direct = all(abs(x - y) <= tol for x, y in zip(sa, sb)) and all(abs((Fa[k+1]-Fa[k]) - (Fb[k+1]-Fb[k])) <= tol for k in range(1, len(Fa) - 1, 2))
+                mirror = all(abs(x - y) <= tol for x, y in zip(sa, sb[::-1]))
+                if not (direct or mirror): continue
+                flip = not direct
+                cand = G[i] + [(r, (not rev) if flip else rev) for r, rev in G[j]]
+                D = design(cand, 'x')
+                if check(D, cand): continue
+                G[i] = cand; G[j] = []; changed = True
+    return [(None, g) for g in G if g]
 
 
 def bars_x(b):
@@ -155,7 +204,7 @@ def design(rs, mark):
         free_r = fR > E - 1 and not any(abs(e - E) < 2 for _, e, _ in sups)
         aw = lambda u0, u1: max([p[3] for p in sp if u0 <= p[0] <= u1] or [0])
         peak = aw(fL, fR)
-        if peak > cap(legs, hd, 50) and hd == 10: hd = 12
+        if peak > cap(legs, hd, 50) and hd < 14: hd = 12 if peak <= cap(legs, 12, 50) else 14
         mid = aw(fL + Ls_ / 4, fR - Ls_ / 4)
         smid = 200 if mid <= cap(legs, hd, 200) else 100 if mid <= cap(legs, hd, 100) else 50
         def ssup(pk): return 100 if pk <= cap(legs, hd, 100) else 50
@@ -243,19 +292,22 @@ def unify(groups, tol=300):
                 D = design(cand, 'x')
                 if check(D, cand): continue
                 G[i] = cand; G[j] = []; changed = True
-    return [(None, g) for g in G if g]
+    G = [g for g in G if g]
+    G.sort(key=lambda g: (min(r['z'] for r, _ in g), -g[0][0]['h'], -g[0][0]['b'], g[0][0]['dir'], -(g[0][0]['E1'] - g[0][0]['E0'])))
+    return [(None, g) for g in G]
 
 
 if __name__ == '__main__':
     marks = []
     n0 = len(groups)
-    groups = unify(groups)
+    groups = unify2(groups, int(os.environ.get('UTOL', '600')))
     print('unify: %d -> %d marks' % (n0, len(groups)))
     pickle.dump(groups, open(os.path.join(HERE, 'groups_u.pkl'), 'wb'))
     for k, (s, rs) in enumerate(groups, 1):
         D = design(rs, 'Рм-%d' % k)
         r0 = rs[0][0]
-        D.update(level=LEVEL[r0['z']], z=r0['z'], dir=r0['dir'], count=len(rs),
+        lv = sorted({r['z'] for r, _ in rs})
+        D.update(level=LEVEL[r0['z']], levels=[LEVEL[z] for z in lv], z=r0['z'], dir=r0['dir'], count=len(rs),
                  runs=[dict(A=r['A'], B=r['B'], E0=r['E0'], E1=r['E1'], rev=rev, where=where(r)) for r, rev in rs],
                  where='; '.join(where(r) for r, _ in rs))
         # axes along the mark (local u)

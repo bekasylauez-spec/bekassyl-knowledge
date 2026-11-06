@@ -54,7 +54,7 @@ def plan(z, ox, oy, P, title):
         geo.append((r, A, ux, uy, nx, ny, hb, spans))
     from shapely.geometry import box as _b
     global PLANBOX
-    PLANBOX = _b(min(DS.AXX) - 700, min(DS.AXY) - 700, max(DS.AXX) + 700, max(DS.AXY) + 700)
+    PLANBOX = _b(min(DS.AXX) - 700, min(DS.AXY) - 700, max(DS.AXX) + 3200, max(DS.AXY) + 3400)
     placed = []
     for r, A, ux, uy, nx, ny, hb, spans in geo:
         txt = RM[(r['z'], tuple(r['A']), tuple(r['B']))]
@@ -65,13 +65,13 @@ def plan(z, ox, oy, P, title):
         E0, E1 = r['E0'], r['E1']
         tl = [a + (b - a) * f for a, b in sorted(spans, key=lambda s_: -(s_[1] - s_[0])) for f in (0.5, 0.3, 0.7, 0.2, 0.8)]
         tl += [E0 + (E1 - E0) * k / 10.0 for k in range(1, 10)]
-        outs = [E0 - tw / 2 - d_ for d_ in (700, 1300, 2000)] + [E1 + tw / 2 + d_ for d_ in (700, 1300, 2000)]
+        outs = [E0 - tw / 2 - d_ for d_ in (500, 700, 1000, 1300, 2000)] + [E1 + tw / 2 + d_ for d_ in (500, 700, 1000, 1300, 2000)]
         tl += outs
         for t in tl:
                 tout = t < E0 or t > E1
                 inspan = any(a + 100 <= t - tw / 2 and t + tw / 2 <= b - 100 for a, b in spans)
                 f = 0.0 if inspan else 1.0
-                for sd, lvl in ((1, 1.0), (-1, 1.0), (1, 2.1), (-1, 2.1), (1, 3.4), (-1, 3.4), (1, 4.8), (-1, 4.8), (1, 6.2), (-1, 6.2)):
+                for sd, lvl in ((1, 1.0), (-1, 1.0), (1, 2.1), (-1, 2.1), (1, 3.4), (-1, 3.4), (1, 4.8), (-1, 4.8), (1, 6.2), (-1, 6.2), (1, 9.0), (-1, 9.0), (1, 11.5), (-1, 11.5)):
                     off = sd * (hb + 120 + th / 2 * lvl)
                     cx, cy = A[0] + ux * t + nx * off, A[1] + uy * t + ny * off
                     bx = affinity.rotate(box(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2), ang, origin=(cx, cy), use_radians=True)
@@ -84,12 +84,23 @@ def plan(z, ox, oy, P, title):
             a, b = max(spans, key=lambda s_: s_[1] - s_[0]); t = (a + b) / 2; off = hb + 120 + th / 2
             cx, cy = A[0] + ux * t + nx * off, A[1] + uy * t + ny * off
             cands = [(99, 0, (cx, cy), box(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2), None)]
+        def _score(c_):
+            b_ = c_[0]
+            if c_[4] is not None:
+                ln = LineString([c_[4], c_[3].exterior.interpolate(c_[3].exterior.project(Point(*c_[4]))).coords[0]])
+                b_ += sum(1 for o in placed if ln.intersects(o))
+            return (b_, c_[1])
+        from shapely.geometry import Point
+        cands = [(_score(c_)[0],) + c_[1:] for c_ in cands]
         bad, _, (cx, cy), bx, lead = min(cands, key=lambda c_: (c_[0], c_[1]))
         if DEBUG: print(txt, "bad", bad, "lead", bool(lead), len(cands))
         placed.append(bx)
         if lead:      # far mark: thin leader from the rigel edge to the text box
             ex, ey = bx.exterior.interpolate(bx.exterior.project(__import__('shapely.geometry', fromlist=['Point']).Point(*lead))).coords[0]
+            dl_ = math.hypot(ex - lead[0], ey - lead[1])
+            if dl_ > 400: ex, ey = ex - (ex - lead[0]) / dl_ * 300, ey - (ey - lead[1]) / dl_ * 300
             ops.append(dict(t='pl', p=[T(*lead), T(ex, ey)], layer='0', lw=5, tag=tag('LD')))
+            placed.append(LineString([lead, (ex, ey)]))
         ops.append(dict(t='mtext', at=T(cx, cy), h=125, att=5, rot=rot, s=txt, layer='TEXT 2.5', tag=tag('M')))
     # axes (kit SPDS axis), chains
     xs = sorted(DS.AXX.items()); ys = sorted(DS.AXY.items())

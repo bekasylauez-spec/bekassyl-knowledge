@@ -38,6 +38,11 @@ def inwin(x0, y0, x1, y1, lay=None, t=None):
     return [r['h'] for r in RR if r['x0'] >= x0 and r['x1'] <= x1 and r['y0'] >= y0 and r['y1'] <= y1
             and (lay is None or r['lay'] == lay) and (t is None or r['t'] == t)]
 
+def pts_lv(levels, beams):
+    out = [0.0]
+    for L, hb in zip(levels, beams): out += [L - hb, L]
+    return out
+
 def build(T, k, sheetno):
     O = (SL0 + k * SW, O0[1])
     pre = 'C%d:' % k
@@ -90,13 +95,15 @@ def build(T, k, sheetno):
     f = min(1.0, (Hc - 200) / 2800.0)
     H1 = (levels[0] - beams[0]) if len(levels) > 1 else Hc
     NB0, NST = (950, 550) if H1 >= 4000 else (450, 400)
+    LOW = len(levels) > 1 and (levels[0] - beams[0]) - 300 < NB0 + 3 * NST + 500
+    if LOW: NST = 450; NB0 = levels[0] + 300 - NST
     drop1 = (len(levels) == 1 and Hc < 4000)
     drop2 = (len(levels) == 1 and Hc < 3000)
     i0 = 0
     _P, _segs = colgeo.chain([0.0] + list(levels), list(beams))
     y11 = [y2 for (y1, y2, st, c) in _segs if st in (100, 80) and c > 1][0]
     DY = {'4E95AC': topd, '4E95AA': (YB + Htop - beams[-1]) - 12850, '4E95A8': 0, '4E95A6': (YB - Df) - 5950,
-          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + (1 if drop2 else (2 if drop1 else 3)) * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
+          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + (1 if drop2 else (2 if drop1 else 3)) * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + (300 if LOW else NB0)) - 7900,
           '4E95AF': topd, '4E95B2': 0, '4E95B3': 0, '4E8F9B': topd, '4E8F97': (YB + Htop - beams[-1] / 2) - 13250, '4E8F98': topd,
           '4E8FA1': (YB + y11) - 11054}
     for hh in PARK:
@@ -105,15 +112,14 @@ def build(T, k, sheetno):
     add(t='sp_set', h=S('4E8F9B'), pts=[[0] + A(XR + 1300, YB + Htop + 600)])
     bnd = sorted({v for sg in _segs for v in sg[:2]})
     nnote = 4 - (1 if drop1 else 0) - (1 if drop2 else 0)
-    lo_ = NB0 + (nnote - 1) * NST + 300
-    if len(levels) > 1 and (Hc - levels[-2]) >= 1500:
-        lo_ = levels[-2] + 200; hi_ = Hc - 300 - 250 - 400
-    else:
-        hi_ = (levels[0] - beams[0]) - 300 - 250 - 400
+    band = (NB0 + NST - 350, NB0 + (nnote - 1) * NST + 350)        # bar callouts on the left
+    beamz = [(L - hb - 250, L + 150) for L, hb in zip(levels, beams)]
     ys1r = None
-    for y in range(int(lo_), int(hi_) + 1, 20):
-        if not any(-90 < v - y < 400 for v in bnd): ys1r = y; break
-    if ys1r is None: ys1r = lo_
+    for y in list(range(int(NB0 + (nnote - 1) * NST + 400), int(Hc) - 600, 20)) + list(range(400, int(Hc) - 600, 20)):
+        if any(-90 < v - y < 400 for v in bnd) or any(-300 < v - y < 300 for v in pts_lv(levels, beams)): continue
+        if band[0] < y < band[1] or any(a_ < y < b_ for a_, b_ in beamz): continue
+        ys1r = y; break
+    if ys1r is None: ys1r = NB0 + (nnote - 1) * NST + 300
     ys1 = YB + ys1r
     kc = YB + Htop - beams[-1] / 2.0
     add(t='sp_set', h=S('4E8F97'), pts=[[1] + A(XL - 700, YB + Htop + 250)])
@@ -159,7 +165,9 @@ def build(T, k, sheetno):
     for L, hb in zip(levels, beams): pts += [L - hb, L]
     for a, c in zip(pts, pts[1:]):
         dim('4E9527', A(XL, YB + a), A(XL, YB + c), A(3050, YB + a), HP, txt='', lfac=1)
-    dim('4E9541', A(XL, YB - Df), A(XL, YB + Htop), A(2650, YB - Df), HP, txt='', lfac=1)
+    ys_ = sorted([-Df] + pts_lv(levels, beams))
+    gap = max(zip(ys_, ys_[1:]), key=lambda g: g[1] - g[0])
+    dim('4E9541', A(XL, YB - Df), A(XL, YB + Htop), A(2650, YB - Df), HP, txt='', lfac=1, tx=A(2650 - 95, YB + (gap[0] + gap[1]) / 2))
     # level marks: texts (values are stored as text in the SPDS mark)
     def lv(v):
         if abs(v) < 0.5: return '±0,000'
@@ -179,7 +187,8 @@ def build(T, k, sheetno):
         add(t='sp_set', h=S('4E95AF'), pts=[[0] + A(3920, YB + Htop - beams[-1] - 300), [1] + A(XL + 30, YB + Htop - beams[-1] + 150)])
     for i, (L, hb) in enumerate(zip(levels[:-1], beams[:-1])):
         t = tg(); add(t='clone', h=S('4E95AF'), tag=t)
-        add(t='sp_set', h=t, pts=[[0] + A(3920, YB + L - hb - 300), [1] + A(XL + 30, YB + L - hb + 150)])
+        yC = YB + L - hb + (-250 if (LOW and i == 0) else -300)
+        add(t='sp_set', h=t, pts=[[0] + A(3920, yC), [1] + A(XL + 30, YB + L - hb + 150)])
         add(t='notetxt', h=t, l2='%d шт.' % nmesh[i])
     vp = T.get('vp', 'см. фундамент')
     add(t='notetxt', h=S('4E95B2'), l2=vp); add(t='notetxt', h=S('4E95B3'), l2=vp)
@@ -263,7 +272,7 @@ def build(T, k, sheetno):
     for x in qbx: plc('4E96AC', [A(x, by[0]), A(x, by[-1])])
     for y in by[1:-1]: plc('4E96B0', [A(qbx[0], y), A(qbx[-1], y)])
     add(t='sp_set', h=S('4E96B3'), pts=[[0] + A(QX + 2 * b + 500, SY + 2 * h - 400), [1] + A(qbx[-2], SY + 2 * h - 900)])
-    add(t='sp_set', h=S('4E96B4'), pts=[[0] + A(QX + 2 * b + 500, SY + 300), [1] + A(qbx[-1] - 160, by[1])])
+    add(t='sp_set', h=S('4E96B4'), pts=[[0] + A(QX + 2 * b + 500, min(SY + 300, SY + 2 * h - 400 - 800)), [1] + A(qbx[-1] - 160, by[1])])
     add(t='move', h=[S('4E96B5')], d=[max(0, dxs), 0])
     # ---------- Сетка С1 sketch (x2): x-dir b-40, y-dir h-40 ----------
     MX, MY = 14200.0, 11500.0
