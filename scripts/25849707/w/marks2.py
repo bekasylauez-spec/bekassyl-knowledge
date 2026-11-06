@@ -48,7 +48,7 @@ def core(p0, prof):
         for d in [x for x in D.DS if x >= d0]:
             dz = D.dopz(pr, i, n, d, endL, endR)
             if all(z['k'] <= n - 1 for z in dz): break
-        res[key] = dict(d=d, n=n, max=round(max(v), 2), dop=dz)
+        res[key] = dict(d=28, n=n, max=round(max(v), 2), dop=[])     # Bekassyl 06.11: all main bars Ø28, no доп (not checked)
     sw = [q[4] for q in pr] or [0]; swmax = max(sw); mid = []
     for f0, f1 in spans:
         qq = (f1 - f0) / 4.0; mid += [q[4] for q in pr if q[0] >= f0 + qq - 1 and q[1] <= f1 - qq + 1]

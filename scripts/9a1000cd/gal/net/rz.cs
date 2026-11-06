@@ -885,6 +885,33 @@ namespace RG
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite); d.DimensionText = S(m, "s", "");
             }
+            else if (t == "blkcopy")
+            {
+                // copy block definition "src" to "name" (if missing), replacing MText/Text contents per "repl" {old:new}
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                string nm = S(m, "name", "");
+                if (!bt.Has(nm))
+                {
+                    var src = (BlockTableRecord)tr.GetObject(bt[S(m, "src", "")], OpenMode.ForRead);
+                    var nb = new BlockTableRecord(); nb.Name = nm; nb.Origin = src.Origin;
+                    bt.UpgradeOpen(); var nid = bt.Add(nb); tr.AddNewlyCreatedDBObject(nb, true);
+                    var ids = new ObjectIdCollection(); foreach (ObjectId id in src) ids.Add(id);
+                    var im = new IdMapping(); db.DeepCloneObjects(ids, nid, im, false);
+                    var rp = (Dictionary<string, object>)m["repl"]; int nr = 0;
+                    foreach (IdPair pr in im)
+                    {
+                        if (!pr.IsCloned || !pr.IsPrimary) continue;
+                        var o = tr.GetObject(pr.Value, OpenMode.ForWrite);
+                        var mt = o as MText; var tx = o as DBText;
+                        foreach (var kv in rp)
+                        {
+                            if (mt != null && mt.Text.Trim() == kv.Key) { mt.Contents = kv.Value.ToString(); nr++; }
+                            if (tx != null && tx.TextString.Trim() == kv.Key) { tx.TextString = kv.Value.ToString(); nr++; }
+                        }
+                    }
+                    log.AppendLine("blkcopy " + nm + " repl " + nr);
+                }
+            }
             else if (t == "setblock")
             {
                 // point a block reference at another block definition (same base point)

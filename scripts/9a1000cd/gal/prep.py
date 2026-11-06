@@ -4,7 +4,7 @@ LIRA = r'C:\Users\Admin\AppData\Local\Temp\claude\210ab68cad67e8c1\9a1000cd-e0d9
 sys.path.insert(0, LIRA)
 AXX = {0: '32', 650: '33', 6650: '34', 12650: '35', 18650: '36', 24850: '37', 31850: '38', 38850: '39', 44850: '40'}
 AXY = {0: 'А', 9000: 'Б', 13900: 'В', 21000: 'Г', 27500: 'Д', 36000: 'Е', 39000: 'Ж'}
-BX = {500: [55, 185, 315, 445], 350: [45, 130, 215, 300], 250: [45, 125, 205]}
+SLAB = {'-0.050': 150, '+4.000': 120, '+4.800': 120, '+6.950': 150, '+10.500': 100}
 STOCK = 11700
 PMAX = 21500                 # longest part of a rigel on one A4x3 sheet at 1:50
 SY = 420000.0
@@ -14,14 +14,10 @@ SSC = 2.5
 
 
 def mk(M):
-    r0 = M['runs'][0]
-    E0abs = r0['E0']
-    ax = AXX if M['dir'] == 'X' else AXY
-    M['axes'] = [(c - E0abs, v) for c, v in sorted(ax.items()) if -1 <= c - E0abs <= M['E'] + 1]
-    M['slab'] = 200
-    M['bx'] = BX[M['b']]
+    M['axes'] = [tuple(a) for a in M['axes']]
+    M['slab'] = SLAB[M['level']]
     bx = M['bx']
-    w = bx[2] - bx[0] + 40
+    w = (bx[3] if len(bx) >= 6 else bx[2]) - bx[0] + 40
     M['X1'] = [w + 100, w, M['h'] - 60, M['h'] + 40]
     M['SK'] = [250, M['h'] - 100, 250]
     M['clear'] = sum(b - a for a, b in M['spans'])
@@ -48,13 +44,43 @@ def mk(M):
     for d in M['dops']:
         rows.setdefault(d['pos'], [d['pos'], 28, d['L'], 0])[3] += d['n']
     M['specrows'] = [tuple(rows[k]) for k in sorted(rows, key=int)]
+    if M.get('nside'): M['specrows'].append((M['side_pos'], 12, None, round((M['E'] - 40) / 1000.0 * 2 * M['nside'], 2)))
     if spl: M['specrows'].append(('Н4', 28, 280, len(spl) * M['n'] * 2))
     return M
 
 
+def pmax(M):
+    """tall rigels: sections go right of the elevation (A4x3 height is short) -> shorter parts"""
+    if M['h'] < 1150: return PMAX
+    return 11600 if M['b'] < 700 else 11000
+
+
+TALL = 1150
+P_LAST, P_MID = 11000.0, 19000.0
+NODE0 = (1892.0, 6186.0)          # kit node «А» bbox lower-left (sheet-relative)
+NODE_TALL = (11600.0, 3200.0)     # tall sheets: node «А» below the section, right of the splice table
+
+
+def greedy(E0, E1, P, cuts):
+    out = []; start = E0
+    while E1 - start > P:
+        cand = [c for c in cuts if start + 3000 < c <= start + P]
+        if not cand: break
+        tgt = start + (E1 - start) / math.ceil((E1 - start) / P)
+        c = min(cand, key=lambda c: abs(c - tgt))
+        out.append((start, c)); start = c
+    out.append((start, E1))
+    return out
+
+
 def parts(M):
     """split at support centres into parts <= PMAX"""
-    E = M['E']
+    E = M['E']; PMAX = pmax(M)
+    if M['h'] >= TALL:
+        if E <= P_LAST: return [(0.0, E)]
+        cuts = [(a + b) / 2.0 for a, b, _ in M['sups']]
+        c = min([q for q in cuts if E - q <= P_LAST and q > 3000] or [max(q for q in cuts if q < E - 1)])
+        return greedy(0.0, c, P_MID, cuts) + [(c, E)]
     if E <= PMAX: return [(0.0, E)]
     cuts = [(a + b) / 2.0 for a, b, _ in M['sups']]
     n = int(math.ceil(E / PMAX))
@@ -93,7 +119,7 @@ def sections(M, u0, u1):
     return out
 
 
-def place(M, secs, SX, splices, elev_len):
+def place(M, secs, SX, splices, elev_len, tables=True):
     """section origins (beam bottom-left), sheet units. One row, equal gaps, same baseline."""
     h, b = M['h'], M['b']
     top_lim = (465611 - KY) - (h - 550) - 350
@@ -101,7 +127,9 @@ def place(M, secs, SX, splices, elev_len):
     below = SSC * 560 + 250; above = SSC * (h + 470) + 250
     bands = [((8900.0 if splices else 1300.0), 21900.0, 5400.0, top_lim), (10400.0, 21900.0, 3500.0, top_lim)]
     ee = 3003.0 + elev_len + 2500
-    if ee < 16000: bands.append((ee, 21900.0, 3500.0, 14300.0))
+    if h >= TALL:
+        bands = [(ee, 21900.0 if tables else 30500.0, 6400.0 if splices else (3500.0 if tables else 5000.0), 14300.0)]
+    elif ee < 17200: bands.append((ee, 21900.0, 3500.0, 14300.0))
     W = len(secs) * (left + right)
     for x0, x1, yb, yt in bands:
         if x0 + W <= x1 and yb + below + above <= yt:
@@ -127,13 +155,14 @@ def build(marks, first_no=1):
                         suffix='' if len(pp) == 1 else ' (%d/%d)' % (i + 1, len(pp)))
             while True:
                 try:
-                    part['secpos'] = place(M, secs, SX, bool(spl), u1 - u0); break
+                    part['secpos'] = place(M, secs, SX, bool(spl), u1 - u0, part['tables']); break
                 except RuntimeError:
                     if len(secs) == 1: raise
                     # keep the cuts with the most доп bars
                     secs = sorted(sorted(secs, key=lambda q: -sum(d['n'] for d in q[2]))[:len(secs) - 1], key=lambda q: q[1])
                     secs = [(str(i + 1), x, ds) for i, (_, x, ds) in enumerate(secs)]
                     part['secs'] = secs
+            if spl and M['h'] >= TALL: part['node'] = (NODE_TALL[0] - NODE0[0], NODE_TALL[1] - NODE0[1])
             sheets.append((M, part)); k += 1
     return sheets
 

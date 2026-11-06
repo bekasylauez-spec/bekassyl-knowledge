@@ -897,7 +897,7 @@ else if (t == "sysvar")
                     }
                     if (th > 0) try { cell.Contents[0].TextHeight = th; } catch { }
                 }
-                tb.GenerateLayout();
+                tb.GenerateLayout(); tb.RecomputeTableBlock(true);
             }
             else if (t == "tfmtcopy")
             {
@@ -908,7 +908,7 @@ else if (t == "sysvar")
                 log.AppendLine("fmt '" + fmt + "'");
                 var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 foreach (var q in L(m["cells"])) { var a = L(q); tb.Cells[Convert.ToInt32(a[0]), Convert.ToInt32(a[1])].DataFormat = fmt; }
-                tb.GenerateLayout();
+                tb.GenerateLayout(); tb.RecomputeTableBlock(true);
             }
             else if (t == "viewset" || t == "viewrestore")
             {
@@ -1792,7 +1792,7 @@ else if (t == "sysvar")
                             cl.Borders.Left.LineWeight = lw; cl.Borders.Right.LineWeight = lw;
                         }
                 }
-                tb.GenerateLayout();
+                tb.GenerateLayout(); tb.RecomputeTableBlock(true);
                 log.AppendLine("tfix " + S(m, "h", "") + " w=" + tb.Width.ToString("0", IC) + " h=" + tb.Height.ToString("0", IC));
             }
             else if (t == "laycopy")

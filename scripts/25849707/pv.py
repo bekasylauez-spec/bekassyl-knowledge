@@ -1,9 +1,11 @@
 import gx,sys,os,fitz,subprocess
 P=gx.S+r'\pv'
 def snap():
+    import shutil
     f=os.path.join(P,'snap.dwg')
-    if os.path.exists(f): os.remove(f)
-    return gx.run([dict(t='wblock',file=f)],'wb')
+    out=gx.run([dict(t='save')],'sv')
+    shutil.copy(r'D:\РАБОЧКА\От Шерхан\Бдм Блок 1\Б1.ригели.dwg', f)
+    return out
 def plot(name,x0,y0,x1,y1,paper='ISO без полей A3 (420.00 x 297.00 мм)',orient='_L',dpi=150,quarters=0,dosnap=True):
     if dosnap: snap()
     pdf=os.path.join(P,name+'.pdf')

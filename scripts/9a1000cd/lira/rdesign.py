@@ -124,8 +124,25 @@ def design(rs, mark):
         if a < 50: b_ += 50 - a; a = 50
         if b_ > E - 50: a -= b_ - (E - 50); b_ = E - 50
         d['a'], d['b'] = max(50, a), b_; d['L'] = int(round(d['b'] - d['a']))
-    Ls = sorted(set(d['L'] for d in dops), reverse=True)
-    for d in dops: d['pos'] = str(2 + Ls.index(d['L']))
+    for top in (True, False):              # one length per group: the longest one, bars re-centred inside the beam
+        grp = [d for d in dops if d['top'] == top]
+        if not grp: continue
+        Lg = max(d['L'] for d in grp)
+        for d in grp:
+            c = (d['a'] + d['b']) / 2.0; a, b_ = c - Lg / 2.0, c + Lg / 2.0
+            if a < 50: b_ += 50 - a; a = 50
+            if b_ > E - 50: a -= b_ - (E - 50); b_ = E - 50
+            d['a'], d['b'], d['L'] = a, b_, Lg
+    out = []                               # lengthened bars of one row must not overlap: merge them
+    for top in (True, False):
+        g = sorted([d for d in dops if d['top'] == top], key=lambda d: d['a'])
+        for d in g:
+            if out and out[-1]['top'] == top and d['a'] < out[-1]['b'] + 100:
+                o = out[-1]; o['b'] = max(o['b'], d['b']); o['n'] = max(o['n'], d['n']); o['L'] = int(round(o['b'] - o['a']))
+            else: out.append(d)
+    dops = out
+    Ls = sorted(set((d['top'], d['L']) for d in dops), key=lambda q: (not q[0], -q[1]))
+    for d in dops: d['pos'] = str(2 + Ls.index((d['top'], d['L'])))
     nside = side_bars(h)
     side_pos = str(2 + len(Ls)) if nside else None
     # ---- hoops per span
