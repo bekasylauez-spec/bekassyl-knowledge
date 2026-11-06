@@ -9,9 +9,7 @@ if ($LASTEXITCODE -ne 0) { throw "compile failed" }
 $lines = @("(setvar `"SECURELOAD`" 0)", "(setvar `"FILEDIA`" 0)", "_.NETLOAD", "`"$dll`"", $Cmd) + $Extra
 if ($Save) { $lines += @("_.QSAVE") }
 $lines += @("_.QUIT", "_Y")
-$tagd = [IO.Path]::GetFileNameWithoutExtension($Dwg); $scr = "$SP
-et
-un_${name}_$tagd.scr"
+$tagd = [IO.Path]::GetFileNameWithoutExtension($Dwg); $scr = "$SP\net\run_${name}_$tagd.scr"
 [IO.File]::WriteAllText($scr, ($lines -join "`r`n") + "`r`n", [Text.Encoding]::GetEncoding(1251))
 $psi = New-Object Diagnostics.ProcessStartInfo "$acad\accoreconsole.exe", "/i `"$Dwg`" /s `"$scr`" /l ru-RU"
 $psi.UseShellExecute = $false; $psi.CreateNoWindow = $true; $psi.RedirectStandardOutput = $true

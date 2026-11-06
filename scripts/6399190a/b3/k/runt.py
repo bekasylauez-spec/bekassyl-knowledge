@@ -10,9 +10,6 @@ for k, T in enumerate(TY):
     lib.op(t='eraseregion', win=[X0 - 2, Y0 - 2, X0 + 29702, Y0 + 21002], mode='intersect')
     st = len(lib.OPS); info = gt.build(X0, Y0, T, '4.%d' % (k + 2)); place.resolve(lib.OPS, st)
     lay = '4.%d' % (k + 2)
-    lib.op(t='laydel', name=lay)
-    lib.op(t='laycopy', src='0', dst=lay)
-    lib.op(t='vpset2', layout=lay, media='ISO_full_bleed_A2_(594.00_x_420.00_MM)', win=[X0, Y0, X0 + 29700, Y0 + 21000], scale=50)
     lib.op(t='save')
     errs = []
     for i in range(0, len(lib.OPS), 25):
