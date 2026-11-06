@@ -11,7 +11,7 @@ K1X = 172179.0                       # kit 6.1 sheet origin (same y)
 XE0 = 301182.0                       # kit beam end E0 (x)
 YT, YB = 468700.0, 468150.0
 SEC0 = (305617.0, 462413.0)          # kit section S0: beam bottom-left (xL, yb), drawn x2.5
-SSC = 2.0                            # our sections: x2 (1:25 on the 1:50 sheet)
+SSC = 2.5                            # sections x2.5 (1:20 on the 1:50 sheet, as the analog)
 DIA = 28
 NODE_A = [k for k in K1 if k.startswith('A1:407B') and k not in ('A1:407BC4',)]
 SPL = dict(top=['A1:4038F3', 'A1:4038F2'], bot=['A1:403948', 'A1:403947'], tdim=['A1:4038F1', 'A1:4038F5'],
@@ -47,7 +47,10 @@ class Sheet:
 
     # ------------------------------------------------------------------ kit clone
     def clone_ops(s, splices):
-        ops = [dict(t='eraseregion', win=[KX + s.dx - 10, KY + s.dy - 10, KX + s.dx + 31510, KY + s.dy + 14860])]
+        import re
+        mp = gx.tagmap(); rx = re.compile('^' + re.escape(s.P) + '(?=[:XSN_])')
+        old = [v for k, v in mp.items() if rx.match(k)]
+        ops = ([dict(t='erase', h=old)] if old else []) + [dict(t='eraseregion', win=[KX + s.dx - 10, KY + s.dy - 10, KX + s.dx + 31510, KY + s.dy + 14860])]
         for r in K:
             if not r.startswith('A5') or r.startswith('A5S1_') or r.startswith('A5S2_'): continue
             ops.append(dict(t='clone', h=K[r]['h'], base=[0, 0], to=[s.dx, s.dy], tag=s.P + r[2:]))
@@ -139,8 +142,11 @@ class Sheet:
             return 0.0
         for z in M['zones']:
             if z['fR'] < u0 + 1 or z['fL'] > u1 - 1: continue
-            l0 = next(((a + b) / 2.0 for a, b, _ in M['sups'] if abs(b - z['fL']) < 2), z['fL'] if z['fL'] > 1 else 0.0)
-            l1 = next(((a + b) / 2.0 for a, b, _ in M['sups'] if abs(a - z['fR']) < 2), z['fR'] if z['fR'] < M['E'] - 1 else M['E'])
+            def refp(a, b):          # axis inside the support, else its centre
+                ax_in = [u for u, _ in M['axes'] if a - 1 <= u <= b + 1]
+                return ax_in[0] if ax_in else (a + b) / 2.0
+            l0 = next((refp(a, b) for a, b, _ in M['sups'] if abs(b - z['fL']) < 2), z['fL'] if z['fL'] > 1 else 0.0)
+            l1 = next((refp(a, b) for a, b, _ in M['sups'] if abs(a - z['fR']) < 2), z['fR'] if z['fR'] < M['E'] - 1 else M['E'])
             l0, l1 = max(l0, u0), min(l1, u1)
             for x in z['lines']:
                 h = HL.pop(0) if HL else s.clone(T('A5:4015B6'), 'HL')
@@ -286,13 +292,18 @@ class Sheet:
             st = (BX[-1] - BX[0]) / (nb - 1)
             s.add(t='dimtext', h=Q('2CB052'), s='%dх%d=%d' % (round(st), nb - 1, round(BX[-1] - BX[0])))
             s.add(t='dimpts', h=Q('2CAFE5'), p1=g(b, 0) + [0], p2=g(BX[-1], 0) + [0], dl=g(BX[-1], yd) + [0])
-            s.add(t='dimpts', h=Q('2CB028'), p1=g(0, 0) + [0], p2=g(b, 0) + [0], dl=g(b, -560) + [0])
+            s.add(t='dimpts', h=Q('2CB028'), p1=g(0, yd) + [0], p2=g(b, yd) + [0], dl=g(b, -648) + [0])
             xv = -230.0
             for hh, (p, q) in zip(['2CAFAA', '2CAFBB', '2CAFCA'], [(0, yB), (yB, yT), (yT, h)]):
                 s.add(t='dimpts', h=Q(hh), p1=g(BX[0] + 50, p) + [0], p2=g(BX[0] + 50, q) + [0], dl=g(xv, q) + [0])
             s.add(t='dimpts', h=Q('2CB01B'), p1=g(-173, h) + [0], p2=g(0, 0) + [0], dl=g(-400, 0) + [0])
             for hh in ['2CAF9A', '2CAFE5', '2CB028', '2CAFAA', '2CAFBB', '2CAFCA', '2CB01B']: s.add(t='dimtext', h=Q(hh), s='')
-            s.add(t='dimdef', h=[Q(hh) for hh in ['2CAF9A', '2CB052', '2CAFE5', '2CB028', '2CAFAA', '2CAFBB', '2CAFCA', '2CB01B']])
+            s.add(t='dimdef', h=[Q(hh) for hh in ['2CB028', '2CAFBB', '2CB01B']])
+            s.add(t='dimdef', h=[Q('2CB052')])
+            s.add(t='dimtx', h=Q('2CAF9A'), at=g(-95, yd + 45) + [0])
+            s.add(t='dimtx', h=Q('2CAFE5'), at=g(b + 95, yd + 45) + [0])
+            s.add(t='dimtx', h=Q('2CAFAA'), at=g(xv - 45, -95) + [0])
+            s.add(t='dimtx', h=Q('2CAFCA'), at=g(xv - 45, h + 95) + [0])
             for hh, x in (('2CB014', b + 173), ('2CB015', -173)):
                 s.add(t='mcset', h=Q(hh), set={'StartPoint': g(x, h - sl), 'EndPoint': g(x, h), 'ClipZonePoint': g(x, h), 'Length': SSC * sl})
             s.add(t='moveto', h=Q('2CB018'), idx=0, to=g(-173, h))
@@ -301,7 +312,7 @@ class Sheet:
             ys = h + 170
             s.add(t='combsegs', h=Q('2CB019'), segs=[[g(x, yT - 1), g(x + 90, ys)] for x in BX], start=g(BX[-1] + 90, ys), end=g(BX[0] + 90, ys), trim=True)
             s.add(t='mcset', h=Q('2CB019'), set={'SecondLine': '(ф%d)' % DIA})
-            yk = yB - 160
+            yk = yB - 151
             s.add(t='combsegs', h=Q('2CB01A'), segs=[[g(x, yB - 2), g(x + 75, yk)] for x in BX], start=g(BX[-1] + 115, yk), end=g(BX[0] + 75, yk), trim=True)
             s.add(t='mcset', h=Q('2CB01A'), set={'SecondLine': '(ф%d)' % DIA})
             ym = (yB + yT) / 2
@@ -347,6 +358,7 @@ class Sheet:
         vals = {'A5:406493': X1[0], 'A5:40648A': X1[1], 'A5:40648B': X1[2], 'A5:40648D': X1[3], 'A5:406499': sum(X1),
                 'A5:4064A7': SK[1], 'A5:4064A8': SK[0], 'A5:4064AB': SK[2], 'A5:4064B0': sum(SK)}
         for r, v in vals.items(): s.add(t='settext', h=T(r), s=str(v))
+        s.add(t='move', h=[T('A5:4064B0'), T('A5:4064B9'), T('A5:406499'), T('A5:4064A4')], d=[-260, 0])
         s.add(t='settext', h=T('A5:404440'), s=s.part['no'])
         s.add(t='settext', h=T('A5:404442'), s='Ригель ' + M['mark'])
         s.add(t='settext', h=T('A5:40443D'), s='\\pxi-3.3333,l3.3333,t3.3333;1.\tОбщие указания см. л. - 1.1\\P2.\tДанный лист читать '

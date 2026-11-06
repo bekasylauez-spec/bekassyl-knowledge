@@ -10,7 +10,7 @@ PMAX = 21500                 # longest part of a rigel on one A4x3 sheet at 1:50
 SY = 420000.0
 SX0 = 172179.0
 KY = 455939.0
-SSC = 2.0
+SSC = 2.5
 
 
 def mk(M):

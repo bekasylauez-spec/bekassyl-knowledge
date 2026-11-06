@@ -18,7 +18,7 @@ def fresh(k, P):
 
 def sec_layout(G):
     defs = G['secdefs']; b = G['b']
-    SEC_Y = min(417700.0, 420195.0 - 3.5 * G['h'])
+    SEC_Y = min(417700.0, 420195.0 - 3.5 * G['h'] + (250.0 if G['h'] >= 1000 else 0.0))
     n = len(defs)
     G['secLM'] = not (n >= 3 and (b + 1408) * 2.5 * n > SEC_X1 - SEC_X0)
     w = ((b + 1408) if G['secLM'] else (b + 1083)) * 2.5

@@ -86,7 +86,8 @@ def build(S, F):
     YTB, YBB = YT - 30, YB + 50
     X = lambda u: S.x(XL0 + (u - F['u0']))
     Y = lambda ay: S.y(ay)
-    YL = lambda ay: S.y(ay - dH)                   # analog objects below the beam: shifted down by dH
+    cmp_ = 250.0 if h >= 1000 else 0.0              # deep beams: lower rows a bit closer (room for the 1:20 sections)
+    YL = lambda ay: S.y(ay - dH + cmp_)            # analog objects below the beam: shifted down by dH
     A = S.A; add = S.add
     sup = F['sup']
     # ---- supports: columns (rect + breaks) or supporting beams (rect, no breaks)

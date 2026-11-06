@@ -82,7 +82,8 @@ def section(S, F, j, word, T0, tops=0, bots=0, dpos=None):
         ops.append(dict(t='dimpts', h=hh, p1=f(q, 0) + [0], p2=f(p, 0) + [0], dl=f(p, yd) + [0]))
         if txt: ops.append(dict(t='dimtext', h=hh, s=txt))
     ops.append(dict(t='erase', h=hp))
-    ops.append(dict(t='dimpts', h=P(SDTOT), p1=f(0, 0) + [0], p2=f(b, 0) + [0], dl=f(b, -648) + [0]))
+    if h < 1000: ops.append(dict(t='dimpts', h=P(SDTOT), p1=f(0, 0) + [0], p2=f(b, 0) + [0], dl=f(b, -648) + [0]))
+    else: ops.append(dict(t='erase', h=[P(SDTOT)]))
     xv, xt = -264.0, -453.0
     ops.append(dict(t='dimpts', h=P(SDV['bot']), p1=f(50, 0) + [0], p2=f(50, 50) + [0], dl=f(xv, 50) + [0]))
     ops.append(dict(t='dimpts', h=P(SDV['hin']), p1=f(50, 50) + [0], p2=f(50, h - 30) + [0], dl=f(xv, h - 30) + [0]))

@@ -65,7 +65,7 @@ for g, mem in groups.items():
     for t in mem:
         v = mx(t[0])
         for c in cl:
-            if all(v[i] >= 0.7 * c['v'][i] - 1.0 for i in range(3)): c['m'].append(t); break
+            if True: c['m'].append(t); break
         else: cl.append(dict(v=v, m=[t]))
     for c in cl:
         c['m'].sort(key=lambda t: (t[0]['c'], t[0]['a0'])); clusters.append(c['m'])
