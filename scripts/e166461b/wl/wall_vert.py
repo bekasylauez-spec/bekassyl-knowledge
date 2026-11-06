@@ -69,9 +69,21 @@ for i, ((a, b), (la, lb), (el, er)) in enumerate(zip(PIECES, LIRA, CFG.get('LEND
     REQ.append(row)
 # one Ø per group for all edge zones and one (Ø, step) for all middle zones (fewer positions, as in the analog)
 D = [[None] * 4 for _ in range(NP)]
+# Bekassyl 06.11: vertical Ø never grows upwards (if the top needs Ø25 the Ø25 bars start from the bottom); within that, the least
+# steel: edge zones ш.100 with the smallest Ø >= the group above; middle the (Ø, step) of least As/m that covers LIRA with Ø >= above
+MIDOPT = sorted([(d_, s_) for d_ in DS for s_ in (200, 100)], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
+GD = [None] * 4
+for g in (3, 2, 1, 0):
+    rq = [REQ[i][g] for i in range(NP) if REQ[i][g]]
+    de = max([x for r_ in rq for x in r_[:2] if x] or [12])
+    need = max(A(r_[2]) * 1000 / r_[3] for r_ in rq) if rq else 0
+    dmin_e = GD[g + 1][0] if g < 3 else 0
+    dmin_m = GD[g + 1][1] if g < 3 else 0
+    dm, sm = next((d_, s_) for d_, s_ in MIDOPT if d_ >= max(dmin_m, 12) and A(d_) * 1000 / s_ >= need - 1e-6)
+    de = max(de, dmin_e, dm if CFG.get('EDGE_GE_MID') else 0)
+    GD[g] = (de, dm, sm)
 for g in range(4):
-    de = max([x for i in range(NP) if REQ[i][g] for x in REQ[i][g][:2] if x] or [12])
-    dm, sm = max([REQ[i][g][2:] for i in range(NP) if REQ[i][g]], key=lambda t: (A(t[0]) * 1000 / t[1], -t[1]))
+    de, dm, sm = GD[g]
     if CFG.get('EDGE_GE_MID') and de < dm: de = dm                     # free-end edge zone never thinner than the middle
     for i, ((a, b), (el, er)) in enumerate(zip(PIECES, ENDS)):
         if g == 0 and CFG.get('PIECES0') and CFG['PIECES0'][i] is None: D[i][g] = []; continue
@@ -79,9 +91,9 @@ for g in range(4):
         if CFG.get('ENDS_G', {}).get('%d|%d' % (i, g)): el, er = CFG['ENDS_G']['%d|%d' % (i, g)]
         D[i][g] = make_zones(a, b, el, er, de, de, dm, sm)
         if g == 0 and CFG.get('ONE0'): D[i][g] = make_zones(CFG['ONE0'][0], CFG['ONE0'][1], False, False, de, de, dm, sm) if i == 0 else []
-if CFG.get('SMOOTH'):                                    # rule: Ø of neighbouring storey groups differ by <= 4 mm (raise the smaller one)
+if CFG.get('SMOOTH'):                                    # (06.11: the ±4 mm raising is replaced by the 'never grows upwards' rule above)
     for kind in 'LRM':
-        for _ in range(4):
+        for _ in range(0):
             for i in range(NP):
                 ds = [next((z[3] for z in D[i][g] if z[0] == kind), None) for g in range(4)]
                 for g in range(4):
@@ -133,7 +145,7 @@ def run(go=False):
     DIAGE = {(round(r['sp'][2][0]), round(r['sp'][2][1])): (r['sp'][0], r['sp'][1]) for r in R if r['t'] == 'LWPOLYLINE' and len(r['sp']) == 3 and r['y0'] > L[0] - 1100}
     try:
         mp_ = json.load(open(os.environ['TEMP'] + '/gx_map.json', encoding='utf-8-sig'))
-        old_ = [v_ for k_, v_ in mp_.items() if k_.startswith('WVa%d_' % SX)]
+        old_ = [v_ for k_, v_ in mp_.items() if k_.startswith('WVa%d_' % SX) or k_.startswith('WVa%d_' % CFG.get('OLDSX', -1))]
     except Exception: old_ = []
     er += old_                                           # clones of an earlier run of this sheet
     ops = [dict(t='clone', h=tN, base=[0, 0], to=[0, -200000], tag='S1N'), dict(t='clone', h=tC, base=[0, 0], to=[0, -200000], tag='S1C'),

@@ -75,7 +75,7 @@ def build(T, k, sheetno):
     add(t='erase', h=[S(x) for x in sorted(set(er))])
     # ---------- facade: stretch heights / width ----------
     yb_top = YB + Htop - beams[-1]
-    PARK = ['4E95A6', '4E95A8', '4E95AA', '4E95AC', '4E95AD', '4E95AE', '4E95AF', '4E95B0', '4E95B1', '4E95B2', '4E95B3', '4E8F9B', '4E8F97', '4E8F98', '4E8FA1']
+    PARK = ['4E95A6', '4E95A8', '4E95AA', '4E95AC', '4E95AD', '4E95AE', '4E95AF', '4E95B0', '4E95B1', '4E95B2', '4E95B3', '4E8F9B', '4E8F97']
     add(t='move', h=[S(x) for x in PARK], d=[300000, 0])
     add(t='pmap', win=A(0, 4500) + A(7400, 16200), axis='y',
         pairs=[[O[1] + 5950, O[1] + YB - Df], [O[1] + 6950, O[1] + YB], [O[1] + 12850, O[1] + yb_top], [O[1] + 13650, O[1] + YB + Htop]])
@@ -84,12 +84,21 @@ def build(T, k, sheetno):
     Hc = Htop - beams[-1]
     topd = (YB + Htop) - 13650
     f = min(1.0, (Hc - 200) / 2800.0)
+    NB0, NST = (950, 550) if Hc >= 4000 else (450, 450)
+    i0 = 0
+    _P, _segs = colgeo.chain([0.0] + list(levels), list(beams))
+    y11 = [y2 for (y1, y2, st, c) in _segs if st == 100 and c > 1][0]
     DY = {'4E95AC': topd, '4E95AA': (YB + Htop - beams[-1]) - 12850, '4E95A8': 0, '4E95A6': (YB - Df) - 5950,
-          '4E95AD': (9000 - YB) * (f - 1), '4E95AE': (9550 - YB) * (f - 1), '4E95B0': (8450 - YB) * (f - 1), '4E95B1': (7900 - YB) * (f - 1),
+          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + 3 * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
           '4E95AF': topd, '4E95B2': 0, '4E95B3': 0, '4E8F9B': topd, '4E8F97': (YB + Htop - beams[-1] / 2) - 13250, '4E8F98': topd,
-          '4E8FA1': (YB + 0.55 * Hc) - 11054}
+          '4E8FA1': (YB + y11) - 11054}
     for hh in PARK:
         add(t='move', h=[S(hh)], d=[-300000, DY[hh]])
+    ysec = YB + (11054 - 6950) * (Hc / 5900.0)
+    ys1 = YB + NB0 + 3 * NST + 350 if len(levels) == 1 else YB + (levels[-2] + Hc) / 2.0
+    kc = YB + Htop - beams[-1] / 2.0
+    add(t='sp_set', h=S('4E8F97'), pts=[[1] + A(XL - 700, YB + Htop + 250)])
+    add(t='sp_set', h=S('4E8FA1'), pts=[[0] + A(XL - 350, ys1), [1] + A(XR + 350, ys1)])
     # bars, выпуски, накладки
     xs = [XL + 56 + i * (h - 112) / (nh - 1) for i in range(nh)]
     for i, x in enumerate(xs):
@@ -122,8 +131,8 @@ def build(T, k, sheetno):
     for (y1, y2, st, cnt) in segs:
         if cnt > 1:
             dim('4E9560', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, txt='%dх%d' % (st, cnt), lfac=1)
-        elif abs(y2 - y1 - 50) < 1:
-            dim('4E954E', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, tx=A(DLR + 260, YB + (y1 + y2) / 2))
+        elif abs(y2 - y1 - 50) < 1 or (y2 - y1) < 400:
+            dim('4E954E', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, tx=A(DLR + 260 + (0 if abs(y2 - y1 - 50) < 1 else 60), YB + (y1 + y2) / 2))
         else:
             dim('4E9599', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, txt='', lfac=1)
     # left dims: Фм/ригель below | storeys | beams ; total
@@ -147,7 +156,7 @@ def build(T, k, sheetno):
         add(t='levelval', h=S(hh), old=ana[hh], value=lv(v), tag=S(hh) + 'v')
     # facade notes
     add(t='notetxt', h=S('4E95AF'), l2='%d шт.' % nmesh[-1])
-    if len(levels) > 1:
+    if True:
         add(t='sp_set', h=S('4E95AF'), pts=[[0] + A(3920, YB + Htop - beams[-1] / 2 + 150), [1] + A(XL + 30, YB + Htop - beams[-1] / 2 - 150)])
     for i, (L, hb) in enumerate(zip(levels[:-1], beams[:-1])):
         t = tg(); add(t='clone', h=S('4E95AF'), tag=t)
@@ -156,10 +165,10 @@ def build(T, k, sheetno):
     vp = T.get('vp', 'см. фундамент')
     add(t='notetxt', h=S('4E95B2'), l2=vp); add(t='notetxt', h=S('4E95B3'), l2=vp)
     ys_ = [r for r in ('4E95AD', '4E95AE')]
-    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + 2950 * f)])
-    add(t='sp_set', h=S('4E95AD'), pts=[[1] + A(xs[0], YB + 2400 * f)])
+    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + NB0 + 3 * NST - 300)])
+    add(t='sp_set', h=S('4E95AD'), pts=[[1] + A(xs[0], YB + NB0 + 2 * NST - 300)])
     add(t='sp_set', h=S('4E95B1'), pts=[[1] + A(xs[0] - 42, YB + 600)])
-    zx = min(P, key=lambda z: abs(z - 1950 * f))
+    zx = min(P, key=lambda z: abs(z - (NB0 + NST - 150)))
     add(t='sp_set', h=S('4E95B0'), pts=[[1] + A(XL + 37, YB + zx)])
     # ---------- section 1-1 (x2) ----------
     SX, SY = 8600.0, 16300.0
