@@ -133,6 +133,11 @@ def build(B):
         if q - p < 400: add(t='dimtx', h=hh, at=[X(p) - 190 if p == r2[0] else X(q) + 190, 466830, 0])
     add(t='erase', h=cp)
     add(t='dimpts', h=A('401292'), p1=[X(r2[0]), 466361, 0], p2=[X(r2[-1]), 466361, 0], dl=[X(r2[-1]), 466411, 0])
+    tc = (r2[0] + r2[-1]) / 2.0
+    if any(abs(x - tc) < 700 for x in r2[1:-1]):
+        segs_ = sorted(zip(r2, r2[1:]), key=lambda pq: abs((pq[0] + pq[1]) / 2.0 - tc))
+        tc = (segs_[0][0] + segs_[0][1]) / 2.0
+    add(t='dimtx', h=A('401292'), at=[X(tc), 466411 + 60, 0])
     # ---- height dims at the left end
     add(t='dimpts', h=A('4015A4'), p1=[X(E0), YT, 0], p2=[X(E0), YB, 0], dl=[174210 + D, YB, 0])
     add(t='dimpts', h=A('4015AD'), p1=[X(E0), YB, 0], p2=[X(E0), YBB, 0], dl=[174745 + D, YBB, 0])

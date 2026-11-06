@@ -129,6 +129,13 @@ namespace RG
                 Props(pl, m, db, tr);
                 MS(db, tr).AppendEntity(pl); tr.AddNewlyCreatedDBObject(pl, true); Tag(m, pl);
             }
+            else if (t == "plw")
+            {
+                // polyline: constant width + per-vertex bulges
+                var pl = (Polyline)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                if (Has(m, "bulges")) { var bl = L(m["bulges"]); for (int i = 0; i < bl.Count && i < pl.NumberOfVertices; i++) pl.SetBulgeAt(i, D(bl[i])); }
+                if (Has(m, "cw")) pl.ConstantWidth = D(m["cw"]);
+            }
             else if (t == "plset")
             {
                 var pl = (Polyline)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);

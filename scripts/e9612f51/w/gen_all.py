@@ -100,7 +100,7 @@ for mi, (sig, parts) in enumerate(marks.items(), 1):
         mids = [(p_ + q_) / 2.0 for p_, q_ in zip(row2, row2[1:])]
         for a_, b_ in sp:
             sg_, ln_, _c = _za(a_, b_); mids += [(u + v) / 2.0 for u, v, _t in sg_]
-        avoid = [c for gg in spT + spB for c in gg[:2]] + [x for x, _ in ax] + mids
+        avoid = [c for gg in spT + spB for c in gg[:2]] + [x for x, _ in ax] + mids + [(a0 + a1) / 2.0 + d_ for d_ in (-900, -450, 0, 450, 900)]
         cand = [a + (b - a) * f for a, b in sp if b - a > 1200 for f in (0.25, 0.4, 0.6, 0.75)] or [(lng[0] + lng[1]) / 2.0]
         secx = max(cand, key=lambda c: min([abs(c - q) for q in avoid] + [1e9]))
         no += 1

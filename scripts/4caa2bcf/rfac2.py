@@ -39,7 +39,7 @@ def facade2(s, B, part, secmarks):
     obst += [c + d_ for c in bot_ for d_ in (-250, 250)]          # bottom comb leaders rise through the beam
     obst += [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
     obst += [e for dp in B.get('dop', []) for e in (dp['u0'], dp['u1'])]
-    obst += [g['u0'] + d_ for d_ in range(-200, 1700, 100)] if not part['brkL'] else []   # level mark + Ск1 note at the start
+    obst += [g['u0'] + d_ for d_ in range(-200, 1200, 100)] if not part['brkL'] else []   # level mark + Ск1 note at the start
     obst += [g['u1'] - d_ for d_ in range(0, 900, 100)] if not part['brkR'] else []
     shelves = []
     def place_x(lo, hi, pref, left=False, strict=False):
@@ -84,7 +84,9 @@ def facade2(s, B, part, secmarks):
     add(t='erase', h=[A(h) for h in POS2['bar'] + POS2['note']])
     # «1 (ф25)» per clear segment (shelf above the beam), placed clear of dims / other shelves
     take, rest = pool(SPDS['n1'], s, 'N1')
+    longest = max(g['segs'], key=lambda t: t[1] - t[0]) if g['segs'] else None
     for a, b in g['segs']:
+        if b - a < 2500 and (a, b) != longest: continue
         x = X(place_x(a + 200, b - 900, (a + b) / 2.0))
         hn = take()
         add(t='spmove', h=hn, items=[[0, x, yu(469238.6) - 140], [1, x, YBB], [2, x, YTB]])

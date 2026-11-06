@@ -91,7 +91,7 @@ if __name__ == '__main__':
         log('RESULT', k, 'OK' if good else 'FAIL')
         if good:
             keep_good(); i += 1; tries = 0
-            if i % 2 == 0: restart()
+            restart()
         else:
             tries += 1
             if tries > 3: log('GIVE UP', k); break

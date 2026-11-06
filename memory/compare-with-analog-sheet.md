@@ -12,3 +12,5 @@ metadata:
 **How to apply:** әр стена/парақ бітсе — аналог PDF кесінділері мен біздің кесінділерді қатар қара; автотүзету скрипттері (tickfix т.б.) аналог объектісінің пішінін өзгертпесін. Байланысты: [[no-repeat-check-pipeline]], [[check-callouts-honestly]], [[cad-clone-analog-stretch]].
 
 Also (05.11): if a wall part does not reach the top storey, that storey gets its own section 2-2 (marks «2», separate opalubka and armirovanie plans copied from the analog, without the missing part); every wall piece on the formwork elevation gets the thick per-storey contour like the main piece.
+
+06.11 (ЖК Галакси ригели, «бірнеше сызық жоқ»): settext replaced MTEXT titles with plain text → lost the analog's underline `{\L…}`; the analog «Ведомость деталей» table (dynamic block) was missing. Before showing: diff analog vs sheet not only by LINE geometry but also MTEXT formatting codes and block INSERTs; when setting a title keep its `{\L…}`.
