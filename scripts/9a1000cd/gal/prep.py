@@ -21,6 +21,9 @@ def mk(M):
     M['X1'] = [w + 100, w, M['h'] - 60, M['h'] + 40]
     M['SK'] = [250, M['h'] - 100, 250]
     M['clear'] = sum(b - a for a, b in M['spans'])
+    # pins Шп1 (Bekassyl 06.11): every side-bar row, at every hoop, Ø = hoop Ø, A240
+    M['npin'] = M.get('nside', 0) * M['NH']
+    M['pinS'] = int(round(bx[-1] - bx[0] - 14)); M['pinL'] = M['pinS'] + 200
     # splice stations for bars longer than the stock length
     spl = []
     if M['E'] - 40 > STOCK:

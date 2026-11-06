@@ -13,6 +13,8 @@ YT, YB = 468700.0, 468150.0
 SEC0 = (305617.0, 462413.0)          # kit section S0: beam bottom-left (xL, yb), drawn x2.5
 SSC = 2.5                            # sections x2.5 (1:20 on the 1:50 sheet, as the analog)
 DIA = 28
+PINSRC, PINB = 'PIN0:19EC6', [0.0, 300000.0]   # «Шпилька_динамическая2» imported from Шаблон для Кж.dwg (handle 19EC6)
+TPL = r'D:\РАБОЧКА\Шаблон для Кж.dwg'
 _R65 = set(k[2:] for k in K)
 NODE_A = [k for k in K1 if k.startswith('A1:407B') and k[2:] not in _R65]
 SPL = dict(top=['A1:4038F3', 'A1:4038F2'], bot=['A1:403948', 'A1:403947'], tdim=['A1:4038F1', 'A1:4038F5'],
@@ -237,7 +239,7 @@ class Sheet:
             s.add(t='mcset', h=h, set={'SecondLine': '(ф%d)' % DIA})
         s.add(t='erase', h=n1)
         s.add(t='moveto', h=T('A5:414D1E'), idx=1, to=[X(u1) + 120, ych])
-        s.add(t='mcset', h=T('A5:414D1E'), set={'FirstLine': 'Шаг хомута', 'SecondLine': 'Х1(ф%d)' % M['hd']})
+        s.add(t='mcset', h=T('A5:414D1E'), set={'FirstLine': 'Шаг хомута', 'SecondLine': ('Х1, Шп1(ф%d)' if M.get('npin') else 'Х1(ф%d)') % M['hd']})
         # section marks
         sp = [T(r) for r in ['A5:4015BF', 'A5:40F7E4', 'A5:40F7E6']]
         for (w, x, _) in s.part['secs']:
@@ -265,15 +267,27 @@ class Sheet:
         tops = [p for p in st if p[0] == 'top']; bots = [p for p in st if p[0] == 'bot']
         def plate(hh, c, y):
             s.add(t='plset', h=hh, p=[[X(c) - 140, y - 15], [X(c) - 140, y + 15], [X(c) + 140, y + 15], [X(c) + 140, y - 15]], closed=True)
+        cs = sorted([(a + b) / 2.0 for a, b, _ in s.M['sups']] + [u for u, _ in s.M['axes']])
+        def fixref(ref, c, lo_=None):
+            lo_ = s.u0 if lo_ is None else lo_
+            if lo_ - 1 <= ref <= c: return ref
+            q = [x for x in cs if lo_ - 1 <= x <= c]
+            return max(q) if q else lo_
+        tops = [(k, c, fixref(ref, c - 250)) for k, c, ref in tops]
+        bots = [(k, c, fixref(ref, c)) for k, c, ref in bots]
         for i, (_, c, ref) in enumerate(tops):
             hp = [(s.P + 'N4038F3'), (s.P + 'N4038F2')] if i == 0 else [s.clone((s.P + 'N4038F3'), 'PL'), s.clone((s.P + 'N4038F2'), 'PL')]
             plate(hp[0], c - 250, s.YTB); plate(hp[1], c + 250, s.YTB)
             hd = [(s.P + 'N4038F1'), (s.P + 'N4038F5')] if i == 0 else [s.clone((s.P + 'N4038F1'), 'PD'), s.clone((s.P + 'N4038F5'), 'PD')]
             s.add(t='dimpts', h=hd[0], p1=[X(c - 250), s.YTB, 0], p2=[X(ref), s.YT, 0], dl=[X(ref), s.up(469559), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 250), s.YTB, 0], p2=[X(c - 250), s.YTB, 0], dl=[X(c - 250), s.up(469559), 0])
-            hc = (s.P + 'N4038F4') if i == 0 else s.clone((s.P + 'N4038F4'), 'PC')
-            k = K1['A1:4038F4']; px, py = map(float, k['pts'][0].split(','))
-            s.add(t='move', h=[hc], d=[X(c - 250) - (px - K1X + KX + s.dx) - 230, s.up(468950) - (py + s.dy) + 0])
+            if i == 0:
+                hc = s.P + 'N4038F4'; c0t = c
+                k = K1['A1:4038F4']; px, py = map(float, k['pts'][0].split(','))
+                s.add(t='move', h=[hc], d=[X(c - 250) - (px - K1X + KX + s.dx) - 230, s.up(468950) - (py + s.dy) + 0])
+            else:      # clone of the already placed first comb: shift by the splice distance only
+                hc = s.clone((s.P + 'N4038F4'), 'PC')
+                s.add(t='move', h=[hc], d=[c - c0t, 0])
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not tops: s.add(t='erase', h=[s.P + 'N' + r for r in ['4038F3', '4038F2', '4038F1', '4038F5', '4038F4']])
         for i, (_, c, ref) in enumerate(bots):
@@ -282,9 +296,13 @@ class Sheet:
             hd = [(s.P + 'N403992'), (s.P + 'N40394A')] if i == 0 else [s.clone((s.P + 'N403992'), 'PD'), s.clone((s.P + 'N40394A'), 'PD')]
             s.add(t='dimpts', h=hd[0], p1=[X(c), s.YB, 0], p2=[X(ref), s.YB, 0], dl=[X(ref), lo(467665), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 500), s.YBB, 0], p2=[X(c), s.YBB, 0], dl=[X(c), lo(467665), 0])
-            hc = (s.P + 'N403949') if i == 0 else s.clone((s.P + 'N403949'), 'PC')
-            k = K1['A1:403949']; px, py = map(float, k['pts'][0].split(','))
-            s.add(t='move', h=[hc], d=[X(c) - (px - K1X + KX + s.dx) - 180, s.up(468834) - (py + s.dy)])
+            if i == 0:
+                hc = s.P + 'N403949'; c0b = c
+                k = K1['A1:403949']; px, py = map(float, k['pts'][0].split(','))
+                s.add(t='move', h=[hc], d=[X(c) - (px - K1X + KX + s.dx) - 180, s.up(468834) - (py + s.dy)])
+            else:
+                hc = s.clone((s.P + 'N403949'), 'PC')
+                s.add(t='move', h=[hc], d=[c - c0b, 0])
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not bots: s.add(t='erase', h=[s.P + 'N' + r for r in ['403948', '403947', '403992', '40394A', '403949']])
 
@@ -334,6 +352,9 @@ class Sheet:
                 for side, xx in (('L', BX[0] + 7), ('R', BX[-1] - 7)):
                     t_ = '%sS%s%d' % (pre, side, i)
                     s.add(t='clone', h=Q('2CAF83'), tag=t_); s.add(t='insat', h=t_, at=g(xx, yy)); s.add(t='dyn', h=t_, prop='Вид', value='Ø12')
+                tp = '%sP%d' % (pre, i)          # pin Шп1 from the left side bar to the right one
+                s.add(t='clone', h=PINSRC, base=PINB, to=g(BX[0] + 7, yy), tag=tp)
+                s.add(t='dyn', h=tp, prop='Расстояние1', value=SSC * M['pinS'] + 1)
             yd = -306.0
             s.add(t='dimpts', h=Q('2CAF9A'), p1=g(BX[0], 0) + [0], p2=g(0, 0) + [0], dl=g(0, yd) + [0])
             s.add(t='dimpts', h=Q('2CB052'), p1=g(BX[-1], 0) + [0], p2=g(BX[0], 0) + [0], dl=g(BX[0], yd) + [0])
@@ -365,9 +386,11 @@ class Sheet:
             s.add(t='mcset', h=Q('2CB01A'), set={'SecondLine': '(ф%d)' % DIA})
             ym = max((yB + yT) / 2, yB + 340) if not ns else max((yB + ysides[0]) / 2, yB + 340)
             legs = [[g(BX[-1] + 15, ym), g(b + 190, ym)]] + ([[g(BX[cover] + 15, ym), g(b + 190, ym)]] if nb >= 4 else [])
+            if ns: legs.append([g(BX[-1] - 80, ysides[0]), g(b + 190, ym)])
             s.add(t='combsegs', h=Q('2CB07F'), segs=legs, trim=True)
             s.add(t='spmove', h=Q('2CB07F'), items=[[0] + g(b + 190, ym)])
             s.add(t='mcset', h=Q('2CB07F'), set={'SecondLine': '(ф%d)' % M['hd']})
+            if ns: s.add(t='mcset', h=Q('2CB07F'), set={'FirstLine': 'Х1;Шп1'})
             if ns:      # side-bar callout: comb from the right-face bars to a shelf right of the section
                 t_ = '%sSC' % pre
                 ysh = ysides[-1] + 120
@@ -414,6 +437,25 @@ class Sheet:
         for r, v in vals.items(): s.add(t='settext', h=T(r), s=str(v))
         s.add(t='move', h=[T('A5:4064B0'), T('A5:4064B9'), T('A5:406499'), T('A5:4064A4')], d=[-260, 0])
         s.add(t='move', h=[T('A5:40648D')], d=[150, 0])      # X1 sketch: right height text clear of the hoop line
+        if M.get('npin') and s.part.get('tables', True):
+            GX1 = ['A5:4064A2', 'A5:4064A3', 'A5:406493', 'A5:40648A', 'A5:40648B', 'A5:40648D', 'A5:406499', 'A5:4064A4', 'A5:40648C']
+            GSK = ['A5:4064A6', 'A5:4064A7', 'A5:4064A8', 'A5:4064AA', 'A5:4064AB', 'A5:4064B0', 'A5:4064B8', 'A5:4064B9']
+            top = 465599.0 + 400.0 * max(0, len(M['specrows']) + 1 - 2)       # spec table top (kit y)
+            e = max(0.0, top + 150 - 467389.0)
+            if s.part.get('a3'):   # A3 (a3.py lifts the sketches +1000 itself): Шп1 left of the Ск1 row
+                u = 0.0; ox, oy = -3600.0, 0.0
+            elif e <= 300:      # A: X1, Ск1 one row (+e) up, Шп1 in the old Ск1 row (+e)
+                u = 1000.0 + e; ox, oy = 0.0, e - u
+            else:             # B: X1, Ск1 up above the table, Шп1 left of the Ск1 row
+                u = min(e, 1300.0); ox, oy = -3600.0, 0.0
+            s.add(t='move', h=[T(r) for r in GX1 + GSK], d=[0, u])
+            # clones are taken from the moved Ск1 row
+            lab = s.clone(T('A5:4064A6'), 'PK'); s.part.setdefault('pktags', []).append(lab); s.add(t='settext', h=lab, s='Шп1'); s.add(t='move', h=[lab], d=[ox, oy])
+            for src, txt, ddy in (('A5:4064B9', 'L=', 0), ('A5:4064B0', str(M['pinL']), 0), ('A5:4064A8', str(M['pinS']), -150)):
+                t_ = s.clone(T(src), 'PK'); s.part['pktags'].append(t_); s.add(t='settext', h=t_, s=txt); s.add(t='move', h=[t_], d=[ox, oy + ddy])
+            tp = '%s_PKB' % s.P; s.part['pktags'].append(tp)
+            s.add(t='clone', h=PINSRC, base=PINB, to=[327900.0 + s.dx + ox, 467800.0 + u + oy + s.dy], tag=tp)
+            s.add(t='dyn', h=tp, prop='Расстояние1', value=600)
         s.add(t='settext', h=T('A5:404440'), s=s.part['no'])
         s.add(t='settext', h=T('A5:404442'), s='Ригель ' + M['mark'])
         s.add(t='settext', h=T('A5:40443D'), s='\\pxi-3.3333,l3.3333,t3.3333;1.\tОбщие указания см. л. - 1.1\\P2.\tДанный лист читать '
@@ -425,39 +467,51 @@ class Sheet:
         M = s.M; sp, stl = s.T('A5:406488'), s.T('A5:4064CF')
         F, I = '%lu2%pr2', '%lu2%pr0'
         rows = list(M['specrows'])                    # [(pos, dia, L or None, count)]
-        nd = len(rows)
+        o = 1 if M.get('npin') else 0                 # Шп1 row right after Х1
+        iP, iS, iM, i0 = 4, 4 + o, 5 + o, 6 + o       # rows: Х1 3, (Шп1 4), Ск1, 1 (main), then specrows
+        nd = len(rows); tot = nd + o
         ops = []
-        if nd < 2: ops.append(dict(t='trows', h=sp, mode='del', at=6 + nd, n=2 - nd))
-        ops.append(dict(t='theight', h=sp, rows=[[r_, 400] for r_ in range(6, 9 + nd)]))   # deleted rows must not stretch the rest
-        if nd > 2:
-            ops.append(dict(t='trows', h=sp, mode='ins', at=7, n=nd - 2, **{'from': 7}))
-            ops.append(dict(t='move', h=[sp], d=[0, 400.0 * (nd - 2)]))
-        last = 5 + nd; conc = last + 2
-        side_row = next((6 + i for i, q in enumerate(rows) if q[2] is None), 0)
+        if tot < 2: ops.append(dict(t='trows', h=sp, mode='del', at=6 + tot, n=2 - tot))
+        ops.append(dict(t='theight', h=sp, rows=[[r_, 400] for r_ in range(6, 9 + tot)]))   # deleted rows must not stretch the rest
+        if tot > 2:
+            ops.append(dict(t='trows', h=sp, mode='ins', at=7, n=tot - 2, **{'from': 7}))
+            ops.append(dict(t='move', h=[sp], d=[0, 400.0 * (tot - 2)]))
+        last = i0 - 1 + nd; conc = last + 2
+        side_row = next((i0 + i for i, q in enumerate(rows) if q[2] is None), 0)
         cells_t = [[2, 2, 'Ригель ' + M['mark']], [3, 0, 'Х1*'], [3, 5, '240']]
-        nums = [[3, 3, M['hd'], I], [3, 9, sum(M['X1']), I], [4, 3, 16, I], [4, 9, sum(M['SK']), I], [5, 3, DIA, I]]
+        nums = [[3, 3, M['hd'], I], [3, 9, sum(M['X1']), I], [iS, 3, 16, I], [iS, 9, sum(M['SK']), I], [iM, 3, DIA, I]]
+        R = lambda r: r + 1
         forms = [[3, 10, '%d*%d' % (M['NH'], M['legs'] // 2), I], [3, 11, 'D4*D4*3.1415926/4*0.00785*J4/1000', F], [3, 12, 'L4*K4', F],
-                 [4, 10, '%d*2' % M['n'], I], [4, 11, 'D5*D5*3.1415926/4*0.00785*J5/1000', F], [4, 12, 'L5*K5', F],
-                 [5, 10, '%.2f*%d' % ((M['E'] - 40) / 1000.0, 2 * M['n']), F], [5, 11, 'D6*D6*3.1415926/4*0.00785*1', F], [5, 12, 'L6*K6', F]]
+                 [iS, 10, '%d*2' % M['n'], I], [iS, 11, 'D{0}*D{0}*3.1415926/4*0.00785*J{0}/1000'.format(R(iS)), F], [iS, 12, 'L{0}*K{0}'.format(R(iS)), F],
+                 [iM, 10, '%.2f*%d' % ((M['E'] - 40) / 1000.0, 2 * M['n']), F], [iM, 11, 'D{0}*D{0}*3.1415926/4*0.00785*1'.format(R(iM)), F], [iM, 12, 'L{0}*K{0}'.format(R(iM)), F]]
+        if o:
+            cells_t += [[iS, 0, 'Ск1*'], [iS, 1, 'ГОСТ 34028-2016'], [iS, 2, '%%C'], [iS, 4, 'A'], [iS, 5, '500С'], [iS, 8, 'L='],
+                        [iM, 0, '1'], [iM, 1, 'ГОСТ 34028-2016'], [iM, 2, '%%C'], [iM, 4, 'A'], [iM, 5, '500С'], [iM, 8, 'L='], [iM, 9, 'пог.м.'],
+                        [iP, 0, 'Шп1*'], [iP, 1, 'ГОСТ 34028-2016'], [iP, 2, '%%C'], [iP, 4, 'A'], [iP, 5, '240'], [iP, 8, 'L=']]
+            nums += [[iP, 3, M['hd'], I], [iP, 9, M['pinL'], I]]
+            forms += [[iP, 10, '%d*%d' % (M['NH'], M['nside']), I], [iP, 11, 'D{0}*D{0}*3.1415926/4*0.00785*J{0}/1000'.format(R(iP)), F],
+                      [iP, 12, 'L{0}*K{0}'.format(R(iP)), F]]
         for i, (pos, dia, L, n) in enumerate(rows):
-            r = 6 + i; R = r + 1
+            r = i0 + i; Rr = r + 1
             cells_t += [[r, 0, pos], [r, 1, 'ГОСТ 34028-2016'], [r, 2, '%%C'], [r, 4, 'A'], [r, 5, '500С'], [r, 8, 'L=']]
             nums += [[r, 3, dia, I]]
             if L is None:
                 cells_t += [[r, 9, 'пог.м.']]
-                forms += [[r, 10, '%.2f' % n, F], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*1' % (R, R), F], [r, 12, 'L%d*K%d' % (R, R), F]]
+                forms += [[r, 10, '%.2f' % n, F], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*1' % (Rr, Rr), F], [r, 12, 'L%d*K%d' % (Rr, Rr), F]]
             else:
                 nums += [[r, 9, L, I]]
-                forms += [[r, 10, '%d' % n, I], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R, R, R), F], [r, 12, 'L%d*K%d' % (R, R), F]]
+                forms += [[r, 10, '%d' % n, I], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (Rr, Rr, Rr), F], [r, 12, 'L%d*K%d' % (Rr, Rr), F]]
         forms += [[2, 12, 'Sum(M4:M%d)' % (last + 1), F],
                   [conc, 12, '%.2f*%.2f*%.2f' % (M['b'] / 1000.0, (M['h'] - M['slab']) / 1000.0, M['clear'] / 1000.0), F]]
         ops += [dict(t='tnum', h=sp, cells=nums), dict(t='tset', h=sp, cells=cells_t), dict(t='tformula', h=sp, cells=forms)]
         m = gx.tagmap()
+        a240 = ('Table({T:%s}).Evaluate(M4+M%d)' % (m[sp], R(iP))) if o else ('Table({T:%s}).M4' % m[sp])
+        d28 = [r_ for r_ in [iM] + list(range(i0, last + 1)) if r_ != side_row]
         ops += [dict(t='tset', h=stl, cells=[[5, 1, '%%%%C%d' % M['hd']], [6, 0, 'Ригель ' + M['mark']]]),
-                dict(t='tformula', h=stl, cells=[[6, 1, 'Table({T:%s}).M4' % m[sp], F], [6, 2, 'Sum(B7:B7)', F], [6, 4, 'Table({T:%s}).M5' % m[sp], F],
+                dict(t='tformula', h=stl, cells=[[6, 1, a240, F], [6, 2, 'Sum(B7:B7)', F], [6, 4, 'Table({T:%s}).M%d' % (m[sp], R(iS)), F],
                      [6, 6, 'TEXT:---'], [6, 5, 'TEXT:---'],
                      [6, 3, 'Table({T:%s}).M%d' % (m[sp], side_row + 1), F] if side_row else [6, 3, 'TEXT:---'],
-                     [6, 7, 'Table({T:%s}).Evaluate(%s)' % (m[sp], '+'.join('M%d' % (r_ + 1) for r_ in range(5, last + 1) if r_ != side_row)), F],
+                     [6, 7, 'Table({T:%s}).Evaluate(%s)' % (m[sp], '+'.join('M%d' % (r_ + 1) for r_ in d28)), F],
                      [6, 8, 'Sum(D7:H7)', F], [6, 9, 'I7+C7', F]])]
         return ops
 

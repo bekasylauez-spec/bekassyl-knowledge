@@ -14,7 +14,7 @@ def eligible(M, part):
 
 def ops(M, part):
     P, SX, SY = part['P'], part['SX'], part['SY']
-    nd = len(M['specrows'])
+    nd = len(M['specrows']) + (1 if M.get('npin') else 0)      # + Шп1 row
     T = lambda r: '%s:%s' % (P, r)
     spec_top = 12300.0
     spec_h = (9 + nd) * 400.0 + 400.0
@@ -22,7 +22,7 @@ def ops(M, part):
     steel_top = spec_bottom - 300.0
     o = [dict(t='erase', h=[T('401330'), T('407C04')]),
          dict(t='import', file=TPL, h=[FRAME_H], base=FRAME_BASE, to=[SX, SY], pre=P + '_A3:'),
-         dict(t='move', h=[T(r) for r in SKETCH], d=[-10500.0, 1000.0]),
+         dict(t='move', h=[T(r) for r in SKETCH] + part.get('pktags', []), d=[-10500.0, 1000.0]),
          dict(t='move', h=[T('406488')], d=[-10500.0, spec_top - 9660.0 - 400.0 * max(0, nd - 2)]),
          dict(t='move', h=[T('40443D')], d=[-10500.0, 0.0]),
          dict(t='move', h=[T('4064CF')], d=[20750.0 - 21992.0, steel_top - 3330.0])]

@@ -39,7 +39,7 @@ def profile(r):
     return pts
 
 
-def cap(legs, d, s): return legs * {10: 0.785, 12: 1.131}[d] * 1000.0 / s
+def cap(legs, d, s): return legs * {10: 0.785, 12: 1.131, 14: 1.539, 16: 2.011, 18: 2.545}[d] * 1000.0 / s
 def r100(x): return int(math.ceil(x / 100.0 - 1e-9)) * 100
 
 
@@ -145,48 +145,59 @@ def design(rs, mark):
     for d in dops: d['pos'] = str(2 + Ls.index((d['top'], d['L'])))
     nside = side_bars(h)
     side_pos = str(2 + len(Ls)) if nside else None
-    # ---- hoops per span
-    hd = 10
+    # ---- hoops per span (Bekassyl 06.11: steps 100/200 only, Ø up instead of step 50; no tails in the chain)
     zones, NH = [], 0
+    def inspan(p): return any(fL <= p[0] <= fR for fL, fR in spans)
+    peak_all = max([p[3] for p in Pf if inspan(p)] or [0])
+    hd = next((d for d in (10, 12, 14, 16, 18) if peak_all <= cap(legs, d, 100)), 18)
     for (fL, fR) in spans:
         sp = [p for p in Pf if fL <= p[0] <= fR]
         Ls_ = fR - fL
         free_l = fL < 1 and not any(abs(a) < 2 for a, _, _ in sups)
         free_r = fR > E - 1 and not any(abs(e - E) < 2 for _, e, _ in sups)
         aw = lambda u0, u1: max([p[3] for p in sp if u0 <= p[0] <= u1] or [0])
-        peak = aw(fL, fR)
-        if peak > cap(legs, hd, 50) and hd == 10: hd = 12
         mid = aw(fL + Ls_ / 4, fR - Ls_ / 4)
-        smid = 200 if mid <= cap(legs, hd, 200) else 100 if mid <= cap(legs, hd, 100) else 50
-        def ssup(pk): return 100 if pk <= cap(legs, hd, 100) else 50
-        s_l, s_r = min(ssup(aw(fL, fL + Ls_ / 2)), smid), min(ssup(aw(fR - Ls_ / 2, fR)), smid)
+        def stp(pk): return 200 if pk <= cap(legs, hd, 200) else 100 if pk <= cap(legs, hd, 100) else 50
+        smid = stp(mid)
+        s_l, s_r = min(stp(aw(fL, fL + Ls_ / 2)), 100, smid), min(stp(aw(fR - Ls_ / 2, fR)), 100, smid)
         def zlen(side):
             pts = [p for p in sp if (p[0] - fL if side == 'L' else fR - p[0]) <= Ls_ / 2]
             far = [abs(p[0] - (fL if side == 'L' else fR)) for p in pts if p[3] > cap(legs, hd, smid)]
-            return max(Ls_ / 4.0, max(far) if far else 0)
-        h0, h4 = fL + 50, fR - 50
-        Lp = h4 - h0
-        n1 = int(math.ceil((zlen('L') - 50) / s_l)); n3 = int(math.ceil((zlen('R') - 50) / s_r))
-        if free_l: n1 = 0
-        if free_r: n3 = 0
-        Lm = Lp - n1 * s_l - n3 * s_r
-        segs = []
-        if Lm < smid:
-            s = min(s_l, s_r)
-            nn = int(Lp // s); rr_ = Lp - nn * s
-            segs = [(h0, h0 + nn * s, '%dх%d' % (s, nn))] + ([(h0 + nn * s, h4, '%d' % round(rr_))] if rr_ > 0.5 else [])
-            cnt = nn + 1 + (1 if rr_ > 0.5 else 0)
-            ln = [h0, h4]
+            return max(Ls_ / 4.0, (max(far) + 50) if far else 0)
+        Lp = Ls_ - 100.0
+        if s_l == smid == s_r or Lp < 2 * smid + s_l + s_r:
+            s_u = min(s_l, s_r, smid); s_l = s_r = smid = s_u
+            n1, n2, n3 = 0, int(Lp // s_u), 0
         else:
-            n2 = int(Lm // smid); rr_ = Lm - n2 * smid
-            x = h0; ln = [h0]
-            if n1: segs.append((x, x + n1 * s_l, '%dх%d' % (s_l, n1))); x += n1 * s_l; ln.append(x)
-            if n2: segs.append((x, x + n2 * smid, '%dх%d' % (smid, n2))); x += n2 * smid
-            if rr_ > 0.5: segs.append((x, x + rr_, '%d' % round(rr_))); x += rr_
-            if n3: ln.append(x); segs.append((x, x + n3 * s_r, '%dх%d' % (s_r, n3))); x += n3 * s_r
-            assert abs(x - h4) < 1, (mark, fL, fR, x, h4)
-            if ln[-1] != h4: ln.append(h4)
-            cnt = n1 + n2 + n3 + 1 + (1 if rr_ > 0.5 else 0)
+            n1 = 0 if free_l else int(math.ceil((zlen('L') - 50) / s_l))
+            n3 = 0 if free_r else int(math.ceil((zlen('R') - 50) / s_r))
+            n2 = int((Lp - n1 * s_l - n3 * s_r) // smid)
+        rr_ = Lp - n1 * s_l - n2 * smid - n3 * s_r
+        kk_ = 0
+        while n1 + n3 and rr_ >= min(s_l, s_r) - 1e-6:            # tail -> one more step of an end zone
+            if (kk_ % 2 == 0 and n1) or not n3:
+                if rr_ >= s_l - 1e-6: n1 += 1; rr_ -= s_l
+                else: n3 += 1; rr_ -= s_r
+            else:
+                if rr_ >= s_r - 1e-6: n3 += 1; rr_ -= s_r
+                else: n1 += 1; rr_ -= s_l
+            kk_ += 1
+        gl = 50 + math.floor(rr_ / 2.0); h0 = fL + gl            # leftover < step -> into the face gaps
+        h4 = h0 + n1 * s_l + n2 * smid + n3 * s_r
+        lab = lambda st, nn: '%dх%d' % (st, nn) if nn > 1 else '%d' % st
+        segs = []; x = h0; ln = [h0]
+        for st, nn in ((s_l, n1), (smid, n2), (s_r, n3)):
+            if not nn: continue
+            if segs and segs[-1][3] == st:
+                segs[-1][1] += nn * st; segs[-1][4] += nn
+            else:
+                if segs: ln.append(x)
+                segs.append([x, x + nn * st, '', st, nn])
+            x += nn * st
+        assert abs(x - h4) < 1e-6
+        ln.append(h4)
+        segs = [(p_, q_, lab(st, nn)) for p_, q_, _, st, nn in segs]
+        cnt = n1 + n2 + n3 + 1
         NH += cnt
         zones.append(dict(fL=fL, fR=fR, segs=segs, lines=sorted(set(round(v, 1) for v in ln)), cnt=cnt, s=(s_l, smid, s_r),
                           asw=(round(aw(fL, fL + Ls_ / 4), 1), round(mid, 1), round(aw(fR - Ls_ / 4, fR), 1))))
@@ -208,7 +219,7 @@ def check(D, rs):
         for z in D['zones']:
             if z['fL'] <= u <= z['fR']:
                 for (p, q, t) in z['segs']:
-                    if p - 1 <= u <= q + 1 and 'х' in t:
+                    if p - 1 <= u <= q + 1:
                         s = int(t.split('х')[0])
                         if w > cap(D['legs'], D['hd'], s) + 0.05: bad.append(('asw', round(u), w, round(cap(D['legs'], D['hd'], s), 1)))
     return bad
