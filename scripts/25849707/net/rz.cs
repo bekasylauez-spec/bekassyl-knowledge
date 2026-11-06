@@ -149,6 +149,48 @@ namespace B1
                 Props(pl, m, db, tr);
                 log.AppendLine("plset " + pl.Handle + " " + pts.Count);
             }
+            else if (t == "stylefont")
+            {
+                // set a text style to a TTF font (Standard -> isocpeui like the analog)
+                var tst = (TextStyleTable)tr.GetObject(db.TextStyleTableId, OpenMode.ForRead);
+                var rec = (TextStyleTableRecord)tr.GetObject(tst[S(m, "name", "Standard")], OpenMode.ForWrite);
+                rec.Font = new Autodesk.AutoCAD.GraphicsInterface.FontDescriptor(S(m, "face", "ISOCPEUR"), false, Has(m, "italic"), 0, 0);
+                rec.FileName = S(m, "file", "isocpeui.ttf");
+                log.AppendLine("stylefont " + rec.Name + " " + rec.FileName);
+            }
+            else if (t == "trowstyle")
+            {
+                // copy cell style (text height, text style, alignment) of row src to rows
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                int sr = Convert.ToInt32(m["src"]);
+                foreach (var q in L(m["rows"]))
+                {
+                    int r = Convert.ToInt32(q);
+                    for (int c = 0; c < tb.Columns.Count; c++)
+                    {
+                        var s0 = tb.Cells[sr, c]; var d0 = tb.Cells[r, c];
+                        try { d0.TextStyleId = s0.TextStyleId; } catch { }
+                        try { d0.TextHeight = s0.TextHeight; } catch { }
+                        try { d0.Alignment = s0.Alignment; } catch { }
+                        try { if (d0.Contents.Count > 0 && s0.Contents.Count > 0) { d0.Contents[0].TextHeight = s0.Contents[0].TextHeight; d0.Contents[0].TextStyleId = s0.Contents[0].TextStyleId; } } catch { }
+                    }
+                    tb.Rows[r].Height = tb.Rows[sr].Height;
+                }
+                tb.GenerateLayout();
+            }
+            else if (t == "eraseins")
+            {
+                // erase block references / texts whose insertion point lies in win (entities without extents too)
+                var w = L(m["win"]); var ms = MS(db, tr); var ids = new List<ObjectId>(); int n = 0;
+                foreach (ObjectId id in ms)
+                {
+                    var e = tr.GetObject(id, OpenMode.ForRead) as Entity; Point3d p;
+                    if (e is BlockReference) p = ((BlockReference)e).Position; else if (e is MText) p = ((MText)e).Location; else if (e is DBText) p = ((DBText)e).Position; else continue;
+                    if (p.X >= D(w[0]) && p.X <= D(w[2]) && p.Y >= D(w[1]) && p.Y <= D(w[3])) ids.Add(id);
+                }
+                foreach (var id in ids) { tr.GetObject(id, OpenMode.ForWrite).Erase(); n++; }
+                log.AppendLine("eraseins " + n);
+            }
             else if (t == "einfo")
             {
                 foreach (var hh in L(m["h"]))

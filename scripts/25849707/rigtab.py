@@ -46,7 +46,9 @@ def ops(S, F, P, conc, title, tm):
     A = S.A; o = []
     sp, st = A(SPEC), A(STEEL)
     extra = max(0, len(P) - 5)
-    if extra: o.append(dict(t='trows', h=sp, mode='ins', at=8, n=extra, **{'from': 7}))
+    if extra:
+        o.append(dict(t='trows', h=sp, mode='ins', at=8, n=extra, **{'from': 7}))
+        o.append(dict(t='move', h=[sp], d=[0, 400.0 * extra]))
     texts, nums, forms = [[2, 2, title]], [], []
     last = 3 + len(P) - 1
     for i, p in enumerate(P):
@@ -64,7 +66,9 @@ def ops(S, F, P, conc, title, tm):
     for r in range(3 + len(P), 8 + extra):            # blank remaining rows
         texts += [[r, c, ''] for c in range(13)]
     forms = [[2, 12, 'Sum(M4:M%d)' % (last + 1), F2]] + forms
-    o += [dict(t='tset', h=sp, cells=texts), dict(t='tnum', h=sp, cells=nums + [[9 + extra, 12, conc, F2]]), dict(t='tformula', h=sp, cells=forms)]
+    o += [dict(t='tset', h=sp, cells=texts), dict(t='tnum', h=sp, cells=nums + [[9 + extra, 12, conc, F2]])]
+    if extra: o.append(dict(t='trowstyle', h=sp, src=4, rows=list(range(5, 8 + extra))))
+    o.append(dict(t='tformula', h=sp, cells=forms))
     # steel table: A240 column = hoops, A500 columns by Ø
     used = sorted(set(p['d'] for p in P if p['cls'] != '240'))
     hdr = list(used)
@@ -78,7 +82,7 @@ def ops(S, F, P, conc, title, tm):
         rows = [3 + i + 1 for i, p in enumerate(P) if p['cls'] != '240' and p['d'] == d]
         sf.append([6, 3 + k, '+'.join(ref(R) for R in rows), F2] if rows else [6, 3 + k, 'TEXT:---'])
     sf += [[6, 8, 'Sum(D7:H7)', F2], [6, 9, 'I7+C7', F2]]
-    o += [dict(t='tset', h=st, cells=[[5, 1, '%%C' + str(F['hoop']['d'])]] + [[5, 3 + k, '%%C%d' % d] for k, d in enumerate(hdr)] + [[6, 0, title]]),
+    o += [dict(t='tset', h=st, cells=[[5, 1, '%%C' + str(F['hoop']['d'])]] + [[5, 3 + k, '%%%%C%d' % d] for k, d in enumerate(hdr)] + [[6, 0, title]]),
           dict(t='tformula', h=st, cells=sf)]
     return o
 

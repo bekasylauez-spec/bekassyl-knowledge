@@ -73,7 +73,7 @@ def section(S, F, j, word, T0, tops=0, bots=0, dpos=None):
     hp = [P(hh) for hh in SDH]
     segs = list(zip(pts, pts[1:]))
     mid = segs[1:-1]
-    eq = len(mid) > 1 and len(set(round(q - p) for p, q in mid)) == 1
+    eq = len(mid) > 1 and len(set(round(q - p) for p, q in mid)) == 1 and (mid[-1][1] - mid[0][0]) >= 300
     chain = [(segs[0][0], segs[0][1], None)]
     chain += [(mid[0][0], mid[-1][1], '%dх%d=%d' % (round(mid[0][1] - mid[0][0]), len(mid), round(mid[-1][1] - mid[0][0])))] if eq else [(p, q, None) for p, q in mid]
     chain += [(segs[-1][0], segs[-1][1], None)]
@@ -106,7 +106,7 @@ def section(S, F, j, word, T0, tops=0, bots=0, dpos=None):
         t = '%sXC%s' % (pre, key)
         ops.append(dict(t='clone', h=P(src), tag=t))
         if key == 'top':
-            ysh = ys_t + 120; sg = [[f(x, y - 1), f(x + (ysh - y) * 88 / 213.0, ysh)] for x in mids]
+            ysh = ys_t + 330; sg = [[f(x, y - 1), f(x + (ysh - y) * 88 / 213.0, ysh)] for x in mids]
         else:
             ysh = ys_b - 420; sg = [[f(x, y - 2), f(x + (y - ysh) * 70 / 151.0, ysh)] for x in mids]
         sg += [sg[-1]] * (4 - len(sg))
@@ -116,6 +116,9 @@ def section(S, F, j, word, T0, tops=0, bots=0, dpos=None):
     ops.append(dict(t='settext', h=P(STIT), s='Разрез %s - %s' % (word, word)))
     ops.append(dict(t='move', h=[P(STIT)], d=[2.5 * (b / 2.0 - 43.0), 2.5 * (h - 400.0)]))
     ops.append(dict(t='erase', h=[P(SML)]))
-    ops.append(dict(t='move', h=[P(SLM)], d=[0, 2.5 * (h - 400.0)]))
-    ops.append(dict(t='levelval', h=P(SLM), old='-0.100', value=F['level'], tag=P(SLM)))
+    if F.get('secLM', True):
+        ops.append(dict(t='move', h=[P(SLM)], d=[0, 2.5 * (h - 400.0)]))
+        ops.append(dict(t='levelval', h=P(SLM), old='-0.100', value=F['level'], tag=P(SLM)))
+    else:
+        ops.append(dict(t='erase', h=[P(SLM)]))
     return 2.5 * (b + 2 * fl)

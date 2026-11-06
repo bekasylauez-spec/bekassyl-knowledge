@@ -1,6 +1,6 @@
 # БДМ Блок 1 rigels: pieces (one b x h) from scheme lines + LIRA As -> reinforcement design + unified marks
 import json, math, collections
-L = json.load(open('lines2.json')); COLS = json.load(open('cols.json'))
+L = json.load(open(__import__('os').path.join(__import__('os').path.dirname(__file__),'lines2.json'))); COLS = json.load(open(__import__('os').path.join(__import__('os').path.dirname(__file__),'cols.json')))
 AXX = [(0,'1'),(6000,'2'),(12000,'3'),(18000,'4'),(24000,'5'),(30000,'6'),(36000,'7'),(42000,'8'),(47500,'9'),(53500,'10'),(59500,'11'),(65900,'12'),(73100,'13'),(73750,'14')]
 AXY = [(0,'А'),(9000,'Б'),(13900,'В'),(21000,'Г'),(27500,'Д'),(36000,'Е'),(39000,'Ж')]
 LVK = {-0.05:'1', 4.5:'2', 7.0:'3'}
@@ -84,18 +84,19 @@ def design(ln, sp):
     res['hoop'] = dict(d=dh or 16, legs=legs, swmax=round(swmax, 1), swmid=round(swmid, 1), ok=dh is not None)
     res['L'] = endR - endL
     return res
-marks = []
-for ln in L:
-    if not ln.get('prof'): 
-        marks.append(dict(z=ln['z'], d=ln['d'], c=ln['c'], nolira=True, segs=ln['segs'])); continue
-    for sp in pieces(ln):
-        r = design(ln, sp); r.update(z=ln['z'], d=ln['d'], c=ln['c'], lira_c=ln['lira_c'])
-        marks.append(r)
-json.dump(marks, open('pieces.json', 'w'), ensure_ascii=False)
-for r in marks:
-    if r.get('nolira'): print('NOLIRA', r['z'], r['d'], r['c']); continue
-    ax = axlab(r['c'], AXY if r['d'] == 'X' else AXX)
-    print('%5.2f %s %-6s b%d h%d L%5d sp%d  top %dØ%d(max%.1f)+%s  bot %dØ%d(max%.1f)+%s  hoop Ø%d/%d %s sw%.0f/%.0f' % (
-        r['z'], r['d'], ax or r['c'], r['b'], r['h'], r['L'], len(r['spans']), r['n'], r['top']['d'], r['top']['max'],
-        [ (z['k'], z['u1']-z['u0']) for z in r['top']['dop']], r['n'], r['bot']['d'], r['bot']['max'], [(z['k'], z['u1']-z['u0']) for z in r['bot']['dop']],
-        r['hoop']['d'], r['hoop']['legs'], '' if r['hoop']['ok'] else 'NG', r['hoop']['swmax'], r['hoop']['swmid']))
+if __name__ == '__main__':
+    marks = []
+    for ln in L:
+        if not ln.get('prof'): 
+            marks.append(dict(z=ln['z'], d=ln['d'], c=ln['c'], nolira=True, segs=ln['segs'])); continue
+        for sp in pieces(ln):
+            r = design(ln, sp); r.update(z=ln['z'], d=ln['d'], c=ln['c'], lira_c=ln['lira_c'])
+            marks.append(r)
+    json.dump(marks, open('pieces.json', 'w'), ensure_ascii=False)
+    for r in marks:
+        if r.get('nolira'): print('NOLIRA', r['z'], r['d'], r['c']); continue
+        ax = axlab(r['c'], AXY if r['d'] == 'X' else AXX)
+        print('%5.2f %s %-6s b%d h%d L%5d sp%d  top %dØ%d(max%.1f)+%s  bot %dØ%d(max%.1f)+%s  hoop Ø%d/%d %s sw%.0f/%.0f' % (
+            r['z'], r['d'], ax or r['c'], r['b'], r['h'], r['L'], len(r['spans']), r['n'], r['top']['d'], r['top']['max'],
+            [ (z['k'], z['u1']-z['u0']) for z in r['top']['dop']], r['n'], r['bot']['d'], r['bot']['max'], [(z['k'], z['u1']-z['u0']) for z in r['bot']['dop']],
+            r['hoop']['d'], r['hoop']['legs'], '' if r['hoop']['ok'] else 'NG', r['hoop']['swmax'], r['hoop']['swmid']))

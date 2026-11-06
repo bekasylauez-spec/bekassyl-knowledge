@@ -40,7 +40,7 @@ def zones(fL, fR):
     """hoops from face+50 to face-50: 100xN1 | 200xN2 (+ odd r) | 100xN3 (Galaxy rg.zones)"""
     h0, h4 = fL + 50, fR - 50
     Lp = h4 - h0
-    if Lp < 1500:
+    if Lp < 2500:
         n = int(Lp // 100); r = Lp - 100 * n
         segs = [(h0, h0 + 100 * n, '100х%d' % n)] + ([(h0 + 100 * n, h4, '%d' % round(r))] if r else [])
         return segs, ([h0, h0 + 100 * n, h4] if r else [h0, h4]), n + 1 + (1 if r else 0)
@@ -103,6 +103,11 @@ def build(S, F):
                 hb = S.take(bp, BRK[0], 'BRK')
                 add(t='mcset', h=hb, set={'StartPoint': [X(f0) - 30, Y(yy)], 'EndPoint': [X(f1) + 30, Y(yy)],
                                           'ClipZonePoint': [X(f1) + 30, Y(yy)], 'Length': f1 - f0 + 60})
+    for side in ('L', 'R'):
+        if F['end' + side] != 'cut': continue
+        xb = X(F['u0'] + 150) if side == 'L' else X(F['u1'] - 150)
+        hb = S.take(bp, BRK[0], 'BRK')
+        add(t='mcset', h=hb, set={'StartPoint': [xb, Y(YB) - 120], 'EndPoint': [xb, Y(YT) + 120], 'ClipZonePoint': [xb, Y(YT) + 120], 'Length': h + 240})
     add(t='erase', h=cp + bp)
     # ---- axes (SPDS construction lines with bubble)
     ap = S.pool(AXS)
@@ -152,6 +157,7 @@ def build(S, F):
     supc = [(s[0], s[1], s[4]) for s in sup]
     zy = YL(YB0 - 818)
     for i, (a, b) in enumerate(spans):
+        if (F['endL'] == 'cut' and abs(a - F['u0']) < 1) or (F['endR'] == 'cut' and abs(b - F['u1']) < 1): continue
         segs, lines, cnt = zones(a, b); NH += cnt
         for xx in lines:
             add(t='plset', h=S.take(hl, HL[0], 'HL'), p=[[X(xx), Y(YBB)], [X(xx), Y(YTB)]], layer='диам%d' % F['hoop']['d'])
@@ -208,9 +214,15 @@ def build(S, F):
     # ---- callouts of the main bars «1 (фd)» (one per span, in the 200-zone)
     n1 = S.pool(N1)
     for (a, b) in spans:
-        if b - a < 1500: continue
+        if b - a < 2500 or (F['endL'] == 'cut' and abs(a - F['u0']) < 1) or (F['endR'] == 'cut' and abs(b - F['u1']) < 1): continue
         segs, lines, cnt = zones(a, b)
-        xx = X(lines[1] + 300)
+        bad = [(c - 1500, c + 500) for c, ua in F['spl'].get('top', [])] + [(d['nx'] - 900, d['nx'] + 900) for d in F['dop']]
+        bad += [(u - 500, u + 500) for w, u in F['secs']]
+        cand = [lines[1] + 300, lines[2] - 300, (lines[1] + lines[2]) / 2.0, lines[1] + 800, lines[2] - 800] + [a + (b - a) * t for t in (0.2, 0.3, 0.4, 0.6, 0.7, 0.8)]
+        dist = lambda u: min([0 if p <= u <= q else min(abs(u - p), abs(u - q)) for p, q in bad] + [1e9])
+        best = max(cand, key=dist)
+        if dist(best) < 300: continue          # no free place: the main bars are labelled in the other spans
+        xx = X(best)
         hn = S.take(n1, N1[0], 'N1')
         add(t='spmove', h=hn, items=[[0, xx, Y(YT + 538.6)], [1, xx, Y(YBB)], [2, xx, Y(YTB)]])
         add(t='mcset', h=hn, set={'FirstLine': F['top']['pos'], 'SecondLine': '(ф%d)' % F['top']['d']})

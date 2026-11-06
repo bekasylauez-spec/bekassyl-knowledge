@@ -1572,6 +1572,38 @@ namespace RG
                 }
                 log.AppendLine("stretch moved " + nm + " stretched " + ns + " failed " + nf);
             }
+            else if (t == "pfit")
+            {
+                // polyline: vertices right of its middle move so that max X = right; vertices above the middle so that max Y = top
+                var pl = (Polyline)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                var ex = pl.GeometricExtents;
+                double mx = (ex.MinPoint.X + ex.MaxPoint.X) / 2, my = (ex.MinPoint.Y + ex.MaxPoint.Y) / 2;
+                double dx = Has(m, "right") ? D(m["right"]) - ex.MaxPoint.X : 0, dy = Has(m, "top") ? D(m["top"]) - ex.MaxPoint.Y : 0;
+                for (int i = 0; i < pl.NumberOfVertices; i++)
+                {
+                    var q = pl.GetPoint2dAt(i);
+                    pl.SetPointAt(i, new Point2d(q.X + (q.X > mx ? dx : 0), q.Y + (q.Y > my ? dy : 0)));
+                }
+                log.AppendLine("pfit " + pl.Handle + " dx=" + dx.ToString("0.#", IC) + " dy=" + dy.ToString("0.#", IC));
+            }
+            else if (t == "hstretch")
+            {
+                // stretch only the listed entities (handles/tags): stretch points inside win move by d; explode block refs first if "explode"
+                var w = L(m["win"]); double wx0 = D(w[0]), wy0 = D(w[1]), wx1 = D(w[2]), wy1 = D(w[3]);
+                var dv = L(m["d"]); var vec = new Vector3d(D(dv[0]), D(dv[1]), 0);
+                int ns = 0;
+                foreach (var hh in L(m["h"]))
+                {
+                    var e = (Entity)tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite);
+                    var pc = new Point3dCollection(); e.GetStretchPoints(pc);
+                    var idx = new IntegerCollection();
+                    for (int i = 0; i < pc.Count; i++) if (pc[i].X >= wx0 && pc[i].X <= wx1 && pc[i].Y >= wy0 && pc[i].Y <= wy1) idx.Add(i);
+                    if (idx.Count == pc.Count && pc.Count > 0) e.TransformBy(Matrix3d.Displacement(vec));
+                    else if (idx.Count > 0) e.MoveStretchPointsAt(idx, vec);
+                    ns++;
+                }
+                log.AppendLine("hstretch " + ns);
+            }
             else if (t == "cmd")
             {
                 Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument.SendStringToExecute(S(m, "s", ""), true, false, false);
