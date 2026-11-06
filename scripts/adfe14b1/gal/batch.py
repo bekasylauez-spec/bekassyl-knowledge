@@ -11,16 +11,9 @@ def ps(cmd):
 
 
 def start():
-    for f in ('listening.txt', 'done.txt', 'job.txt'):
-        try: os.remove(os.path.join(JD, f))
-        except OSError: pass
-    pid = ps('$p=Start-Process "C:\Program Files\Autodesk\AutoCAD 2021\acad.exe" -ArgumentList \'"%s" /nologo /b "%s"\' -PassThru; $p.Id' % (DWG, os.path.join(NET, 'boot.scr'))).strip()
-    for i in range(200):
-        if os.path.exists(os.path.join(JD, 'listening.txt')): break
-        time.sleep(2)
-    else:
-        raise RuntimeError('listener did not start')
-    return pid
+    out = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(NET, 'start.ps1')], capture_output=True, text=True, encoding='utf-8', errors='replace').stdout
+    if not os.path.exists(os.path.join(JD, 'listening.txt')): raise RuntimeError('listener did not start ' + out[-300:])
+    return out.strip().splitlines()[-1]
 
 
 def stop(pid):
@@ -34,7 +27,7 @@ sh = prep.build(marks)
 first = sys.argv[1] if len(sys.argv) > 1 else '6.1'
 todo = sh[[p['no'] for _, p in sh].index(first):]
 B = 12
-pid = start()
+pid = sys.argv[2] if len(sys.argv) > 2 else start()
 if first == '6.1':
     gx.run([dict(t='eraseregion', win=[170000, 419990, 172179 + 31500 * 80, 434860])], 'clr')
     print('cleared', flush=True)
