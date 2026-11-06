@@ -50,6 +50,7 @@ def run_mark(m, k0, no0, mark, count, log=print):
     G_all = [plan.sheetF(F, fr) for fr in frags]
     NHt = 0; errs = []
     for i, G in enumerate(G_all):
+        if i: recycle()                     # MultiCAD leak: fresh document before every sheet
         k = k0 + i; P = 'K%d:' % k
         SX, SY = slot(k)
         fresh(k, P)
