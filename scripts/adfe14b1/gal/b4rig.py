@@ -241,8 +241,9 @@ class Sheet:
             s.add(t='dimpts', h=hd[0], p1=[X(c - 250), s.YTB, 0], p2=[X(ref), s.YT, 0], dl=[X(ref), s.up(469559), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 250), s.YTB, 0], p2=[X(c - 250), s.YTB, 0], dl=[X(c - 250), s.up(469559), 0])
             hc = (s.P + 'N4038F4') if i == 0 else s.clone((s.P + 'N4038F4'), 'PC')
-            k = K1['A1:4038F4']; px, py = map(float, k['pts'][0].split(','))
-            s.add(t='move', h=[hc], d=[X(c - 250) - (px - K1X + KX + s.dx) - 230, s.up(468950) - (py + s.dy) + 0])
+            ysh = s.YT + 250; xa, xb = X(c - 250), X(c + 250)
+            s.add(t='combsegs', h=hc, segs=[[[xa, s.YTB], [xa - 350, ysh]], [[xb, s.YTB], [xa - 350 + 120, ysh]]],
+                  start=[xa - 350 + 120, ysh], end=[xa - 350 - 600, ysh], trim=True)
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not tops: s.add(t='erase', h=[s.P + 'N' + r for r in ['4038F3', '4038F2', '4038F1', '4038F5', '4038F4']])
         for i, (_, c, ref) in enumerate(bots):
@@ -252,8 +253,9 @@ class Sheet:
             s.add(t='dimpts', h=hd[0], p1=[X(c), s.YB, 0], p2=[X(ref), s.YB, 0], dl=[X(ref), lo(467665), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 500), s.YBB, 0], p2=[X(c), s.YBB, 0], dl=[X(c), lo(467665), 0])
             hc = (s.P + 'N403949') if i == 0 else s.clone((s.P + 'N403949'), 'PC')
-            k = K1['A1:403949']; px, py = map(float, k['pts'][0].split(','))
-            s.add(t='move', h=[hc], d=[X(c) - (px - K1X + KX + s.dx) - 180, s.up(468834) - (py + s.dy)])
+            ysh = s.YB - 260; xa, xb = X(c), X(c + 500)
+            s.add(t='combsegs', h=hc, segs=[[[xa, s.YBB], [xa - 300, ysh]], [[xb, s.YBB], [xa - 300 + 120, ysh]]],
+                  start=[xa - 300 + 120, ysh], end=[xa - 300 - 600, ysh], trim=True)
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not bots: s.add(t='erase', h=[s.P + 'N' + r for r in ['403948', '403947', '403992', '40394A', '403949']])
 

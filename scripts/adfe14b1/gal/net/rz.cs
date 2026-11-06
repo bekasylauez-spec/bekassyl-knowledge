@@ -1614,6 +1614,13 @@ namespace RG
                 var dd = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
                 log.AppendLine("doc " + dd.Name + " readonly=" + dd.IsReadOnly + " filename=" + db.Filename + " ver=" + db.OriginalFileVersion);
             }
+            else if (t == "opendoc")
+            {
+                // open another drawing in this AutoCAD (jobs then target it by file name)
+                var dm = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;
+                var nd = Autodesk.AutoCAD.ApplicationServices.DocumentCollectionExtension.Open(dm, S(m, "file", ""), false);
+                log.AppendLine("opened " + nd.Name);
+            }
             else if (t == "saveas")
             {
                 var dd = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
