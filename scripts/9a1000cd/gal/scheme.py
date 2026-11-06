@@ -39,8 +39,8 @@ def plan(z, ox, oy, P, title):
         spans = [(faces[i], faces[i + 1]) for i in range(0, len(faces), 2) if faces[i + 1] - faces[i] > 1]
         for a, b in spans:
             q = lambda t, s: T(A[0] + ux * t + nx * s, A[1] + uy * t + ny * s)
-            ops.append(dict(t='pl', p=[q(a, -hb), q(b, -hb)], layer='0', lw=30, ltype='ACAD_ISO02W100', tag=tag('B')))
-            ops.append(dict(t='pl', p=[q(a, hb), q(b, hb)], layer='0', lw=30, ltype='ACAD_ISO02W100', tag=tag('B')))
+            ops.append(dict(t='pl', p=[q(a, -hb), q(b, -hb)], layer='0', lw=30, ltype='ACAD_ISO02W100', ltscale=25, tag=tag('B')))
+            ops.append(dict(t='pl', p=[q(a, hb), q(b, hb)], layer='0', lw=30, ltype='ACAD_ISO02W100', ltscale=25, tag=tag('B')))
         # mark on the longest span, beside the rigel (above / left)
         a, b = max(spans, key=lambda s: s[1] - s[0])
         tm = (a + b) / 2.0
@@ -66,13 +66,13 @@ def plan(z, ox, oy, P, title):
     yk = [(c, v) for c, v in ys if v not in ('В', 'Г', 'Е', 'И')]
     xd = xleft + 450
     for (c0, _), (c1, _) in zip(yk, yk[1:]):
-        h = tag('DY'); ops.append(dict(t='clone', h='A5:401292', tag=h))
-        ops.append(dict(t='dimpts', h=h, p1=[xd, T(0, c0)[1], 0], p2=[xd, T(0, c1)[1], 0], dl=[xd, T(0, c1)[1], 0]))
-        ops.append(dict(t='dimset', h=[h], lfac=1.0 / K)); ops.append(dict(t='dimtext', h=h, s=''))
+        h = tag('DY')
+        ops.append(dict(t='dim', h='A5:401292', p1=[xd, T(0, c0)[1], 0], p2=[xd, T(0, c1)[1], 0], dl=[xd, T(0, c1)[1], 0], rot=math.pi / 2, lfac=1.0 / K, tag=h))
+        ops.append(dict(t='dimtext', h=h, s=''))
     # title
     h = tag('T'); ops.append(dict(t='clone', h='A5:4038B1', tag=h))
     ops.append(dict(t='moveto', h=h, idx=0, to=[ox + 31200 * K / 2, ytop + 700]))
-    ops.append(dict(t='settext', h=h, s=title))
+    ops.append(dict(t='settext', h=h, s=title, w=14000))
     return ops
 
 

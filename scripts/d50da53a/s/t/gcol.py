@@ -2,6 +2,17 @@
 # Facade 1:50 real size, sections/mesh x2 (1:25). Main bars Ø28, hoops Ø10 (analog), meshes С1 Ø10, П-elements Ø16.
 import json, math, sys
 import mb, colgeo
+_sh = colgeo.storey_hoops
+def _short(lo, bb):
+    a, b = lo + 50.0, bb - 50.0; S_ = b - a
+    if S_ >= 1800: return _sh(lo, bb)
+    n = int(S_ // 100); r = S_ - 100 * n
+    steps = [100.0] * n
+    if r > 1e-6: steps.insert(n // 2, r)
+    pos = [a]
+    for st in steps: pos.append(pos[-1] + st)
+    return pos, (n, 0, 0), steps
+colgeo.storey_hoops = _short
 
 O0 = (-691502.7, -1749172.2)            # analog sheet x4.1 origin
 SL0 = -1552803.1                        # first slot (right of scheme 4.1)
@@ -64,10 +75,21 @@ def build(T, k, sheetno):
     add(t='erase', h=[S(x) for x in sorted(set(er))])
     # ---------- facade: stretch heights / width ----------
     yb_top = YB + Htop - beams[-1]
+    PARK = ['4E95A6', '4E95A8', '4E95AA', '4E95AC', '4E95AD', '4E95AE', '4E95AF', '4E95B0', '4E95B1', '4E95B2', '4E95B3', '4E8F9B', '4E8F97', '4E8F98', '4E8FA1']
+    add(t='move', h=[S(x) for x in PARK], d=[300000, 0])
     add(t='pmap', win=A(0, 4500) + A(7400, 16200), axis='y',
         pairs=[[O[1] + 5950, O[1] + YB - Df], [O[1] + 6950, O[1] + YB], [O[1] + 12850, O[1] + yb_top], [O[1] + 13650, O[1] + YB + Htop]])
     add(t='pmap', win=A(3000, 4500) + A(7400, 16200), axis='x', pairs=[[O[0] + 4150, O[0] + XL], [O[0] + 5050, O[0] + XL + h]])
     XR = XL + h
+    Hc = Htop - beams[-1]
+    topd = (YB + Htop) - 13650
+    f = min(1.0, (Hc - 200) / 2800.0)
+    DY = {'4E95AC': topd, '4E95AA': (YB + Htop - beams[-1]) - 12850, '4E95A8': 0, '4E95A6': (YB - Df) - 5950,
+          '4E95AD': (9000 - YB) * (f - 1), '4E95AE': (9550 - YB) * (f - 1), '4E95B0': (8450 - YB) * (f - 1), '4E95B1': (7900 - YB) * (f - 1),
+          '4E95AF': topd, '4E95B2': 0, '4E95B3': 0, '4E8F9B': topd, '4E8F97': (YB + Htop - beams[-1] / 2) - 13250, '4E8F98': topd,
+          '4E8FA1': (YB + 0.55 * Hc) - 11054}
+    for hh in PARK:
+        add(t='move', h=[S(hh)], d=[-300000, DY[hh]])
     # bars, выпуски, накладки
     xs = [XL + 56 + i * (h - 112) / (nh - 1) for i in range(nh)]
     for i, x in enumerate(xs):
@@ -125,20 +147,28 @@ def build(T, k, sheetno):
         add(t='levelval', h=S(hh), old=ana[hh], value=lv(v), tag=S(hh) + 'v')
     # facade notes
     add(t='notetxt', h=S('4E95AF'), l2='%d шт.' % nmesh[-1])
+    if len(levels) > 1:
+        add(t='sp_set', h=S('4E95AF'), pts=[[0] + A(3920, YB + Htop - beams[-1] / 2 + 150), [1] + A(XL + 30, YB + Htop - beams[-1] / 2 - 150)])
     for i, (L, hb) in enumerate(zip(levels[:-1], beams[:-1])):
         t = tg(); add(t='clone', h=S('4E95AF'), tag=t)
-        add(t='move', h=[t], d=[0, (L - hb) - (Htop - beams[-1])])
+        add(t='sp_set', h=t, pts=[[0] + A(3920, YB + L - hb / 2 + 150), [1] + A(XL + 30, YB + L - hb / 2 - 150)])
         add(t='notetxt', h=t, l2='%d шт.' % nmesh[i])
     vp = T.get('vp', 'см. фундамент')
     add(t='notetxt', h=S('4E95B2'), l2=vp); add(t='notetxt', h=S('4E95B3'), l2=vp)
     ys_ = [r for r in ('4E95AD', '4E95AE')]
-    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + 2950)])
-    add(t='sp_set', h=S('4E95AD'), pts=[[1] + A(xs[0], YB + 2400)])
-    zx = min(P, key=lambda z: abs(z - 1950))
+    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + 2950 * f)])
+    add(t='sp_set', h=S('4E95AD'), pts=[[1] + A(xs[0], YB + 2400 * f)])
+    add(t='sp_set', h=S('4E95B1'), pts=[[1] + A(xs[0] - 42, YB + 600)])
+    zx = min(P, key=lambda z: abs(z - 1950 * f))
     add(t='sp_set', h=S('4E95B0'), pts=[[1] + A(XL + 37, YB + zx)])
     # ---------- section 1-1 (x2) ----------
     SX, SY = 8600.0, 16300.0
-    def sp(i, n, L): return 2 * (56 + i * (L - 112) / (n - 1))
+    def cov(L, n):
+        for c in (56, 55, 57, 54, 58):
+            if (L - 2 * c) % (n - 1) == 0: return c
+        return 56
+    def sp(i, n, L):
+        c = cov(L, n); return 2 * (c + i * (L - 2 * c) / (n - 1))
     bx = [SX + sp(i, nb, b) for i in range(nb)]; by = [SY + sp(j, nh, h) for j in range(nh)]
     bars = [(x, y) for x in bx for y in by if x in (bx[0], bx[-1]) or y in (by[0], by[-1])]
     add(t='plset', h=S('4E95B4'), p=[A(SX, SY), A(SX + 2 * b, SY), A(SX + 2 * b, SY + 2 * h), A(SX, SY + 2 * h)], closed=True)
@@ -168,12 +198,12 @@ def build(T, k, sheetno):
     # section dims (СПДС М2, lfac 0.5)
     yd1, yd2 = SY - 522, SY - 922
     dim('4E95D7', A(SX, SY), A(bx[0], SY), A(SX, yd1), 0, tx=A(SX - 260, yd1 - 340))
-    for x1_, x2_ in zip(bx, bx[1:]): dim('4E95E6', A(x1_, SY), A(x2_, SY), A(x1_, yd1), 0)
+    sb_ = round((bx[1] - bx[0]) / 2); dim('4E95E6', A(bx[0], SY), A(bx[-1], SY), A(bx[0], yd1), 0, txt='%dх%d=%d' % (sb_, nb - 1, sb_ * (nb - 1)))
     dim('4E960D', A(bx[-1], SY), A(SX + 2 * b, SY), A(SX, yd1), 0, tx=A(SX + 2 * b + 260, yd1 - 340))
     dim('4E961C', A(SX, SY), A(SX + 2 * b, SY), A(SX, yd2), 0)
     xd1, xd2 = SX - 617, SX - 1017
     dim('4E9629', A(SX, SY), A(SX, by[0]), A(xd1, SY), HP, tx=A(xd1 - 340, SY - 260))
-    for y1_, y2_ in zip(by, by[1:]): dim('4E9638', A(SX, y1_), A(SX, y2_), A(xd1, y1_), HP)
+    sh_ = round((by[1] - by[0]) / 2); dim('4E9638', A(SX, by[0]), A(SX, by[-1]), A(xd1, by[0]), HP, txt='%dх%d=%d' % (sh_, nh - 1, sh_ * (nh - 1)))
     dim('4E966C', A(SX, by[-1]), A(SX, SY + 2 * h), A(xd1, SY), HP, tx=A(xd1 - 340, SY + 2 * h + 260))
     dim('4E967B', A(SX, SY), A(SX, SY + 2 * h), A(xd2, SY), HP)
     # section notes: move with the right edge, targets

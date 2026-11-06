@@ -37,9 +37,9 @@ def run():
     ops = [dict(t='eraseregion', win=[SX - 50, SY - 50, SX + 31550, SY + 14900])]
     for r in ['A5:401330', 'A5:404440', 'A5:404442', 'A5:40443F']:
         ops.append(dict(t='clone', h=r, base=[0, 0], to=[dx, dy], tag=P + ':' + r[3:]))
-    nb = 3; per = (len(R) + nb - 1) // nb
-    TW = sum(W); gap = 450
-    x0 = SX + 1000 + (30250 - nb * TW - (nb - 1) * gap) / 2.0
+    nb = 2; per = (len(R) + nb - 1) // nb
+    TW = sum(W); gap = 900
+    x0 = SX + 1700
     ytop = SY + 13300
     n = [0]
     def txt(s, cx, cy, title=False, w=None):

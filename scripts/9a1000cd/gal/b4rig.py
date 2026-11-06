@@ -131,6 +131,7 @@ class Sheet:
             s.add(t='moveto', h=T('A5:4069C0'), idx=1, to=[e1, yk])
         # доп bars of this part
         barp = [T('A5:4274A8'), T('A5:4274AA')]; notep = [T('A5:4274A9'), T('A5:4274AB')]
+        s.dopx = []
         for d in M['dops']:
             a, b = max(d['a'], u0), min(d['b'], u1)
             if b - a < 1: continue
@@ -138,7 +139,19 @@ class Sheet:
             hb = barp.pop(0) if barp else s.clone(T('A5:4274A8'), 'DB')
             s.add(t='plset', h=hb, p=[[X(a), y], [X(b), y]], layer=s.lay)
             hn = notep.pop(0) if notep else s.clone(T('A5:4274A9'), 'DN')
-            xn = X(a + min(600, (b - a) / 3)) if d['top'] else X(b - min(600, (b - a) / 3))
+            # free spot on the top callout row: away from splice combs, section marks, Ск1, other callouts
+            busy = list(s.dopx) + [x for _, x, _ in s.part['secs']]
+            for kind, c, _ in s.part.get('spl', []): busy += [c - 480, c - 250, c + 250] if kind == 'top' else [c - 180, c, c + 500]
+            if not s.cutL: busy.append(u0)
+            if not s.cutR: busy.append(u1)
+            L_ = b - a
+            cand = ([a + min(600, L_ / 3), a + L_ * 0.5, a + L_ * 0.25, a + L_ * 0.75, a + 300, b - 300] if d['top'] else
+                    [b - min(600, L_ / 3), a + L_ * 0.5, a + L_ * 0.75, a + L_ * 0.25, b - 300, a + 300])
+            cand = [c for c in cand if a + 150 <= c <= b - 150]
+            ok = [c for c in cand if all(abs(c - q) > 1100 for q in busy)]
+            un = ok[0] if ok else max(cand, key=lambda c: min([abs(c - q) for q in busy] or [1e9]))
+            s.dopx.append(un)
+            xn = X(un)
             ysh = s.up(469289) if d['top'] else s.up(469289) - 30
             s.add(t='spmove', h=hn, items=[[0, xn, ysh], [1, xn, y]])
             s.add(t='mcset', h=hn, set={'FirstLine': d['pos'], 'SecondLine': '(ф%d)' % DIA})
@@ -211,7 +224,7 @@ class Sheet:
         n1 = [T('A5:4015B1'), T('A5:40671E')]
         for z in M['zones']:
             if z['fR'] - z['fL'] < 2500 or z['fR'] < u0 + 1 or z['fL'] > u1 - 1: continue
-            busy = [c for _, c, _ in s.part.get('spl', [])] + [x for _, x, _ in s.part['secs']] +                    [(d['a'] + min(600, (d['b'] - d['a']) / 3)) if d['top'] else (d['b'] - min(600, (d['b'] - d['a']) / 3)) for d in M['dops']]
+            busy = [c for _, c, _ in s.part.get('spl', [])] + [x for _, x, _ in s.part['secs']] +                    list(s.dopx)
             cand = ([z['lines'][1] + 300] if len(z['lines']) > 2 else []) + [(z['fL'] + z['fR']) / 2, z['fL'] + (z['fR'] - z['fL']) * 0.35,
                     z['fL'] + (z['fR'] - z['fL']) * 0.65, z['fL'] + 600, z['fR'] - 600]
             cand = [c for c in cand if u0 + 300 < c < u1 - 300 and all(abs(c - b) > 1300 for b in busy)]

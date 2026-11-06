@@ -1508,8 +1508,8 @@ else if (t == "sysvar")
             else if (t == "clonexf")
             {
                 // deep-clone a set of entities together (keeps their mutual SPDS links), displace by d; log old>new
-                var ids = new ObjectIdCollection();
-                foreach (var h in L(m["hs"])) ids.Add(H(db, h.ToString()));
+                var ids = new ObjectIdCollection(); var nm = new Dictionary<ObjectId, string>();
+                foreach (var h in L(m["hs"])) { ObjectId oi; try { oi = H(db, h.ToString()); } catch { continue; } if (oi.IsErased || nm.ContainsKey(oi)) continue; ids.Add(oi); nm[oi] = h.ToString().ToUpper(); }
                 var im = new IdMapping();
                 db.DeepCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, false);
                 var dv = L(m["d"]); var vec = new Vector3d(D(dv[0]), D(dv[1]), 0);
@@ -1523,7 +1523,7 @@ else if (t == "sysvar")
                     var e = (Entity)tr.GetObject(p.Value, OpenMode.ForWrite);
                     e.TransformBy(Matrix3d.Displacement(vec));
                     var ke = (Entity)tr.GetObject(p.Key, OpenMode.ForRead);
-                    if (pre != null) map[pre + ke.Handle] = e.Handle.ToString();
+                    if (pre != null) map[pre + (nm.ContainsKey(p.Key) ? nm[p.Key] : ke.Handle.ToString())] = e.Handle.ToString();
                     sbm.Append(ke.Handle + ">" + e.Handle + " ");
                 }
                 log.AppendLine("clonexf " + S(m, "pre", "") + " " + sbm);
