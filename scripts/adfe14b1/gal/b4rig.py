@@ -254,8 +254,8 @@ class Sheet:
             s.add(t='dimpts', h=hd[1], p1=[X(c + 500), s.YBB, 0], p2=[X(c), s.YBB, 0], dl=[X(c), lo(467665), 0])
             hc = (s.P + 'N403949') if i == 0 else s.clone((s.P + 'N403949'), 'PC')
             ysh = s.YT + 250; xa, xb = X(c), X(c + 500)          # as the analog: shelf above the beam, leaders down to the plates
-            s.add(t='combsegs', h=hc, segs=[[[xa, s.YBB], [xa - 300, ysh]], [[xb, s.YBB], [xa - 300 + 120, ysh]]],
-                  start=[xa - 300 + 120, ysh], end=[xa - 300 - 600, ysh], trim=True)
+            s.add(t='combsegs', h=hc, segs=[[[xa, s.YBB], [xb + 300 - 120, ysh]], [[xb, s.YBB], [xb + 300, ysh]]],
+                  start=[xb + 300 - 120, ysh], end=[xb + 300 + 600, ysh], trim=True)
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not bots: s.add(t='erase', h=[s.P + 'N' + r for r in ['403948', '403947', '403992', '40394A', '403949']])
 
@@ -349,11 +349,10 @@ class Sheet:
                     segs = [[g(xx, yy - 1), g(xx - (ysh - yy) * 0.45, ysh)] for xx, yy in pts]
                     xe = [q[1][0] for q in segs]
                     s.add(t='combsegs', h=t, segs=segs, start=[max(xe), segs[0][1][1]], end=[min(xe) - SSC * 220, segs[0][1][1]], trim=True)
-                else:
-                    ysh = yB - 330
-                    segs = [[g(xx, yy - 2), g(xx - (yy - ysh) * 0.45, ysh)] for xx, yy in pts]
-                    xe = [q[1][0] for q in segs]
-                    s.add(t='combsegs', h=t, segs=segs, start=[max(xe), segs[0][1][1]], end=[min(xe) - SSC * 220, segs[0][1][1]], trim=True)
+                else:                                       # bottom доп: shelf to the right of the beam, above the bottom bars
+                    ysh = yB + 150; x0 = b + 190
+                    segs = [[g(xx, yy), g(x0, ysh)] for xx, yy in pts]
+                    s.add(t='combsegs', h=t, segs=segs, start=g(x0, ysh), end=g(x0 + 230, ysh), trim=True)
                 s.add(t='mcset', h=t, set={'FirstLine': d['pos'], 'SecondLine': '(ф%d)' % DIA})
         s.add(t='erase', h=[s.T(r) for r in K if r.startswith('A5S0_')])
         s.add(t='regen')

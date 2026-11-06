@@ -25,10 +25,11 @@ def stop(pid):
 marks = json.load(open(os.path.join(prep.LIRA, 'marks.json'), encoding='utf-8'))
 sh = prep.build(marks)
 first = sys.argv[1] if len(sys.argv) > 1 else '6.1'
-todo = sh[[p['no'] for _, p in sh].index(first):]
+only = [a for a in sys.argv[3:]]
+todo = [q for q in sh if q[1]['no'] in only] if only else sh[[p['no'] for _, p in sh].index(first):]
 B = 12
 pid = sys.argv[2] if len(sys.argv) > 2 else start()
-if first == '6.1':
+if first == '6.1' and not only:
     gx.run([dict(t='eraseregion', win=[170000, 419990, 172179 + 31500 * 80, 434860])], 'clr')
     print('cleared', flush=True)
 for i, (M, p) in enumerate(todo):
