@@ -25,7 +25,13 @@ def restart_acad():
     for f in ('job.txt', 'done.txt', 'listening.txt'):
         try: os.remove(os.path.join(jd, f))
         except Exception: pass
-    p = subprocess.Popen([r'C:\Program Files\Autodesk\AutoCAD 2021\acad.exe', '/nologo', '/b', os.path.join(S, 'net', 'boot.scr')])
+    for f in ('Б1.ригели.dwl', 'Б1.ригели.dwl2'):
+        try: os.remove(os.path.join(r'D:\РАБОЧКА\От Шерхан\Бдм Блок 1', f))
+        except Exception: pass
+    # WMI-created process: not in this runner's process tree -> survives when the runner is stopped
+    r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', os.path.join(S, 'net', 'startacad.ps1')], capture_output=True)
+    class _P: pass
+    p = _P(); p.pid = int((r.stdout.decode().strip() or '0').splitlines()[-1])
     open(pf, 'w').write(str(p.pid))
     for i in range(150):
         time.sleep(2)

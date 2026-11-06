@@ -124,7 +124,9 @@ class Sheet:
             hb = barp.pop(0) if barp else s.clone(T('A5:4274A8'), 'DB')
             s.add(t='plset', h=hb, p=[[X(a), y], [X(b), y]], layer=s.lay)
             hn = notep.pop(0) if notep else s.clone(T('A5:4274A9'), 'DN')
-            xn = X((a + b) / 2.0)
+            bad = [q for k, c, r in s.part.get('spl', []) if k == 'top' for q in (c - 250, c + 250, r)]
+            cand = [(a + b) / 2.0, a + (b - a) * 0.3, a + (b - a) * 0.7, a + (b - a) * 0.15, a + (b - a) * 0.85]
+            xn = X(next((c for c in cand if not any(c - 150 <= q <= c + 800 for q in bad)), cand[0]))
             ysh = s.up(469289) if d['top'] else s.up(469289) - 30
             s.add(t='spmove', h=hn, items=[[0, xn, ysh], [1, xn, y]])
             s.add(t='mcset', h=hn, set={'FirstLine': d['pos'], 'SecondLine': '(ф%d)' % DIA})
@@ -234,7 +236,9 @@ class Sheet:
             for d in M['dops']:                       # доп callouts
                 a, b = max(d['a'], s.u0), min(d['b'], s.u1)
                 if b - a < 1: continue
-                xn = X((a + b) / 2.0)
+                bad = [q for k, c, r in s.part.get('spl', []) if k == 'top' for q in (c - 250, c + 250, r)]
+                cand = [(a + b) / 2.0, a + (b - a) * 0.3, a + (b - a) * 0.7, a + (b - a) * 0.15, a + (b - a) * 0.85]
+                xn = X(next((c for c in cand if not any(c - 150 <= q <= c + 800 for q in bad)), cand[0]))
                 s.occ.append((xn - 100, xn + 700))
             for (_, x, _) in s.part['secs']: s.occ.append((X(x) - 250, X(x) + 250))
             for z in M['zones']:
@@ -248,6 +252,7 @@ class Sheet:
         pick = next(((y, lo, hi, xs) for y, lo, hi, xs in opts if free(lo - 100, hi + 100, y)), opts[0])
         y, lo, hi, xs = pick
         s.occ.append((lo - 50, hi + 50, y))
+        s.occ.append((min(xa, lo) - 50, max(xb, hi) + 50))           # its leaders occupy the band at every height
         left = xs < xa
         s.add(t='combsegs', h=hc, segs=[[[xa, ybar], [xs if left else xs - 120, y]], [[xb, ybar], [xs + 120 if left else xs, y]]],
               start=[xs + 120 if left else xs - 120, y], end=[lo if left else hi, y], trim=True)

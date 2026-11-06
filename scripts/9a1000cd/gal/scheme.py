@@ -6,7 +6,7 @@ import design as DS
 K = 0.25
 SY = prep.SY
 SHEETS = [('6.1', [-0.05, 4.0]), ('6.2', [4.8, 6.95]), ('6.3', [10.5])]
-SX = {'6.1': prep.SX0 - 3 * 31500.0, '6.2': prep.SX0 - 2 * 31500.0, '6.3': prep.SX0 - 31500.0}
+SX = {'6.1': prep.SX0 - 4 * 31500.0, '6.2': prep.SX0 - 3 * 31500.0, '6.3': prep.SX0 - 2 * 31500.0}
 X9, YA = 53850.0, -1350.0
 PW = 32 * 250 + 400               # plan width incl. columns
 marks = json.load(open(os.path.join(prep.LIRA, 'marks.json'), encoding='utf-8'))

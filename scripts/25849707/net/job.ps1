@@ -12,7 +12,7 @@ if (-not $dll) {
 }
 Copy-Item $Ops "$env:TEMP\b1_ops.json" -Force
 $jd = "$env:TEMP\acadjob_b1"; New-Item -ItemType Directory -Force $jd | Out-Null; Remove-Item "$jd\done.txt" -ErrorAction SilentlyContinue
-[IO.File]::WriteAllText("$jd\job.txt", "$dll|B1.Cmds|Apply|$Doc", [Text.Encoding]::UTF8)
+[IO.File]::WriteAllText("$jd\job.tmp", "$dll|B1.Cmds|Apply|$Doc", [Text.Encoding]::UTF8); Move-Item "$jd\job.tmp" "$jd\job.txt" -Force
 for ($i = 0; $i -lt $Wait -and -not (Test-Path "$jd\done.txt"); $i++) { Start-Sleep 1 }
 if (Test-Path "$jd\done.txt") { Get-Content "$jd\done.txt" -Encoding UTF8 | Select-Object -First 3 } else { "timeout" }
 Get-Content "$env:TEMP\b1_log.txt" -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 40
