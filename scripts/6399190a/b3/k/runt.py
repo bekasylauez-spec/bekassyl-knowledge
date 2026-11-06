@@ -1,6 +1,6 @@
 import sys, json, lib, ab, place, gt
 TY = json.load(open('types_t.json', encoding='utf-8'))
-NOTE7 = 'В местах примыкания ригелей промежуточных уровней хомуты шаг 100 по всей высоте колонны (сетки С1 только в узле верха).'
+NOTE7 = 'В уровнях промежуточных ригелей - хомуты ш.100 по всей высоте, сетки С1 только в верхнем узле.'
 sel = sys.argv[1:]
 for k, T in enumerate(TY):
     if sel and T['mark'] not in sel: continue
@@ -14,6 +14,9 @@ for k, T in enumerate(TY):
     lib.op(t='laycopy', src='0', dst=lay)
     lib.op(t='vpset2', layout=lay, media='ISO_full_bleed_A2_(594.00_x_420.00_MM)', win=[X0, Y0, X0 + 29700, Y0 + 21000], scale=50)
     lib.op(t='save')
-    out = ab.run(lib.OPS, 'gt_%d' % k, 1500)
-    errs = [l for l in ab.log().splitlines() if 'ERR' in l or 'no handle' in l or 'not found' in l]
+    errs = []
+    for i in range(0, len(lib.OPS), 25):
+        out = ab.run(lib.OPS[i:i + 25], 'gt_%d_%d' % (k, i), 300)
+        if 'timeout' in out[:300]: errs.append('TIMEOUT %d' % i); break
+        errs += [l for l in ab.log().splitlines() if 'ERR' in l or 'no handle' in l or 'not found' in l]
     print(T['mark'], info, len(lib.OPS), 'errs', len(errs)); print('\n'.join(errs[:25]))

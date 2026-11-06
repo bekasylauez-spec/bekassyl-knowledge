@@ -289,9 +289,13 @@ class Sheet:
             hd = [(s.P + 'N4038F1'), (s.P + 'N4038F5')] if i == 0 else [s.clone((s.P + 'N4038F1'), 'PD'), s.clone((s.P + 'N4038F5'), 'PD')]
             s.add(t='dimpts', h=hd[0], p1=[X(c - 250), s.YTB, 0], p2=[X(ref), s.YT, 0], dl=[X(ref), s.up(469559), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 250), s.YTB, 0], p2=[X(c - 250), s.YTB, 0], dl=[X(c - 250), s.up(469559), 0])
-            hc = (s.P + 'N4038F4') if i == 0 else s.clone((s.P + 'N4038F4'), 'PC')
-            k = K1['A1:4038F4']; px, py = map(float, k['pts'][0].split(','))
-            s.add(t='move', h=[hc], d=[X(c - 250) - (px - K1X + KX + s.dx) - 230, s.up(468950) - (py + s.dy) + 0])
+            if i == 0:
+                hc = s.P + 'N4038F4'; c0t = c
+                k = K1['A1:4038F4']; px, py = map(float, k['pts'][0].split(','))
+                s.add(t='move', h=[hc], d=[X(c - 250) - (px - K1X + KX + s.dx) - 230, s.up(468950) - (py + s.dy) + 0])
+            else:      # clone of the already placed first comb: shift by the splice distance only
+                hc = s.clone((s.P + 'N4038F4'), 'PC')
+                s.add(t='move', h=[hc], d=[c - c0t, 0])
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not tops: s.add(t='erase', h=[s.P + 'N' + r for r in ['4038F3', '4038F2', '4038F1', '4038F5', '4038F4']])
         for i, (_, c, ref) in enumerate(bots):
@@ -300,9 +304,13 @@ class Sheet:
             hd = [(s.P + 'N403992'), (s.P + 'N40394A')] if i == 0 else [s.clone((s.P + 'N403992'), 'PD'), s.clone((s.P + 'N40394A'), 'PD')]
             s.add(t='dimpts', h=hd[0], p1=[X(c), s.YB, 0], p2=[X(ref), s.YB, 0], dl=[X(ref), lo(467665), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 500), s.YBB, 0], p2=[X(c), s.YBB, 0], dl=[X(c), lo(467665), 0])
-            hc = (s.P + 'N403949') if i == 0 else s.clone((s.P + 'N403949'), 'PC')
-            k = K1['A1:403949']; px, py = map(float, k['pts'][0].split(','))
-            s.add(t='move', h=[hc], d=[X(c) - (px - K1X + KX + s.dx) - 180, s.up(468834) - (py + s.dy)])
+            if i == 0:
+                hc = s.P + 'N403949'; c0b = c
+                k = K1['A1:403949']; px, py = map(float, k['pts'][0].split(','))
+                s.add(t='move', h=[hc], d=[X(c) - (px - K1X + KX + s.dx) - 180, s.up(468834) - (py + s.dy)])
+            else:
+                hc = s.clone((s.P + 'N403949'), 'PC')
+                s.add(t='move', h=[hc], d=[c - c0b, 0])
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not bots: s.add(t='erase', h=[s.P + 'N' + r for r in ['403948', '403947', '403992', '40394A', '403949']])
 
