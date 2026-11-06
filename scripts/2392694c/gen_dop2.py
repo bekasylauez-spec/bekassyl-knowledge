@@ -133,11 +133,12 @@ def chain_try(B, X, Y, segs_, horiz, dl, base_pts, texts):
     # dim line and extension lines
     if horiz:
         nl.append(LineString([(X + a0 - 120, Y + dl), (X + a1 + 120, Y + dl)]))
-        for p in pts: nl.append(LineString([(X + p, Y + base_pts[p]), (X + p, Y + dl + (100 if dl > base_pts[p] else -100))]))
+        for p in pts: nl.append(LineString([(X + p, Y + base_pts[p]), (X + p, Y + dl + (220 if dl > base_pts[p] else -220))]))
     else:
         nl.append(LineString([(X + dl, Y + a0 - 120), (X + dl, Y + a1 + 120)]))
-        for p in pts: nl.append(LineString([(X + base_pts[p], Y + p), (X + dl + (100 if dl > base_pts[p] else -100), Y + p)]))
+        for p in pts: nl.append(LineString([(X + base_pts[p], Y + p), (X + dl + (220 if dl > base_pts[p] else -220), Y + p)]))
     bad += B.lines_bad(nl)
+    extl = nl[1:]
     import itertools
     per = []
     for i, (a, b) in enumerate(segs_):
@@ -166,6 +167,7 @@ def chain_try(B, X, Y, segs_, horiz, dl, base_pts, texts):
         if best is not None and sc >= best[0]: continue
         polys = [o[2] for o in combo]
         if any(polys[i].intersects(polys[j]) for i in range(len(polys)) for j in range(i + 1, len(polys))): continue
+        sc += sum(1 for p in polys for el in extl if p.buffer(40).intersects(el))      # own chain ext lines (each also a neighbour's)
         exts = [o[3] for o in combo if o[3] is not None]
         if any(e.intersects(p) for e in exts for p in polys if not e.touches(p)) and len(polys) > 1:
             sc += 0.5 * sum(1 for e in exts for p in polys if e.intersects(p))
@@ -202,7 +204,7 @@ def stL(key, k, B, X, Y, along_x, zl, ops, report):
         pts = [s0] + [a for a in ax2 if s0 + 300 < a < s1 - 300] + [s1]
         segs_ = list(zip(pts, pts[1:])); texts = [str(int(round(b - a))) for a, b in segs_]
         best = None
-        for side, d in [(1, 300), (-1, 550), (1, 600), (-1, 850), (1, 950), (-1, 1200), (1, 1350), (-1, 1600), (1, 1800), (-1, 2050), (1, 2300), (-1, 2550)]:
+        for side, d in [(1, 300), (-1, 550), (1, 600), (-1, 850), (1, 950), (-1, 1200), (1, 1350), (-1, 1600), (1, 1800), (-1, 2050), (1, 2300), (-1, 2550), (1, 2900), (-1, 3150), (1, 3500), (-1, 3750)]:
             bar = p1 if side > 0 else p0
             dl = bar + side * d
             bp = {p: bar for p in pts}
@@ -228,7 +230,7 @@ def stB(key, k, B, X, Y, along_x, zl, ops, report):
         best = None
         for at, sg in [(s0, -1), (s1, 1)]:
             pass
-        for d in (350, 700, 1050, 1400, 1800, 2200):
+        for d in (350, 700, 1050, 1400, 1800, 2200, 2700, 3200):
             for at, sg in ((s0, -1), (s1, 1)):
                 dl = at + sg * d
                 bp = {p: at for p in cp}
@@ -248,14 +250,14 @@ def stN(key, k, B, X, Y, along_x, zl, ops, report):
         num = pos[(d, L)]
         cands = []
         fr = sorted([i / 20 for i in range(21)], key=lambda f: abs(f - 0.5))
-        offs = (520, 900, 1300, 1800, 2300)
+        offs = (520, 900, 1300, 1800, 2300, 3000, 3800, 4600)
         for f in fr:
             c = s0 + 50 + f * (s1 - s0 - 100)
             if along_x:
                 ys = ([(p0 + p1) / 2] if p1 - p0 >= 940 else []) + [v for o in offs for v in (p1 + o, p0 - o)]
                 for oy in ys: cands.append((c, oy, [(c, p1), (c, p0)], c))
             else:
-                xs = ([p1 - 100] if p1 - p0 >= 1400 else []) + [p0 - 110] + [p0 - o for o in (600, 1100, 1600, 2100)]
+                xs = ([p1 - 100] if p1 - p0 >= 1400 else []) + [p0 - 110] + [p0 - o for o in (600, 1100, 1600, 2100, 2800, 3600, 4400)]
                 for ox in xs: cands.append((ox, c, [(p1, c), (p0, c)], None))
         cands.sort(key=lambda q: (abs(q[1] - (p0 + p1) / 2) if along_x else abs(q[0] - (p0 + p1) / 2)) // 300)
         best = None

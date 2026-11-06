@@ -149,6 +149,18 @@ def _is_shelf(pid_, ls_):
     return False
 shelves = [(pid_, ls_) for pid_, ls_ in segs if ptype.get(pid_, '').startswith('SPDSNOTE') and _is_shelf(pid_, ls_)]   # SPDS callouts only
 strokes = [(pid_, ls_) for pid_, ls_ in segs if ptype.get(pid_) in ('SPDSSECTION', 'SPDSCONSTRUCTIONLINE') and ls_.length <= 1000]   # section mark strokes/arrows
+# an axis line (dashes) crossing dims inside the plan is normal: of an axis only its bubble (pieces within 700 of its label) counts (06.11)
+_lab = {}
+for pid_, poly_, s_ in texts: _lab.setdefault(pid_, []).append(poly_)
+def _clip(pid_, ls_):
+    if ptype.get(pid_) != 'SPDSCONSTRUCTIONLINE': return ls_
+    from shapely.ops import unary_union
+    zone = unary_union([q.centroid.buffer(560) for q in _lab.get(pid_, [])]) if _lab.get(pid_) else None
+    if zone is None: return None
+    g = ls_.intersection(zone)
+    return g if (not g.is_empty and g.geom_type == 'LineString' and g.length > 1) else None
+strokes = [(pid_, _clip(pid_, ls_)) for pid_, ls_ in strokes]
+strokes = [(p_, g_) for p_, g_ in strokes if g_ is not None]
 hatches = []                                                      # concrete/ground hatch areas: no text on them
 for e in list(msp.query('HATCH')) + [v for p_, v in ins_hatch]:
     try:
@@ -178,11 +190,11 @@ for name, (x0, y0, x1, y1) in sheets.items():
             pj, b, sb = T[j]
             if pi_ == pj: continue
             if ash.intersects(b) and ash.intersection(b).area > 0.005 * min(a.area, b.area):   # any real touch
-                found.append(('ТЕКСТ/ТЕКСТ', sa, sb, a.centroid))
+                found.append(('ТЕКСТ/ТЕКСТ', sa, sb, a.centroid, pi_ + '/' + pj))
         for pl, ls in L:
             if pl == pi_: continue
             if ash.intersects(ls) and ash.intersection(ls).length > 0.03 * math.sqrt(a.area / max(len(sa), 1)):
-                found.append(('ЛИНИЯ/ТЕКСТ', sa, pl, a.centroid))
+                found.append(('ЛИНИЯ/ТЕКСТ', sa, pl, a.centroid, pi_))
     # a note shelf must not run across an axis, an element or another line (Bekassyl 31.10, sheet 3.2)
     for ps, sh in shelves:
         if not W.intersects(sh): continue
@@ -191,32 +203,32 @@ for name, (x0, y0, x1, y1) in sheets.items():
             if ptype.get(pl) == 'DIMENSION' and sh.intersection(ls).geom_type == 'LineString' and sh.intersection(ls).length > 1: continue  # «1/ш.200 →» continuing a chain (analog 3.2)
             if sh.crosses(ls) or (sh.intersects(ls) and sh.intersection(ls).length > 1):
                 txt = '|'.join(ptexts.get(ps, []))
-                found.append(('ПОЛКА/ЛИНИЯ', txt, pl, sh.centroid))
+                found.append(('ПОЛКА/ЛИНИЯ', txt, pl, sh.centroid, ps))
     for ps, st in strokes:
         if not W.intersects(st): continue
         for pl, ls in L:
             if pl == ps or (ptype.get(pl) in ('SPDSCONSTRUCTIONLINE', 'SPDSSECTION') and ls.length > 1000): continue
             if st.crosses(ls) or (st.intersects(ls) and st.intersection(ls).length > 1):
-                found.append(('ЗНАК РАЗРЕЗА/ЛИНИЯ', '|'.join(ptexts.get(ps, [])), pl, st.centroid))
+                found.append(('ЗНАК РАЗРЕЗА/ЛИНИЯ', '|'.join(ptexts.get(ps, [])), pl, st.centroid, ps))
     # every text inside the inner frame (20 mm left, 5 mm elsewhere) and off the stamp (185 x 55 mm, bottom right)
     SC = {'2.3': 50, '3.7': 25}.get(name, 100); m5, m20 = 5 * SC, 20 * SC
     inner = box(x0 + m20, y0 + m5, x1 - m5, y1 - m5); stamp = box(x1 - m5 - 185 * SC, y0 + m5, x1 - m5, y0 + m5 + 55 * SC)
     for p_, poly, s_ in T:
         if ptype.get(p_, '') in ('SPDSFORMAT',): continue
-        if not inner.contains(poly): found.append(('ЗА РАМКОЙ', s_, '', poly.centroid))
-        elif poly.intersects(stamp) and not stamp.contains(poly): found.append(('НА ШТАМПЕ', s_, '', poly.centroid))
+        if not inner.contains(poly): found.append(('ЗА РАМКОЙ', s_, '', poly.centroid, p_))
+        elif poly.intersects(stamp) and not stamp.contains(poly): found.append(('НА ШТАМПЕ', s_, '', poly.centroid, p_))
     for p_, poly, s_ in T:
         for hh_, hg in hatches:
             if hg.intersects(poly) and hg.intersection(poly).area > 0.15 * poly.area:
-                found.append(('ТЕКСТ НА ШТРИХОВКЕ', s_, hh_, poly.centroid)); break
+                found.append(('ТЕКСТ НА ШТРИХОВКЕ', s_, hh_, poly.centroid, p_)); break
     total += len(found)
     print('==', name, len(found))
     seen = set()
-    for k, sa, sb, c in found:
+    for k, sa, sb, c, own in found:
         key = (k, sa, str(sb), round(c.x / 200), round(c.y / 200))
         if key in seen: continue
         seen.add(key)
-        print('  %s  "%s"  <> %s  @(%.0f, %.0f)' % (k, sa, sb, c.x - x0, c.y - y0))
+        print('  %s  "%s"  <> %s  @(%.0f, %.0f)  {%s}' % (k, sa, sb, c.x - x0, c.y - y0, own))
 if unread:
     print('НЕ ПРОЧИТАНО (проверка неполная!):', len(unread), sorted({u[1] for u in unread}))
     total += len(unread)
