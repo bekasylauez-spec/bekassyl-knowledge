@@ -72,7 +72,7 @@ def sections(M, u0, u1):
     """cuts of this part: one per distinct set of доп bars present (top/bottom), main-only first"""
     cand = []
     axes = [u for u, _ in M['axes']]
-    spl = [c for _, c, _ in M.get('spl', [])] + [(d['a'] + min(600, (d['b'] - d['a']) / 3)) if d['top'] else (d['b'] - min(600, (d['b'] - d['a']) / 3)) for d in M['dops']]
+    spl = [c for _, c, _ in M.get('spl', [])] + [(max(d['a'], u0) + min(d['b'], u1)) / 2.0 for d in M['dops']]
     for z in M['zones']:
         a, b = max(z['fL'], u0), min(z['fR'], u1)
         if b - a < 800: continue

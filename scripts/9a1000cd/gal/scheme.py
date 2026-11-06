@@ -10,11 +10,12 @@ SX = {'6.1': prep.SX0 - 3 * 31500.0, '6.2': prep.SX0 - 2 * 31500.0, '6.3': prep.
 X9, YA = 53850.0, -1350.0
 PW = 32 * 250 + 400               # plan width incl. columns
 marks = json.load(open(os.path.join(prep.LIRA, 'marks.json'), encoding='utf-8'))
-rr, groups = pickle.load(open(os.path.join(prep.LIRA, 'groups.pkl'), 'rb'))
-# run -> mark (groups are in marks order)
+rr, _g = pickle.load(open(os.path.join(prep.LIRA, 'groups.pkl'), 'rb'))
+groups = pickle.load(open(os.path.join(prep.LIRA, 'groups_u.pkl'), 'rb'))
+# run -> mark (unified groups are in marks order); runs matched by end points
 RM = {}
 for m, (sg, rs) in zip(marks, groups):
-    for r, rev in rs: RM[id(r)] = m['mark']
+    for r, rev in rs: RM[(r['z'], tuple(r['A']), tuple(r['B']))] = m['mark']
 
 
 def plan(z, ox, oy, P, title):
@@ -47,7 +48,7 @@ def plan(z, ox, oy, P, title):
         if ang > math.pi / 2 + 0.01 or ang < -math.pi / 2 + 0.01: ang += math.pi       # readable
         side = hb + 330
         px, py = A[0] + ux * tm + nx * side, A[1] + uy * tm + ny * side
-        ops.append(dict(t='mtext', at=T(px, py), h=125, att=5, rot=ang, s=RM[id(r)], layer='TEXT 2.5', tag=tag('M')))
+        ops.append(dict(t='mtext', at=T(px, py), h=125, att=5, rot=ang, s=RM[(r['z'], tuple(r['A']), tuple(r['B']))], layer='TEXT 2.5', tag=tag('M')))
     # axes (kit SPDS axis), chains
     xs = sorted(DS.AXX.items()); ys = sorted(DS.AXY.items())
     ybot = oy - 1000; xleft = ox - 1000

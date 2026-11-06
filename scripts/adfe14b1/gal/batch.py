@@ -35,12 +35,19 @@ if first == '6.1' and not only:
 for i, (M, p) in enumerate(todo):
     if i and i % B == 0:
         stop(pid); pid = start(); print('restart', flush=True)
-    t0 = time.time()
-    try:
-        log = b4rig.run(M, p)
-        gx.run([dict(t='save')], 'sv')
-        print(p['no'], M['mark'], round(time.time() - t0), [l for l in log if 'ERR' in l][:2], flush=True)
-    except Exception as ex:
-        print(p['no'], M['mark'], 'EXC', ex, flush=True)
+    for attempt in range(3):
+        t0 = time.time()
+        try:
+            log = b4rig.run(M, p)
+            hung = any('timeout' in l for l in log)
+            if not hung:
+                out = gx.run([dict(t='save')], 'sv'); hung = 'timeout' in out
+            if hung: raise TimeoutError('AutoCAD did not answer')
+            print(p['no'], M['mark'], round(time.time() - t0), [l for l in log if 'ERR' in l][:2], flush=True)
+            break
+        except Exception as ex:
+            print(p['no'], M['mark'], 'EXC', ex, '-> restart AutoCAD', flush=True)
+            ps('Stop-Process -Id %s -Force' % pid); time.sleep(3)
+            pid = start(); print('restart after hang', flush=True)
 stop(pid)
 print('ALLDONE', flush=True)

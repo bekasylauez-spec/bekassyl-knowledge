@@ -27,9 +27,9 @@ def restart_acad():
         except Exception: pass
     p = subprocess.Popen([r'C:\Program Files\Autodesk\AutoCAD 2021\acad.exe', '/nologo', '/b', os.path.join(S, 'net', 'boot.scr')])
     open(pf, 'w').write(str(p.pid))
-    for i in range(240):
+    for i in range(150):
         time.sleep(2)
         if os.path.exists(os.path.join(jd, 'listening.txt')): break
-    time.sleep(25)
-    out = run([dict(t='docinfo')], 'ping', wait=180)
+    time.sleep(15)
+    out = run([dict(t='docinfo')], 'ping', wait=240)
     return p.pid, out

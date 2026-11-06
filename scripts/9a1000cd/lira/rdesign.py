@@ -214,8 +214,44 @@ def check(D, rs):
     return bad
 
 
+def colpos(rs):
+    r0, rev = rs[0]; E = r0['E1'] - r0['E0']
+    s = [((a + b) / 2.0 - r0['E0']) for a, b, k in r0['sups'] if k == 'col']
+    return sorted((E - x) if rev else x for x in s), E
+
+
+def unify(groups, tol=300):
+    """merge groups: same level/section, length within tol, same column supports within tol (direct or mirrored);
+    the template is the group with more supports; the merge is kept only if As/Asw of every member are covered"""
+    G = [list(rs) for _, rs in groups]
+    changed = True
+    while changed:
+        changed = False
+        for i in range(len(G)):
+            for j in range(len(G)):
+                if i == j or not G[i] or not G[j]: continue
+                a, b = G[i][0][0], G[j][0][0]
+                if (a['z'], a['b'], a['h']) != (b['z'], b['b'], b['h']): continue
+                if len(a['sups']) < len(b['sups']): continue          # i = template (more supports)
+                ca, Ea = colpos(G[i]); cb, Eb = colpos(G[j])
+                if abs(Ea - Eb) > tol or len(ca) != len(cb): continue
+                direct = all(abs(x - y) <= tol for x, y in zip(ca, cb))
+                mirror = all(abs(x - (Eb - y)) <= tol for x, y in zip(ca, sorted(cb, reverse=True)))
+                if not (direct or mirror): continue
+                flip = not direct
+                cand = G[i] + [(r, (not rev) if flip else rev) for r, rev in G[j]]
+                D = design(cand, 'x')
+                if check(D, cand): continue
+                G[i] = cand; G[j] = []; changed = True
+    return [(None, g) for g in G if g]
+
+
 if __name__ == '__main__':
     marks = []
+    n0 = len(groups)
+    groups = unify(groups)
+    print('unify: %d -> %d marks' % (n0, len(groups)))
+    pickle.dump(groups, open(os.path.join(HERE, 'groups_u.pkl'), 'wb'))
     for k, (s, rs) in enumerate(groups, 1):
         D = design(rs, 'Рм-%d' % k)
         r0 = rs[0][0]

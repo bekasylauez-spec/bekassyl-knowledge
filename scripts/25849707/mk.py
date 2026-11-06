@@ -5,7 +5,7 @@ import gx, rig, rigsec, rigtab, an61, plan, json, math
 class Stuck(Exception): pass
 
 
-def R(ops, name, wait=900):
+def R(ops, name, wait=300):
     out = gx.run(ops, name, wait=wait)
     if out.strip().startswith('timeout') or 'eAtMaxReaders' in out: raise Stuck(name + ': ' + out[-300:])
     return out

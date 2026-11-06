@@ -1,0 +1,36 @@
+﻿# kill my AutoCAD instance (pid.txt), reopen m2w.dwg with the listener; answer the "recover" dialogs
+$g = "C:\Users\Admin\AppData\Local\Temp\claude\210ab68cad67e8c1\9a1000cd-e0d9-42b2-b432-f6f3db0e7099\scratchpad\gal"
+$jd = "$env:TEMP\acadjob_m2"
+$old = [int](Get-Content "$g\net\pid.txt" -Raw).Trim()
+try { Stop-Process -Id $old -Force -ErrorAction Stop; "killed $old" } catch { "not running $old" }
+Start-Sleep 3
+foreach ($f in @("$jd\listening.txt", "$jd\job.txt", "$jd\done.txt", "$g\w\m2w.dwl", "$g\w\m2w.dwl2")) { if (Test-Path $f) { [IO.File]::Delete($f) } }
+$p = Start-Process "C:\Program Files\Autodesk\AutoCAD 2021\acad.exe" -ArgumentList "`"$g\w\m2w.dwg`" /nologo /b `"$g\net\boot.scr`"" -PassThru
+$p.Id | Set-Content "$g\net\pid.txt"
+Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+Add-Type @"
+using System;using System.Runtime.InteropServices;
+public class UR{[DllImport("user32.dll")]public static extern IntPtr PostMessage(IntPtr h,uint m,IntPtr w,IntPtr l);}
+"@
+$root = [Windows.Automation.AutomationElement]::RootElement
+$pc = New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ProcessIdProperty, $p.Id)
+for ($i = 0; $i -lt 150; $i++) {
+  Start-Sleep 2
+  if (Test-Path "$jd\listening.txt") { "listening pid $($p.Id)"; exit 0 }
+  $wc = New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Window)
+  $dlgs = @(); foreach ($top in $root.FindAll([Windows.Automation.TreeScope]::Children, $pc)) { foreach ($d in $top.FindAll([Windows.Automation.TreeScope]::Descendants, $wc)) { if ($d.Current.Name -match 'поврежд|Восстан') { $dlgs += $d } } }
+  foreach ($w in $dlgs) {
+    foreach ($nm in @("Восстановить", "Закрыть")) {
+      $c = New-Object Windows.Automation.PropertyCondition([Windows.Automation.AutomationElement]::NameProperty, $nm)
+      $b = $w.FindFirst([Windows.Automation.TreeScope]::Descendants, $c)
+      if ($b -and $b.Current.NativeWindowHandle) {
+        $h = [IntPtr]$b.Current.NativeWindowHandle
+        [UR]::PostMessage($h, 0x0201, [IntPtr]1, [IntPtr]0x000A000A) | Out-Null
+        [UR]::PostMessage($h, 0x0202, [IntPtr]0, [IntPtr]0x000A000A) | Out-Null
+        "clicked $nm"
+      }
+    }
+  }
+}
+"relaunch timeout"
+exit 1

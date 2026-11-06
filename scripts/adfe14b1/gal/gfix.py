@@ -14,7 +14,7 @@ json.dump(SH, open(os.path.join(W, 'sh_all.json'), 'w'))
 def check():
     dxf = os.path.join(W, 'live.dxf'); geo = os.path.join(W, 'geo_all.txt')
     x0 = min(v[0] for v in SH.values()); x1 = max(v[2] for v in SH.values())
-    gx.run([dict(t='dxfout', file=dxf), dict(t='geomdump', win=[x0, 420000, x1, 434850], file=geo)], 'gchk')
+    gx.run([dict(t='dxfout', file=dxf), dict(t='geomdump', win=[x0, 420000, x1, 434850], file=geo)], 'gchk', wait=1500)
     r = subprocess.run([sys.executable, '-X', 'utf8', os.path.join(W, 'oc.py'), dxf, os.path.join(W, 'sh_all.json'), '--geom=' + geo,
                         '--dump=' + os.path.join(W, 'dump_{}.pkl')], capture_output=True, text=True, encoding='utf-8', errors='replace')
     return r.stdout

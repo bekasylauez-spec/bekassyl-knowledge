@@ -124,7 +124,7 @@ class Sheet:
             hb = barp.pop(0) if barp else s.clone(T('A5:4274A8'), 'DB')
             s.add(t='plset', h=hb, p=[[X(a), y], [X(b), y]], layer=s.lay)
             hn = notep.pop(0) if notep else s.clone(T('A5:4274A9'), 'DN')
-            xn = X(a + min(600, (b - a) / 3)) if d['top'] else X(b - min(600, (b - a) / 3))
+            xn = X((a + b) / 2.0)
             ysh = s.up(469289) if d['top'] else s.up(469289) - 30
             s.add(t='spmove', h=hn, items=[[0, xn, ysh], [1, xn, y]])
             s.add(t='mcset', h=hn, set={'FirstLine': d['pos'], 'SecondLine': '(ф%d)' % DIA})
@@ -197,7 +197,7 @@ class Sheet:
         n1 = [T('A5:4015B1'), T('A5:40671E')]
         for z in M['zones']:
             if z['fR'] - z['fL'] < 2500 or z['fR'] < u0 + 1 or z['fL'] > u1 - 1: continue
-            busy = [c for _, c, _ in s.part.get('spl', [])] + [x for _, x, _ in s.part['secs']] +                    [(d['a'] + min(600, (d['b'] - d['a']) / 3)) if d['top'] else (d['b'] - min(600, (d['b'] - d['a']) / 3)) for d in M['dops']]
+            busy = [c for _, c, _ in s.part.get('spl', [])] + [x for _, x, _ in s.part['secs']] +                    [(max(d['a'], u0) + min(d['b'], u1)) / 2.0 for d in M['dops']]
             cand = ([z['lines'][1] + 300] if len(z['lines']) > 2 else []) + [(z['fL'] + z['fR']) / 2, z['fL'] + (z['fR'] - z['fL']) * 0.35,
                     z['fL'] + (z['fR'] - z['fL']) * 0.65, z['fL'] + 600, z['fR'] - 600]
             cand = [c for c in cand if u0 + 300 < c < u1 - 300 and all(abs(c - b) > 1300 for b in busy)]
@@ -226,6 +226,32 @@ class Sheet:
         s.spans = spans; s.sups = sups
 
     # ------------------------------------------------------------------ splices (накладки Н4 Ø28)
+    def comb(s, hc, xa, xb, ybar):
+        """Н4 comb: shelf above the beam, left or right of its plates, at one of two heights, clear of other shelves"""
+        M = s.M; X = s.X
+        if not hasattr(s, 'occ'):
+            s.occ = []
+            for d in M['dops']:                       # доп callouts
+                a, b = max(d['a'], s.u0), min(d['b'], s.u1)
+                if b - a < 1: continue
+                xn = X((a + b) / 2.0)
+                s.occ.append((xn - 100, xn + 700))
+            for (_, x, _) in s.part['secs']: s.occ.append((X(x) - 250, X(x) + 250))
+            for z in M['zones']:
+                for xx in [(z['fL'] + z['fR']) / 2]: pass
+        opts = []
+        for ysh in (s.YT + 250, s.YT + 520):
+            opts.append((ysh, xa - 350 - 600, xa - 350 + 120, xa - 350))          # left of the plates
+            opts.append((ysh, xb + 350 - 120, xb + 350 + 600, xb + 350))          # right of the plates
+        def free(lo, hi, y):
+            return all(hi < a or lo > b for a, b, yy in [(o[0], o[1], o[2] if len(o) > 2 else None) for o in s.occ] if yy is None or abs(yy - y) < 200)
+        pick = next(((y, lo, hi, xs) for y, lo, hi, xs in opts if free(lo - 100, hi + 100, y)), opts[0])
+        y, lo, hi, xs = pick
+        s.occ.append((lo - 50, hi + 50, y))
+        left = xs < xa
+        s.add(t='combsegs', h=hc, segs=[[[xa, ybar], [xs if left else xs - 120, y]], [[xb, ybar], [xs + 120 if left else xs, y]]],
+              start=[xs + 120 if left else xs - 120, y], end=[lo if left else hi, y], trim=True)
+
     def splices(s):
         T, X, lo = s.T, s.X, s.lo
         st = s.part.get('spl', [])
@@ -241,9 +267,8 @@ class Sheet:
             s.add(t='dimpts', h=hd[0], p1=[X(c - 250), s.YTB, 0], p2=[X(ref), s.YT, 0], dl=[X(ref), s.up(469559), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 250), s.YTB, 0], p2=[X(c - 250), s.YTB, 0], dl=[X(c - 250), s.up(469559), 0])
             hc = (s.P + 'N4038F4') if i == 0 else s.clone((s.P + 'N4038F4'), 'PC')
-            ysh = s.YT + 250; xa, xb = X(c - 250), X(c + 250)
-            s.add(t='combsegs', h=hc, segs=[[[xa, s.YTB], [xa - 350, ysh]], [[xb, s.YTB], [xa - 350 + 120, ysh]]],
-                  start=[xa - 350 + 120, ysh], end=[xa - 350 - 600, ysh], trim=True)
+            xa, xb = X(c - 250), X(c + 250)
+            s.comb(hc, xa, xb, s.YTB)
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not tops: s.add(t='erase', h=[s.P + 'N' + r for r in ['4038F3', '4038F2', '4038F1', '4038F5', '4038F4']])
         for i, (_, c, ref) in enumerate(bots):
@@ -253,9 +278,8 @@ class Sheet:
             s.add(t='dimpts', h=hd[0], p1=[X(c), s.YB, 0], p2=[X(ref), s.YB, 0], dl=[X(ref), lo(467665), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 500), s.YBB, 0], p2=[X(c), s.YBB, 0], dl=[X(c), lo(467665), 0])
             hc = (s.P + 'N403949') if i == 0 else s.clone((s.P + 'N403949'), 'PC')
-            ysh = s.YT + 250; xa, xb = X(c), X(c + 500)          # as the analog: shelf above the beam, leaders down to the plates
-            s.add(t='combsegs', h=hc, segs=[[[xa, s.YBB], [xb + 300 - 120, ysh]], [[xb, s.YBB], [xb + 300, ysh]]],
-                  start=[xb + 300 - 120, ysh], end=[xb + 300 + 600, ysh], trim=True)
+            xa, xb = X(c), X(c + 500)                          # as the analog: shelf above the beam, leaders down to the plates
+            s.comb(hc, xa, xb, s.YBB)
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
         if not bots: s.add(t='erase', h=[s.P + 'N' + r for r in ['403948', '403947', '403992', '40394A', '403949']])
 
