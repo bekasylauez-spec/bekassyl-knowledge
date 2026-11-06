@@ -27,9 +27,9 @@ X4 = (round(2 * UO + 2 * OFF), round(2 * UO + 2 * OFF))                         
 X5R = UO + OFF                                                                     # rhombus half-diagonal 263
 LH = lambda a: 2 * (a[0] + a[1]) + 2 * HOOK
 L_X5 = round(4 * math.sqrt(2) * X5R + 2 * HOOK)
-SK1 = (round(YS[-1] - YS[0]), LAP_N)
-SK2 = (round(XS[-1] - XS[0]), LAP_N)
-SK3 = (round(2 * UO), LAP_N)
+SK1 = (round(YS[-1] - YS[0] + D + 16), LAP_N)       # legs outside the bars: axis distance + (Ø28 + Ø16)
+SK2 = (round(XS[-1] - XS[0] + D + 16), LAP_N)
+SK3 = (round(2 * UO + D + 16), LAP_N)
 MESH = (BX - 40, BY - 40)                # С1 660 x 860, Ø10 @100
 CONS = dict(l=600, h=850)                # КН-1 (Км-4, Км-5): 600 from the column face, towards the crane line
 

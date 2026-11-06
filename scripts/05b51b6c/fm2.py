@@ -10,7 +10,7 @@ AY = [0, 6000, 12000]
 PX, PY, PH = 2000, 3000, 1000           # pad
 BB, BH = 350, 600                       # beam
 STOCK = 11700
-LAP = {20: 1220, 12: 730, 16: 980}      # 61d, B25 (lap table of the analog)
+LAP = {20: 1220, 12: 730, 16: 980, 28: 1710}      # 61d, B25 (lap table of the analog)
 
 
 def gbot(L, step=150, c=50):
@@ -29,7 +29,7 @@ P2 = list(range(75, 2926, 150))      # y of bottom bars along X (pos 2), 20 pcs,
 P3 = list(range(100, 1901, 200))     # x of top bars along Y (pos 3), 10 pcs, ш.200
 P4 = list(range(200, 2801, 200))     # y of top bars along X (pos 4), 14 pcs, ш.200
 NP = len(AX) * len(AY)
-BAR_B = [-117, 0, 117]   # beam bars in plan (top 3 + bottom 3 project on these lines)
+BAR_B = [-125, -42, 42, 125]   # beam bars in plan: 4+4 Ø28 (b>300 -> 4+4, 2 hoops)
 
 # beam lines: along X on every row from the outer pad faces, along Y on every axis
 LX = (AX[-1] + PX / 2 - 50) - (AX[0] - PX / 2 + 50)
@@ -41,7 +41,7 @@ def bar_len(L, d):
     return L + (n - 1) * LAP[d]
 
 
-M5 = (len(AY) * 6 * bar_len(LX, 20) + len(AX) * 6 * bar_len(LY, 20)) / 1000          # п.м.
+M5 = (len(AY) * 8 * bar_len(LX, 28) + len(AX) * 8 * bar_len(LY, 28)) / 1000          # п.м.
 M6 = (len(AY) * 2 * bar_len(LX, 12) + len(AX) * 2 * bar_len(LY, 12)) / 1000
 
 
@@ -70,26 +70,26 @@ COLX = [-350 + CC + k * (700 - 2 * CC) / 3 for k in range(4)]
 COLY = [-450 + CC + k * (900 - 2 * CC) / 4 for k in range(5)]
 DOW = sorted(set([(x, COLY[0]) for x in COLX] + [(x, COLY[-1]) for x in COLX] + [(COLX[0], y) for y in COLY] + [(COLX[-1], y) for y in COLY]))
 CORN = [(x, y) for x in (COLX[0], COLX[-1]) for y in (COLY[0], COLY[-1])]
-DOW_IN = PH - 50 - 40                     # in the pad down to the bottom mesh
+DOW_IN = PH - 50 - 28 - 28 - 14                     # in the pad down to the bottom mesh
 L_VP1 = DOW_IN + 200 + 600
 L_VP2 = DOW_IN + 200 + 1200
-X1 = (280, 530); X2 = (626, 826)
+X1 = (205, 538); X2 = (626, 826)        # X1: 2 hoops in the beam section, each on 3 bars
 L_X1 = 2 * sum(X1) + 200; L_X2 = 2 * sum(X2) + 200
 L_SK = (PH - 80) + 2 * 1000
 NSK = int(2 * (PX + PY) / 200)
-L_SP = round((2 * 117 + 10 + 2 * 100) / 10 + 0.49) * 10      # Шп1: side bars ±117 + 2 hooks 135°/100
-KR_H = 820; L_KR = 4 * KR_H + 8 * 700                 # КР-1 700x700, between the meshes
+L_SP = round((2 * 125 + 12 + 10 + 2 * 100) / 10 + 0.49) * 10      # Шп1: side bars ±117 + 2 hooks 135°/100
+KR_H = 790; L_KR = 4 * KR_H + 8 * 700                 # КР-1 700x700, between the meshes
 
 POS = [  # (pos, star, d, cls, L or None (п.м.), count, sheet note)
-    ('1', '', 20, '500С', PY - 100, len(P1) * NP, 'подушка, низ, вдоль цифровых осей'),
-    ('2', '', 20, '500С', PX - 100, len(P2) * NP, 'подушка, низ, вдоль буквенных осей'),
-    ('3', '', 16, '500С', PY - 100, len(P3) * NP, 'подушка, верх, вдоль цифровых осей'),
-    ('4', '', 16, '500С', PX - 100, len(P4) * NP, 'подушка, верх, вдоль буквенных осей'),
-    ('5', '', 20, '500С', None, round(M5, 1), 'балки, 3+3, нахлест 1220'),
+    ('1', '', 28, '500С', PY - 100, len(P1) * NP, 'подушка, низ, вдоль цифровых осей'),
+    ('2', '', 28, '500С', PX - 100, len(P2) * NP, 'подушка, низ, вдоль буквенных осей'),
+    ('3', '', 28, '500С', PY - 100, len(P3) * NP, 'подушка, верх, вдоль цифровых осей'),
+    ('4', '', 28, '500С', PX - 100, len(P4) * NP, 'подушка, верх, вдоль буквенных осей'),
+    ('5', '', 28, '500С', None, round(M5, 1), 'балки, 4+4, нахлест 1710'),
     ('6', '', 12, '500С', None, round(M6, 1), 'балки, боковые 2, нахлест 730'),
     ('Ск1', '*', 16, '500С', L_SK, NSK * NP, 'П-скоба по контуру подушки'),
-    ('Х1', '*', 10, '500С', L_X1, N_X1, 'хомут балок'),
-    ('Х2', '*', 10, '500С', L_X2, 3 * NP, 'хомут выпусков'),
+    ('Х1', '*', 10, '500С', L_X1, 2 * N_X1, 'хомут балок, 2 шт. в сечении'),
+    ('Х2', '*', 10, '500С', L_X2, 4 * NP, 'хомут выпусков'),
     ('Вп1', '*', 28, '500С', L_VP1, len(CORN) * NP, 'выпуски угловые (+600)'),
     ('Вп2', '*', 28, '500С', L_VP2, (len(DOW) - len(CORN)) * NP, 'выпуски средние (+1200)'),
     ('Шп1', '*', 10, '500С', L_SP, N_X1, 'шпилька боковых стержней балок, шаг хомутов'),

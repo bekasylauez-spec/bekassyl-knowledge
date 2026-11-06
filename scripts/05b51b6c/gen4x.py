@@ -146,7 +146,7 @@ for lo, hi, hb in st:
     upper = bool(z1) and lo >= z1
     p, (n1, n2, n3), stp = C.colgeo.storey_hoops(lo, hi - hb)
     hx = UX if upper else HX
-    for k in sorted({0, n1, n1 + n2, len(p) - 1}):
+    for k in range(len(p)):                        # every hoop drawn
         ln([E(-hx, p[k]), E(hx, p[k])], 'диам10', 30)
     zone_marks.append(p)
     if hb:
@@ -220,8 +220,6 @@ hz = zone_marks[0]
 zx = min(hz, key=lambda q: abs(q - (bot + 1400)))
 zx2 = min(hz, key=lambda q: abs(q - (bot + 2700))); zx3 = min(hz, key=lambda q: abs(q - (bot + 3350)))
 note('Х1', '(%%C10)', E(-HX, zx), W(OX, YB + bot + 1500), 'Oblique')
-note('Х2', '(%%C10)', E(-C.X3[1] / 2 - 120, zx2), W(OX, YB + bot + 3150), 'Oblique')
-note('Х3', '(%%C10)', E(-C.X3[1] / 2 + 60, zx3), W(OX, YB + bot + 3700), 'Oblique')
 note('Н2', '(%%C28)', E(C.YS[0] - 42, bot + 600), W(OX, YB + bot + 950), 'Oblique')
 note('Вп1', 'см. лист 3.6', E(C.YS[-1], -1000), W(FR + 1000, YB - 1100), 'Oblique')
 note('Вп2', 'см. лист 3.6', E(C.YS[-2], -1700), W(FR + 1000, YB - 1800), 'Oblique')
@@ -229,18 +227,15 @@ if z1:
     up = [s for s in st if s[0] >= z1][0]
     zc_ = (up[0] + up[1]) / 2
     hzu = zone_marks[-1]
-    note('Ск1', '(%%C16)', E(C.YS[0] - 22, zb - 150), W(OX, YB + z1 + 300), 'Oblique')
-    note('Ск2', '(%%C16)', E(C.YS[1], zb - 60), W(OX, YB + z1 - 450), 'Oblique')
+    note('Ск1', '(%%C16)', E(C.YS[0] - 22, zb - 150), W(OX, YB + z1 + 400), 'Oblique')
     zh4 = min(hzu, key=lambda q: abs(q - z1 - 1400)); zh5 = min(hzu, key=lambda q: abs(q - z1 - 1900))
-    note('Х4', '(%%C10)', E((1 if CONS else -1) * UX, zh4), W(CX + 1300, YB + z1 + 1900) if CONS else W(OX, YB + z1 + 1000), 'Oblique')
-    note('Х5', '(%%C10)', E((1 if CONS else -1) * C.X5R * 0.3, zh5), W(CX + 1300, YB + z1 + 2500) if CONS else W(OX, YB + z1 + 1500), 'Oblique')
-    note(str(len(joints) * 2 + 1), '(%%C28)', E(-C.UO, z1 + 1850), W(OX, YB + z1 + 2000), 'Oblique')
+    note('Х4', '(%%C10)', E((1 if CONS else -1) * UX, zh4), W(CX + 1300, YB + z1 + 1900) if CONS else W(OX, YB + z1 + 1450), 'Oblique')
+    note(str(len(joints) * 2 + 1), '(%%C28)', E(-C.UO, z1 + 1850), W(OX, YB + z1 + 1950), 'Oblique')
     add(t='moveto', h=T('3E8E9D'), idx=1, to=E(C.UO + 22, top - 140))
     add(t='mcset', h=T('3E8E9D'), set={'FirstLine': 'Ск3', 'SecondLine': '(%%C16)', 'Origin': W(CX + 800, YB + top + 500), 'Angle': 0.0, 'Arrow': 'Oblique'})
 else:
     add(t='moveto', h=T('3E8E9D'), idx=1, to=E(C.YS[-1] + 22, zb - 120))
     add(t='mcset', h=T('3E8E9D'), set={'FirstLine': 'Ск1', 'SecondLine': '(%%C16)', 'Origin': W(FR + 900, YB + top + 950), 'Angle': 0.0, 'Arrow': 'Oblique'})
-    note('Ск2', '(%%C16)', E(C.YS[-2], zb - 60), W(FR + 900, YB + top + 350), 'Oblique')
 if CONS:
     note('К1', '(%%C28)', E(C.BY / 2 + cl - 30, zk - 450), W(CX + 1300, YB + z1 + 330), 'Oblique')
     note('Хк', '(%%C10)', E(C.BY / 2 + 560, z1 - ch_ + 250 * 0.6 + 120), W(CX + 1300, YB + z1 + 1150), 'Oblique')
@@ -248,7 +243,7 @@ if CONS:
 # ---------------- section marks, knot, title
 lo0, hi0, hb0_ = st[0]
 p0_, (n1_, n2_, n3_), _s = C.colgeo.storey_hoops(lo0, hi0 - hb0_)
-zc = max(p0_[n1_ + n2_] - 150, bot + 4300)
+zc = p0_[n1_ + n2_] - 490
 add(t='spmove', h=T('3E8EA3'), items=[[0] + E(-C.BY / 2 - 450, zc), [1] + E(C.BY / 2 + 450, zc)])
 add(t='secset', h=T('3E8EA3'), word='1')
 if z1:

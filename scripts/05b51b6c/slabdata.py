@@ -7,7 +7,7 @@ STOCK = 11700
 LAP = {12: 730, 14: 860}
 SL = BO.SLAB62                                      # (-350, -450, 32350, 12450)
 OPEN = BO.OPEN62
-STEP = 200
+STEP = 100
 C0 = 50
 
 
@@ -51,7 +51,7 @@ def pm1():
     area = (x1 - x0) * (y1 - y0) / 1e6
     per = 2 * ((x1 - x0) + (y1 - y0))
     nsk = int(per // 200)
-    pos = [('1', 12, None, round(2 * L / 1000, 1), 'сетки верх и низ, ш.200'),
+    pos = [('1', 12, None, round(2 * L / 1000, 1), 'сетки верх и низ, ш.100'),
            ('Ск1', 12, None, round(nsk * (400 + 60 + 400) / 1000, 1), 'П-скоба по контуру 400/60/400, ш.200 (%d шт.)' % nsk)]
     return dict(t=120, nsk=nsk, pos=pos, conc=area * 0.12, area=area, nx=nx, ny=ny)
 
@@ -59,16 +59,15 @@ def pm1():
 def pm2():
     x0, y0, x1, y1 = SL
     ops = list(OPEN.values())
-    L, nx, ny = mesh(x0, y0, x1, y1, ops, 14)
+    L, nx, ny = mesh(x0, y0, x1, y1, ops, 12)
     area = (x1 - x0) * (y1 - y0) / 1e6 - sum((o[2] - o[0]) * (o[3] - o[1]) for o in ops) / 1e6
     n_add = 0; L_add = 0
     for o in ops:
         for side in ((o[2] - o[0]), (o[2] - o[0]), (o[3] - o[1]), (o[3] - o[1])):
             L_add += (side + 2 * 600) * 2 * 2      # 2 bars, top + bottom
             n_add += 4
-    pos = [('1', 14, None, round(L / 1000, 1), 'низ, ш.200 в обоих направлениях'),
-           ('2', 14, None, round(L / 1000, 1), 'верх, ш.200 в обоих направлениях'),
-           ('3', 14, None, round(L_add / 1000, 1), 'доп. у проёмов 2%%C14 с каждой стороны')]
+    pos = [('1', 12, None, round(L / 1000, 1), 'низ, ш.100 в обоих направлениях'),
+           ('2', 12, None, round(L / 1000, 1), 'верх, ш.100 в обоих направлениях')]
     per = 2 * ((x1 - x0) + (y1 - y0)) + sum(2 * ((o[2] - o[0]) + (o[3] - o[1])) for o in ops)
     nsk = int(per // 200)
     nf = int(area / 0.16)

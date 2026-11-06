@@ -116,8 +116,7 @@ for (a, c), hz in zip(LN['spans'], LN['hz']):
         m_ = k
         while m_ + 1 < len(dd) and dd[m_ + 1] == dd[k]: m_ += 1
         runs_all.append((pts[k], pts[m_ + 1], dd[k], m_ - k + 1)); k = m_ + 1
-    marks = sorted(set([hz[0], hz[-1]] + [r[0] for r in runs_all if a < r[0] < c]))
-    for z_ in marks:
+    for z_ in hz:
         zt = ztop(z_)
         pl([P(z_, zt - 30), P(z_, zt - h + 30)], 'диам10', 30)
 lowest = min(top0, top1) - h
@@ -164,11 +163,11 @@ sm = max(gaps)[1]
 sp2 = [q for q in LN['spans'] if q[1] - q[0] > 1]
 s2a, s2c = sp2[1] if len(sp2) > 2 else sp2[0]
 hz2 = LN['hz'][LN['spans'].index((s2a, s2c))]
-note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(e0 + 400, ztop(e0) - h + cov), [X0 + XS0 - 900, Y0 + YT + KE * (ztop(e0) - lvl - h) - 500])
+note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(e0 + 150, ztop(e0) - h + cov), [X0 + XS0 - 900, Y0 + YT + KE * (ztop(e0) - lvl - h) - 500])
 note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], P(sa + (sc_ - sa) * 0.25, ztop(sa) - cov), [P(sa + (sc_ - sa) * 0.25, 0)[0] + 700, Y0 + YT + KE * (ztop(sa) - lvl) + 1800])
 hxx = hz2[len(hz2) // 3] if len(sp2) > 2 else hz2[int(len(hz2) * 0.6)]
 note('Х1(%%C10)', 'см. цепочку', P(hxx, ztop(s2a) - h / 2), [max(P(hxx, 0)[0] + 700, P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 2600) if len(sp2) > 1 else P(sa + (sc_ - sa) * 0.25, 0)[0] + 700 + 1900, Y0 + YT + KE * (ztop(s2a) - lvl) + 1800])
-note('Ск1(%%C16)', '', P(e1 - 55, ztop(e1) - h / 2), [P(e1, 0)[0] + 900, Y0 + YT + KE * (ztop(e1) - lvl) + 900])
+note('Ск1(%%C16)', '', P(e1 - 55, ztop(e1) - h / 2), [P(e1, 0)[0] + 900, Y0 + YT + KE * (ztop(e1) - lvl) + 1500])
 t = tag(); O.append({'t': 'clone', 'h': SECT, 'tag': t})
 O.append({'t': 'spmove', 'h': t, 'items': [[0] + [P(sm, 0)[0], P(sm, ztop(sm) - h)[1] - 750], [1] + [P(sm, 0)[0], P(sm, ztop(sm))[1] + 750]]})
 O.append({'t': 'secset', 'h': t, 'word': '1'})
@@ -207,14 +206,18 @@ note('2(%%%%C%d)' % A['d'], '%d шт.' % A['n'], Q(xs[-1], h - cov), Q(ox, h + 6
 note('1(%%%%C%d)' % A['d'], '%d шт.' % A['n'], Q(xs[-1], cov), Q(ox, -60), 'None')
 if A['side']: note('3(%%C12)', '', Q(xs[-1], h / (A['side'] + 1)), Q(ox, h * 0.35), 'None')
 note('Х1(%%C10)', '%d шт. в сеч.' % A['hoops'], Q(hs[-1][1], h * 0.6), Q(ox, h * 0.7))
-level(X0 + SX - KS * b / 2 - 1300, Y0 + SY + KS * h, top0)
+for k in range(A['side']):
+    z = h * (k + 1) / (A['side'] + 1)
+    pl([Q(xs[0] + 30, z + 30), Q(xs[0] - 12, z), Q(xs[-1] + 12, z), Q(xs[-1] - 30, z - 30)], 'диам10', 30)
+if A['side']: note('Шп1(%%C10)', 'на каждом хомуте', Q(0, h / (A['side'] + 1)), Q(-b / 2 - 250, h * 0.5 if A['side'] > 1 else h * 0.75))
+level(X0 + SX - KS * b / 2 - 1300, Y0 + SY + KS * h, ztop(sm))
 t = tag(); O.append({'t': 'clone', 'h': T_TTL, 'tag': t})
 O.append({'t': 'settext', 'h': t, 's': '{\\LРазрез 1 - 1}'})
 O.append({'t': 'moveto', 'h': t, 'idx': 0, 'to': Q(-b / 2 - 150, h + 300)})
 
 # ---------------- ведомость деталей
 TX0, TY1, CW0, CW, RH = X0 + 20500, Y0 + 14500, 1300, 5000, 2000
-DET = [('Х1', sch['hx1']), ('Ск1', None)]
+DET = [('Х1', sch['hx1']), ('Ск1', None)] + ([('Шп1', None)] if A['side'] else [])
 TY0 = TY1 - 800 - RH * len(DET)
 mtext([TX0 + (CW0 + CW) / 2, TY1 + 450], 'Ведомость деталей')
 pl([[TX0, TY0], [TX0 + CW0 + CW, TY0], [TX0 + CW0 + CW, TY1], [TX0, TY1]], '0', 30, True)
@@ -234,6 +237,10 @@ for k, (pos, g) in enumerate(DET):
         pl([[sx, sy + hh], [sx + 90, sy + hh - 90]], 'диам10', 30)
         mtext([sx + w / 2, sy + hh + 170], '%d' % a); mtext([sx - 180, sy + hh / 2], '%d' % c, rot=math.pi / 2)
         mtext([sx + w + 400, sy + hh / 2], 'крюки 2х100', att=4)
+    elif pos == 'Шп1':
+        w = 2600
+        pl([[sx + 300, sy + 750], [sx + 50, sy + 500], [sx + w, sy + 500], [sx + w - 250, sy + 250]], 'диам10', 30)
+        mtext([sx + w / 2, sy + 680], '%d' % (b - 2 * cov + 12)); mtext([sx + w / 2, sy + 80], 'крюки 135° 2х100')
     else:
         web = h - 2 * cov; hh = 950; w = 2000
         pl([[sx + w, sy + hh], [sx, sy + hh], [sx, sy], [sx + w, sy]], 'диам16', 40)
@@ -253,11 +260,12 @@ SP, ST = PRE + '37FCCB', PRE + '37FCCC'
 POS = sch['pos']; Np = len(POS)
 O.append({'t': 'trows', 'h': SP, 'mode': 'del', 'at': 3 + Np, 'n': 11 - Np})
 O.append({'t': 'trows', 'h': SP, 'mode': 'del', 'at': 3 + Np + 2, 'n': 1})                # подготовка row
+O.append({'t': 'theight', 'h': SP, 'rows': [[3 + Np, 800], [3 + Np + 1, 1100], [3 + Np + 2, 800]]})
 cells = [[2, 2, 'Балка %s' % MARK]]; form = []
 for r, p in zip(range(3, 3 + Np), POS):
     pos, d, L, n, _ = p
     unit = BD.KG[d] if L is None else round(L / 1000 * BD.KG[d], 2)
-    cells += [[r, 0, pos + ('*' if pos in ('Х1', 'Ск1') else '')], [r, 3, str(d)], [r, 5, '500С'], [r, 9, 'пог.м.' if L is None else str(int(L))],
+    cells += [[r, 0, pos + ('*' if pos in ('Х1', 'Ск1', 'Шп1') else '')], [r, 3, str(d)], [r, 5, '500С'], [r, 9, 'пог.м.' if L is None else str(int(L))],
               [r, 10, ('%.1f' % n) if L is None else str(n)], [r, 11, '%.2f' % unit]]
     form.append([r, 12, 'K%d*L%d' % (r + 1, r + 1)])
 form.append([2, 12, 'Sum(M4:M%d)' % (3 + Np)])
@@ -268,8 +276,8 @@ for p in POS:
     unit = BD.KG[p[1]] if p[2] is None else round(p[2] / 1000 * BD.KG[p[1]], 2)
     by[p[1]] = by.get(p[1], 0) + unit * p[3]
 big = 25 if A['d'] == 25 else 20
-sc = [[5, 1, '%%C10'], [5, 2, '%%C12'], [5, 3, '%%C16'], [5, 4, '%%C20'], [5, 5, '%%C25'], [6, 0, 'Балка %s' % MARK]]
-for c, d in zip(range(1, 6), (10, 12, 16, 20, 25)): sc.append([6, c, '%.2f' % by.get(d, 0)])
+sc = [[5, 1, '%%C10'], [5, 2, '%%C12'], [5, 3, '%%C16'], [5, 4, '%%C20'], [5, 5, '%%C28'], [6, 0, 'Балка %s' % MARK]]
+for c, d in zip(range(1, 6), (10, 12, 16, 20, 28)): sc.append([6, c, '%.2f' % by.get(d, 0)])
 O += [{'t': 'tset', 'h': ST, 'cells': sc}, {'t': 'tformula', 'h': ST, 'cells': [[6, 6, 'Sum(B7:F7)'], [6, 7, 'G7']], 'fmt': '%lu2%pr2'},
       {'t': 'move', 'h': [ST], 'd': [-16950, 16640]}]
 O.append({'t': 'vpset2', 'layout': SNO, 'media': 'ISO_full_bleed_A2_(594.00_x_420.00_MM)', 'win': [X0, Y0 - 2000, X0 + 59400, Y0 + 40000], 'scale': 100})

@@ -6,7 +6,7 @@ sys.path.insert(0, r'D:\РАБОЧКА\Bekassyl\15_Проекты\ЖК Гала�
 import colgeo
 import beams_ob as BO
 
-KG = {10: 0.617, 12: 0.888, 16: 1.578, 20: 2.466, 25: 3.853}
+KG = {10: 0.617, 12: 0.888, 16: 1.578, 20: 2.466, 25: 3.853, 28: 4.834}
 AX, AY = BO.AX, BO.AY
 COLW = (700, 900)                          # column along X / along Y
 STOCK = 11700
@@ -22,9 +22,10 @@ def group(mark):
 
 
 def arm(b, h):
-    if b <= 300: nb, d = 3, 16
-    elif b <= 450: nb, d = 4, 20
-    else: nb, d = 5, 25
+    d = 28                                                   # user 06.11: all main bars Ø28
+    if b <= 300: nb = 3
+    elif b <= 450: nb = 4
+    else: nb = 5
     side = 0 if h < 700 else (1 if h < 800 else 2)        # per face
     hoops = 1 if b <= 300 else 2
     return dict(n=nb, d=d, side=side, hoops=hoops)
@@ -59,8 +60,13 @@ def hoops(a, b):
     if b - a >= 3000:
         p, z, s = colgeo.storey_hoops(a, b)
         return p
-    n = max(1, int((b - a - 100) // 100) + 1)
-    return [a + 50 + 100 * k for k in range(n)]
+    S = b - a - 100                                  # first and last hoop 50 from the faces
+    k = int(S // 100); r = S - 100 * k
+    steps = [100.0] * k
+    if r > 1e-6: steps.insert(len(steps) // 2, r)     # remainder inside the zone, not at the end
+    pos = [a + 50]
+    for st in steps: pos.append(pos[-1] + st)
+    return pos
 
 
 def line_data(mark, seg):
@@ -106,6 +112,7 @@ def schedule(mark):
            ('2', A['d'], None, round(tot['L1'] / 2 / 1000, 1), 'верх, %d стержней' % A['n'])]
     if A['side']: pos.append(('3', 12, None, round(tot['L3'] / 1000, 1), 'боковые %d+%d' % (A['side'], A['side'])))
     pos.append(('Х1', 10, 2 * sum(hx1) + 200, tot['nh'] * A['hoops'], 'хомут'))
+    if A['side']: pos.append(('Шп1', 10, int(math.ceil(((b - 2 * COV) + 12 + 10 + 200) / 10) * 10), tot['nh'] * A['side'], 'шпилька боковых, на каждом хомуте'))
     pos.append(('Ск1', 16, (h - 2 * COV) + 2 * leg, tot['nsk'], 'П-скоба на концах'))
     if tot['nn']: pos.append(('Н', A['d'], 10 * A['d'], tot['nn'], 'накладки'))
     conc = b * h * tot['clear'] / 1e9
