@@ -13,3 +13,4 @@ WhatsApp (Business) — Google Chrome-да web.whatsapp.com, Claude in Chrome к
 - Кеңейтім Chrome-ға registry арқылы алдын ала қосылған: HKCU\Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn (update_url). Яндексте де бар, бірақ Claude оған қосылмайды.
 - Пайдаланушы «біреуге бірдеңе жіберу керек болса жібер» деді, бірақ әр хабардың алушысы мен мәтінін алдымен көрсетіп, «иә» алғаннан кейін ғана жіберемін.
 - Пайдаланушы өзі браузер баптауын жасай алмайды — қадамдарды өте қарапайым, бір-бірден бер.
+- 06.11 23:12: computer-use рұқсаты (пайдаланушы телефонда) өтпеді, Chrome қосылмаған → **WhatsApp desktop қосымшасы + Windows-MCP** (App launch, Click координатпен, Clipboard+ctrl+v файл жолы «Открытие» терезесіне) арқылы жіберілді. Екінші монитор x<0 (−2560…0). 10 МБ-тан үлкен DWG-ны zip-ке қыс.
