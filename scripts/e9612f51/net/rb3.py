@@ -21,7 +21,7 @@ def zones_b3(fL, fR):
 
 def zones_any(a, b):
     # spans / cantilevers shorter than 3 m: one zone ш.100 (analog-style chain stays readable)
-    if b - a - 100 >= 3000: return zones_b3(a, b)
+    if b - a - 100 >= 3600: return zones_b3(a, b)
     h0, h4 = a + 50, b - 50; Lp = h4 - h0
     n = int(Lp // 100); rr = Lp - 100 * n
     h0, h4 = h0 + rr / 2.0, h4 - rr / 2.0
@@ -119,6 +119,7 @@ def build(B):
             add(t='dimpts', h=hh, p1=[X(s0), YB, 0], p2=[X(s1), YB, 0], dl=[X(s1), 467342, 0])
             add(t='dimtext', h=hh, s=('%s=%d' % (txt, round(s1 - s0))) if 'х' in txt else '')
             if 'х' not in txt: add(t='dimtx', h=hh, at=[X((s0 + s1) / 2.0), 467342 - 150, 0])
+            elif len('%s=%d' % (txt, round(s1 - s0))) * 0.78 * 125 + 80 > (s1 - s0): add(t='dimtx', h=hh, at=[X((s0 + s1) / 2.0), 467342 - 170, 0])
         for kk, (p, q) in enumerate(((ref[i][0], lines[0]), (lines[-1], ref[i][1]))):
             hh = ed.pop(0) if ed else clone(A(ED[0]), 'ED')
             add(t='dimpts', h=hh, p1=[X(q), YB, 0], p2=[X(p), YB, 0], dl=[X(p), 467342, 0])

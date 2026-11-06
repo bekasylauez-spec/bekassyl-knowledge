@@ -52,7 +52,7 @@ namespace LAY3
                     v.SetPlotType(ps, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
                     v.SetUseStandardScale(ps, true); v.SetStdScaleType(ps, StdScaleType.StdScale1To1);
                     v.SetPlotRotation(ps, rot ? PlotRotation.Degrees090 : PlotRotation.Degrees000);
-                    v.SetPlotCentered(ps, true);
+                    try { v.SetPlotCentered(ps, true); } catch { }
                     v.SetCurrentStyleSheet(ps, "monochrome.ctb"); ps.ShowPlotStyles = true; ps.PrintLineweights = true;
                     lo.CopyFrom(ps);
                     var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForWrite);
@@ -64,7 +64,7 @@ namespace LAY3
                     vp.CenterPoint = new Point3d(PW / 2.0, PH / 2.0, 0); vp.Width = pw; vp.Height = ph;
                     vp.ViewDirection = Vector3d.ZAxis; vp.ViewTarget = Point3d.Origin; vp.TwistAngle = 0;
                     vp.ViewCenter = new Point2d((x0 + x1) / 2.0, (y0 + y1) / 2.0);
-                    vp.CustomScale = 1.0 / sc; vp.Locked = true; vp.On = true;
+                    vp.CustomScale = 1.0 / sc; vp.Locked = true;
                     log.AppendLine("layout " + name + " media " + best + (rot ? " rot" : "") + " paper " + PW.ToString("0", IC) + "x" + PH.ToString("0", IC));
                     tr.Commit();
                 }
@@ -80,6 +80,8 @@ namespace LAY3
                     {
                         var ld = (DBDictionary)tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead);
                         var lo = (Layout)tr.GetObject(ld.GetAt(name), OpenMode.ForRead);
+                        var lb = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                        foreach (ObjectId id in lb) { var q = tr.GetObject(id, OpenMode.ForRead) as Viewport; if (q != null && q.Number != 1 && !q.On) { q.UpgradeOpen(); q.On = true; } }
                         var pi = new PlotInfo(); pi.Layout = lo.ObjectId;
                         var piv = new PlotInfoValidator(); piv.MediaMatchingPolicy = MatchingPolicy.MatchEnabled; piv.Validate(pi);
                         string file = Path.Combine(pdfdir, name + ".pdf");

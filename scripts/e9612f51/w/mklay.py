@@ -10,10 +10,10 @@ for k in range(1, 31):
 open(T + r'\lay3.txt', 'w', encoding='utf-8').write('\n'.join(lines))
 if '--pdf' in sys.argv: open(T + r'\lay3_pdf.txt', 'w', encoding='utf-8').write(W + r'\pdf')
 elif os.path.exists(T + r'\lay3_pdf.txt'): os.remove(T + r'\lay3_pdf.txt')
-jd = T + r'\acadjob_rg'
+jd = T + r'\acadjob_b3'
 try: os.remove(jd + r'\done.txt')
 except OSError: pass
-open(jd + r'\job.txt', 'w', encoding='utf-8').write(gx.S + r'\net\lay3.dll|LAY3.Cmds|Apply|Б3.ригели.dwg')
+open(jd + r'\job.txt', 'w', encoding='utf-8').write(gx.S + r'\net\lay3c.dll|LAY3.Cmds|Apply|b3w.dwg')
 t0 = time.time()
 while time.time() - t0 < 1800 and not os.path.exists(jd + r'\done.txt'): time.sleep(2)
 print(open(jd + r'\done.txt', encoding='utf-8').read()[:300] if os.path.exists(jd + r'\done.txt') else 'timeout')
