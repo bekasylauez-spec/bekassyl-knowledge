@@ -49,8 +49,11 @@ def pm1():
     x0, y0, x1, y1 = SL
     L, nx, ny = mesh(x0, y0, x1, y1, [], 12)
     area = (x1 - x0) * (y1 - y0) / 1e6
-    pos = [('1', 12, None, round(2 * L / 1000, 1), 'сетки верх и низ, ш.200')]
-    return dict(t=120, pos=pos, conc=area * 0.12, area=area, nx=nx, ny=ny)
+    per = 2 * ((x1 - x0) + (y1 - y0))
+    nsk = int(per // 200)
+    pos = [('1', 12, None, round(2 * L / 1000, 1), 'сетки верх и низ, ш.200'),
+           ('Ск1', 12, None, round(nsk * (400 + 60 + 400) / 1000, 1), 'П-скоба по контуру 400/60/400, ш.200 (%d шт.)' % nsk)]
+    return dict(t=120, nsk=nsk, pos=pos, conc=area * 0.12, area=area, nx=nx, ny=ny)
 
 
 def pm2():
@@ -66,7 +69,12 @@ def pm2():
     pos = [('1', 14, None, round(L / 1000, 1), 'низ, ш.200 в обоих направлениях'),
            ('2', 14, None, round(L / 1000, 1), 'верх, ш.200 в обоих направлениях'),
            ('3', 14, None, round(L_add / 1000, 1), 'доп. у проёмов 2%%C14 с каждой стороны')]
-    return dict(t=200, pos=pos, conc=area * 0.2, area=area, nx=nx, ny=ny)
+    per = 2 * ((x1 - x0) + (y1 - y0)) + sum(2 * ((o[2] - o[0]) + (o[3] - o[1])) for o in ops)
+    nsk = int(per // 200)
+    nf = int(area / 0.16)
+    pos += [('Ск1', 12, None, round(nsk * (400 + 140 + 400) / 1000, 1), 'П-скоба по контуру и у проёмов 400/140/400, ш.200 (%d шт.)' % nsk),
+            ('Ф-1', 12, None, round(nf * 1.07, 1), 'фиксатор верхней сетки, шахматно 400х400 (%d шт.)' % nf)]
+    return dict(t=200, nsk=nsk, nf=nf, pos=pos, conc=area * 0.2, area=area, nx=nx, ny=ny)
 
 
 if __name__ == '__main__':

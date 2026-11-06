@@ -243,7 +243,7 @@ if N == 6:
     dim(P(LB, 0), P(LB, HB), SLOT + X0p + K * LB + 1200, True, lfac=1 / K)
     note('1', '-250х10', P(700, HB), P(1000, HB + 300))
     note('2', '-300х6', P(3500, HB / 2), P(3800, HB + 300))
-    note('3', '-120х10', P(10, HB * 0.75), P(-300, HB + 300))
+    note('3', '-120х10', P(10, HB * 0.75), P(300, HB + 300))
     note('4', '-100х6', P(1490, HB * 0.6), P(1800, HB + 300))
     t = tag(); O.append({'t': 'clone', 'h': '3E529E', 'tag': t})
     O.append({'t': 'spmove', 'h': t, 'items': [[0, P(2250, 0)[0], P(2250, 0)[1] - 750], [1, P(2250, 0)[0], P(2250, HB)[1] + 750]]})
@@ -306,5 +306,5 @@ O.append({'t': 'vpset2', 'layout': SNO, 'media': 'ISO_full_bleed_A2_(594.00_x_42
 O.append({'t': 'save'})
 print(SNO, len(O), 'ops')
 if RUN:
-    out = ab.run(O, 'gkm', 1800)
+    out = ab.run(O, "gkm", 900); print(out[:200])
     print('\n'.join(l for l in out.splitlines() if 'ERR' in l or 'errors' in l)[-1500:])

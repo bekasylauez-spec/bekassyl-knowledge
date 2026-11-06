@@ -5,7 +5,10 @@ def rc(h):
     o = ab.run([{'t': 'tdump', 'h': h}], 'td'); return tuple(map(int, re.findall(r'TABLE rows (\d+) cols (\d+)', o)[-1]))
 O = []
 nr, nc = rc(SPEC)
-if nr == 17: O.append({'t': 'trows', 'h': SPEC, 'mode': 'ins', 'at': 13, 'from': 12, 'n': 1})
+if nr == 17: O.append({'t': 'trows', 'h': SPEC, 'mode': 'ins', 'at': 13, 'from': 12, 'n': 1}); nr = 18
+if nr == 18:
+    O.append({'t': 'trows', 'h': SPEC, 'mode': 'ins', 'at': 14, 'from': 13, 'n': 2})
+    O.append({'t': 'move', 'h': [STEEL], 'd': [0, -1700]})
 cells, form = [], []
 for k, p in enumerate(F.POS):
     r = 3 + k; pos, st, d, cls, L, n, _ = p
@@ -13,8 +16,9 @@ for k, p in enumerate(F.POS):
     cells += [[r, 0, pos + st], [r, 1, 'ГОСТ 34028-2016'], [r, 2, '%%C'], [r, 3, str(d)], [r, 4, 'A'], [r, 5, cls], [r, 8, 'L='],
               [r, 9, 'пог.м.' if L is None else str(int(L))], [r, 10, ('%.1f' % n) if L is None else str(n)], [r, 11, '%.2f' % unit]]
     form.append([r, 12, 'K%d*L%d' % (r + 1, r + 1)])
-form.append([2, 12, 'Sum(M4:M14)'])
-cells += [[15, 12, '%.2f' % F.V_CONC], [16, 12, '%.2f' % F.V_PODG]]
+NP_ = len(F.POS)
+form.append([2, 12, 'Sum(M4:M%d)' % (3 + NP_)])
+cells += [[3 + NP_ + 1, 12, '%.2f' % F.V_CONC], [3 + NP_ + 2, 12, '%.2f' % F.V_PODG]]
 O += [{'t': 'tset', 'h': SPEC, 'cells': cells}, {'t': 'tformula', 'h': SPEC, 'cells': form, 'fmt': '%lu2%pr2'}]
 nr2, nc2 = rc(STEEL)
 if nc2 == 10:
