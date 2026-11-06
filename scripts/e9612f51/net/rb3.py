@@ -7,14 +7,25 @@ from rg import zones
 from rigg import zones_any as _za
 
 
+def zones_b3(fL, fR):
+    # 100хN1 | 200хN2 | 100хN3 with no odd remainder: the remainder (<200) is split between the two end gaps (50 + r/2)
+    Lp = fR - fL - 100
+    n1 = int(round(Lp / 4 / 100.0)); n3 = n1
+    rest = Lp - 100 * (n1 + n3); n2 = int(rest // 200); r = rest - 200 * n2
+    if r >= 100: n3 += 1; r -= 100
+    h0, h4 = fL + 50 + r / 2.0, fR - 50 - r / 2.0
+    segs = [(h0, h0 + 100 * n1, '100х%d' % n1), (h0 + 100 * n1, h0 + 100 * n1 + 200 * n2, '200х%d' % n2), (h4 - 100 * n3, h4, '100х%d' % n3)]
+    lines = [h0, h0 + 100 * n1, h4 - 100 * n3, h4]
+    return segs, lines, n1 + n2 + n3 + 1
+
+
 def zones_any(a, b):
     # spans / cantilevers shorter than 3 m: one zone ш.100 (analog-style chain stays readable)
-    if b - a - 100 >= 3000: return zones(a, b)
+    if b - a - 100 >= 3000: return zones_b3(a, b)
     h0, h4 = a + 50, b - 50; Lp = h4 - h0
     n = int(Lp // 100); rr = Lp - 100 * n
-    if 0 < rr < 100 and n > 0: n -= 1; rr += 100
-    segs = [(h0, h0 + 100 * n, '100х%d' % n)] + ([(h0 + 100 * n, h4, '%d' % round(rr))] if rr else [])
-    return segs, ([h0, h0 + 100 * n, h4] if rr else [h0, h4]), n + 1 + (1 if rr else 0)
+    h0, h4 = h0 + rr / 2.0, h4 - rr / 2.0
+    return [(h0, h4, '100х%d' % n)], [h0, h4], n + 1
 from brk import breaks
 import rigx
 from rigx import SPDS, AN0, SRC
