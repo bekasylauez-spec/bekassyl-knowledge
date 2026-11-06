@@ -107,6 +107,7 @@ def build(B):
             hh = zd.pop(0) if zd else clone(A(ZD[0]), 'ZD')
             add(t='dimpts', h=hh, p1=[X(s0), YB, 0], p2=[X(s1), YB, 0], dl=[X(s1), 467342, 0])
             add(t='dimtext', h=hh, s=('%s=%d' % (txt, round(s1 - s0))) if 'х' in txt else '')
+            if 'х' not in txt: add(t='dimtx', h=hh, at=[X((s0 + s1) / 2.0), 467342 - 150, 0])
         for kk, (p, q) in enumerate(((ref[i][0], lines[0]), (lines[-1], ref[i][1]))):
             hh = ed.pop(0) if ed else clone(A(ED[0]), 'ED')
             add(t='dimpts', h=hh, p1=[X(q), YB, 0], p2=[X(p), YB, 0], dl=[X(p), 467342, 0])
@@ -134,7 +135,7 @@ def build(B):
     # ---- splices Н4: plates + dims + combs (top groups B['spT'], bottom groups B['spB'] = [(c1, c2, axis)])
     PL = {'T': [('4038F3', '4038F2')], 'B': [('403948', '403947'), ('4039A0', '40399F')]}
     YSPT = 469559 + min(dY, 150)
-    vx = sorted(set([x for ln in [zones_any(a, b)[1] for a, b in spans] for x in ln] + [c for s_ in sup for c in s_] + [x for x, _ in B['axes']] + [E0, E1]))
+    vx = sorted(set([x for ln in [zones_any(a, b)[1] for a, b in spans] for x in ln] + [c for s_ in sup for c in s_] + [x for x, _ in B['axes']] + [E0, E1] + [c for g_ in B['spT'] + B['spB'] for c in g_] + [x for _, x in B['secs']]))
     def freex(p, q, txt):
         w = len(txt) * 0.85 * 125 + 60
         cands = [(p + q) / 2.0 + k * 50 * sg for k in range(0, 60) for sg in (1, -1)]

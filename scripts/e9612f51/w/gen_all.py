@@ -95,7 +95,12 @@ for mi, (sig, parts) in enumerate(marks.items(), 1):
         spT = [[c - 250, c + 250, near_ax(refl(c))] for c in topc if a0 < c < a1]
         spB = [[c - 250, c + 250, near_ax(refl(c - 1700))] for c in botc if a0 < c < a1]
         lng = max(sp, key=lambda q: q[1] - q[0])
-        avoid = [c for gg in spT + spB for c in gg[:2]] + [x for x, _ in ax]
+        import sys as _s, os as _o; _s.path.insert(0, _o.path.join(_o.path.dirname(_o.path.abspath(__file__)), '..', 'net'))
+        from rb3 import zones_any as _za
+        mids = [(p_ + q_) / 2.0 for p_, q_ in zip(row2, row2[1:])]
+        for a_, b_ in sp:
+            sg_, ln_, _c = _za(a_, b_); mids += [(u + v) / 2.0 for u, v, _t in sg_]
+        avoid = [c for gg in spT + spB for c in gg[:2]] + [x for x, _ in ax] + mids
         cand = [a + (b - a) * f for a, b in sp if b - a > 1200 for f in (0.25, 0.4, 0.6, 0.75)] or [(lng[0] + lng[1]) / 2.0]
         secx = max(cand, key=lambda c: min([abs(c - q) for q in avoid] + [1e9]))
         no += 1

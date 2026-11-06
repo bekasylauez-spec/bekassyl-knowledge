@@ -65,6 +65,8 @@ def sheet(k):
     import wipe
     B = json.load(open(os.path.join(W, 'sh_%d.json' % k), encoding='utf-8'))
     o, n = wipe.wipe(B['P']); log('wipe', k, n)
+    import gx
+    x0 = B['SX']; er = gx.run([dict(t='eraseregion', win=[x0 - 5, 455934, x0 + 31505, 470794])], 'er'); log('eraseregion', k, [l for l in er.splitlines() if 'eraseregion' in l][:1])
     r = subprocess.run([sys.executable, '-X', 'utf8', os.path.join(NET, 'rb3.py'), os.path.join(W, 'sh_%d.json' % k), '--import', '--run'],
                        capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=1500, cwd=NET)
     out = [l for l in r.stdout.splitlines() if l.strip()]
@@ -84,19 +86,21 @@ def restore_good():
     restart()
 
 if __name__ == '__main__':
-    a, b = int(sys.argv[1]), int(sys.argv[2])
+    if sys.argv[1] == 'list': ks = [int(x) for x in sys.argv[2].split(',')]; a, b = ks[0], ks[-1]
+    else: a, b = int(sys.argv[1]), int(sys.argv[2]); ks = list(range(a, b + 1))
     sys.path.insert(0, NET); os.chdir(NET)
     keep_good()
-    k = a; tries = 0
-    while k <= b:
+    i = 0; tries = 0
+    while i < len(ks):
+        k = ks[i]
         ok = False
         try: ok = sheet(k)
         except Exception as ex: log('EXC', k, repr(ex)[:300])
         good = ok and integ(k)
         log('RESULT', k, 'OK' if good else 'FAIL')
         if good:
-            keep_good(); k += 1; tries = 0
-            if (k - a) % 2 == 0: restart()
+            keep_good(); i += 1; tries = 0
+            if i % 2 == 0: restart()
         else:
             tries += 1
             if tries > 3: log('GIVE UP', k); break
