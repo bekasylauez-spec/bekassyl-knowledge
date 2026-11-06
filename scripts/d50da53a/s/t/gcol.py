@@ -87,20 +87,29 @@ def build(T, k, sheetno):
     H1 = (levels[0] - beams[0]) if len(levels) > 1 else Hc
     NB0, NST = (950, 550) if H1 >= 4000 else (450, 400)
     drop1 = (len(levels) == 1 and Hc < 4000)
+    drop2 = (len(levels) == 1 and Hc < 3000)
     i0 = 0
     _P, _segs = colgeo.chain([0.0] + list(levels), list(beams))
     y11 = [y2 for (y1, y2, st, c) in _segs if st == 100 and c > 1][0]
     DY = {'4E95AC': topd, '4E95AA': (YB + Htop - beams[-1]) - 12850, '4E95A8': 0, '4E95A6': (YB - Df) - 5950,
-          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + (2 if drop1 else 3) * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
+          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + (1 if drop2 else (2 if drop1 else 3)) * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
           '4E95AF': topd, '4E95B2': 0, '4E95B3': 0, '4E8F9B': topd, '4E8F97': (YB + Htop - beams[-1] / 2) - 13250, '4E8F98': topd,
           '4E8FA1': (YB + y11) - 11054}
     for hh in PARK:
         add(t='move', h=[S(hh)], d=[-300000, DY[hh]])
     ysec = YB + (11054 - 6950) * (Hc / 5900.0)
     add(t='sp_set', h=S('4E8F9B'), pts=[[0] + A(XR + 1300, YB + Htop + 600)])
-    ys1r = NB0 + (2 if drop1 else 3) * NST + 350
     bnd = sorted({v for sg in _segs for v in sg[:2]})
-    while any(-90 < v - ys1r < 520 for v in bnd): ys1r += 60
+    nnote = 4 - (1 if drop1 else 0) - (1 if drop2 else 0)
+    lo_ = NB0 + (nnote - 1) * NST + 300
+    if len(levels) > 1 and (Hc - levels[-2]) >= 1500:
+        lo_ = levels[-2] + 200; hi_ = Hc - 300 - 250 - 400
+    else:
+        hi_ = (levels[0] - beams[0]) - 300 - 250 - 400
+    ys1r = None
+    for y in range(int(lo_), int(hi_) + 1, 20):
+        if not any(-90 < v - y < 400 for v in bnd): ys1r = y; break
+    if ys1r is None: ys1r = lo_
     ys1 = YB + ys1r
     kc = YB + Htop - beams[-1] / 2.0
     add(t='sp_set', h=S('4E8F97'), pts=[[1] + A(XL - 700, YB + Htop + 250)])
@@ -171,8 +180,9 @@ def build(T, k, sheetno):
     vp = T.get('vp', 'см. фундамент')
     add(t='notetxt', h=S('4E95B2'), l2=vp); add(t='notetxt', h=S('4E95B3'), l2=vp)
     ys_ = [r for r in ('4E95AD', '4E95AE')]
-    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + NB0 + (2 if drop1 else 3) * NST - 300)])
+    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + NB0 + (1 if drop2 else (2 if drop1 else 3)) * NST - 300)])
     if drop1: add(t='erase', h=[S('4E95AD')])
+    if drop2: add(t='erase', h=[S('4E95B0')])
     add(t='sp_set', h=S('4E95AD'), pts=[[1] + A(xs[0], YB + NB0 + 2 * NST - 300)])
     add(t='sp_set', h=S('4E95B1'), pts=[[1] + A(xs[0] - 42, YB + 600)])
     zx = min(P, key=lambda z: abs(z - (NB0 + NST - 150)))
@@ -216,13 +226,14 @@ def build(T, k, sheetno):
     dim('4E95D7', A(SX, SY), A(bx[0], SY), A(SX, yd1), 0, tx=A(SX - 260, yd1 - 340))
     sb_ = round((bx[1] - bx[0]) / 2); tb_ = '%dх%d=%d' % (sb_, nb - 1, sb_ * (nb - 1))
     small = (bx[-1] - bx[0]) < len(tb_) * 0.8 * 125 + 150
-    dim('4E95E6', A(bx[0], SY), A(bx[-1], SY), A(bx[0], yd1), 0, txt=tb_, tx=(A((bx[0] + bx[-1]) / 2, yd2 - 230) if small else None))
+    if small: tb_ = '%dх%d' % (sb_, nb - 1)
+    dim('4E95E6', A(bx[0], SY), A(bx[-1], SY), A(bx[0], yd1), 0, txt=tb_, tx=None)
     dim('4E960D', A(bx[-1], SY), A(SX + 2 * b, SY), A(SX, yd1), 0, tx=A(SX + 2 * b + 260, yd1 - 340))
     dim('4E961C', A(SX, SY), A(SX + 2 * b, SY), A(SX, yd2), 0)
     xd1, xd2 = SX - 617, SX - 1017
     dim('4E9629', A(SX, SY), A(SX, by[0]), A(xd1, SY), HP, tx=A(xd1 - 340, SY - 260))
-    sh_ = round((by[1] - by[0]) / 2); th_ = '%dх%d=%d' % (sh_, nh - 1, sh_ * (nh - 1))
-    dim('4E9638', A(SX, by[0]), A(SX, by[-1]), A(xd1, by[0]), HP, txt=th_, tx=(A(xd2 - 230, (by[0] + by[-1]) / 2) if small else None))
+    sh_ = round((by[1] - by[0]) / 2); th_ = ('%dх%d' % (sh_, nh - 1)) if small else '%dх%d=%d' % (sh_, nh - 1, sh_ * (nh - 1))
+    dim('4E9638', A(SX, by[0]), A(SX, by[-1]), A(xd1, by[0]), HP, txt=th_, tx=None)
     dim('4E966C', A(SX, by[-1]), A(SX, SY + 2 * h), A(xd1, SY), HP, tx=A(xd1 - 340, SY + 2 * h + 260))
     dim('4E967B', A(SX, SY), A(SX, SY + 2 * h), A(xd2, SY), HP)
     # section notes: move with the right edge, targets
