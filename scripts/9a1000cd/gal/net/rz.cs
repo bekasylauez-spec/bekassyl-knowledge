@@ -928,6 +928,26 @@ namespace RG
                     log.AppendLine("blkcopy " + nm + " repl " + nr);
                 }
             }
+            else if (t == "sidelist")
+            {
+                // list entities of class "cls" in another DWG (handle + extents if available)
+                using (var side = new Database(false, true))
+                {
+                    side.ReadDwgFile(S(m, "file", ""), FileOpenMode.OpenForReadAndAllShare, true, "");
+                    side.CloseInput(true);
+                    using (var st = side.TransactionManager.StartTransaction())
+                    {
+                        var sms = (BlockTableRecord)st.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(side), OpenMode.ForRead);
+                        foreach (ObjectId id in sms)
+                        {
+                            if (id.ObjectClass.DxfName != S(m, "cls", "SPDSFORMAT")) continue;
+                            var e = st.GetObject(id, OpenMode.ForRead) as Entity; string ex = "";
+                            try { var x = e.GeometricExtents; ex = x.MinPoint.X.ToString("0", IC) + " " + x.MinPoint.Y.ToString("0", IC) + " " + x.MaxPoint.X.ToString("0", IC) + " " + x.MaxPoint.Y.ToString("0", IC); } catch { ex = "noext"; }
+                            log.AppendLine("SIDE " + e.Handle + " " + ex);
+                        }
+                    }
+                }
+            }
             else if (t == "setblock")
             {
                 // point a block reference at another block definition (same base point)

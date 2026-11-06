@@ -10,9 +10,14 @@ for M, p in prep.build(marks, first_no=FIRST):
         try:
             gx.run([dict(t='eraseregion', win=[p['SX'] - 50, p['SY'] - 50, p['SX'] + 31550, p['SY'] + 14900])], 'er')
             log = b4rig.run(M, p)
-            st = stamp2.stamp(p)
+            if p.get('a3'):
+                import a3
+                log += [l for l in gx.run(a3.ops(M, p), 'a3' + p['P']).splitlines() if 'ERR' in l]
+                st = stamp2.stamp(dict(P=p['P'], SX=p['SX'] - 10500.0, SY=p['SY']))
+            else:
+                st = stamp2.stamp(p)
             errs = [l for l in log + st.splitlines() if 'ERR' in l]
-            n, out = fix.fix(p['no'], p['SX'], p['SY'], rounds=4)
+            n, out = fix.fix(p['no'], p['SX'], p['SY'], rounds=4, width=20750 if p.get('a3') else 31250)
             gx.run([dict(t='save')], 'sv', wait=200)
             print(p['no'], M['mark'], p['suffix'], 'TOTAL', n, 'ERR' if errs else '', errs[:2], '%ds' % (time.time() - t0), flush=True)
             if n: print('\n'.join(l for l in out.splitlines() if l.startswith('  '))[:800], flush=True)

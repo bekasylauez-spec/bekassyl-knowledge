@@ -22,7 +22,7 @@ def clean(poly, pid, T, L, skip=()):
     return True
 
 
-def fix(no, sx, sy, rounds=3):
+def fix(no, sx, sy, rounds=3, width=31250):
     tot, out = check(no, sx, sy)
     for k in range(rounds):
         if tot == 0: break
@@ -36,7 +36,7 @@ def fix(no, sx, sy, rounds=3):
                 bad.append(m.group(3))
                 if m.group(1) == 'ТЕКСТ/ТЕКСТ' and m.group(5): bad.append(m.group(5))
         ops = []; done = set()
-        frame = (sx + 1000, sy + 250, sx + 31250, sy + 14600)
+        frame = (sx + 1000, sy + 250, sx + width, sy + 14600)
         for pid in bad:
             if pid in done: continue
             done.add(pid)

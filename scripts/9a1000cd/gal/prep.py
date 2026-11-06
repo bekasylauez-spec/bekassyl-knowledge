@@ -119,7 +119,7 @@ def sections(M, u0, u1):
     return out
 
 
-def place(M, secs, SX, splices, elev_len, tables=True):
+def place(M, secs, SX, splices, elev_len, tables=True, a3=False):
     """section origins (beam bottom-left), sheet units. One row, equal gaps, same baseline."""
     h, b = M['h'], M['b']
     top_lim = (465611 - KY) - (h - 550) - 350
@@ -127,7 +127,9 @@ def place(M, secs, SX, splices, elev_len, tables=True):
     below = SSC * 560 + 250; above = SSC * (h + 470) + 250
     bands = [((8900.0 if splices else 1300.0), 21900.0, 5400.0, top_lim), (10400.0, 21900.0, 3500.0, top_lim)]
     ee = 3003.0 + elev_len + 2500
-    if h >= TALL:
+    if a3:
+        bands = [(6400.0, 11400.0, max(700.0, min(2600.0, top_lim - below - above)), top_lim)]
+    elif h >= TALL:
         bands = [(ee, 21900.0 if tables else 30500.0, 6400.0 if splices else (3500.0 if tables else 5000.0), 14300.0)]
     elif ee < 17200: bands.append((ee, 21900.0, 3500.0, 14300.0))
     W = len(secs) * (left + right)
@@ -155,7 +157,9 @@ def build(marks, first_no=1):
                         suffix='' if len(pp) == 1 else ' (%d/%d)' % (i + 1, len(pp)))
             while True:
                 try:
-                    part['secpos'] = place(M, secs, SX, bool(spl), u1 - u0, part['tables']); break
+                    import a3 as _a3
+                    part['a3'] = _a3.eligible(M, part)
+                    part['secpos'] = place(M, secs, SX, bool(spl), u1 - u0, part['tables'], part['a3']); break
                 except RuntimeError:
                     if len(secs) == 1: raise
                     # keep the cuts with the most доп bars

@@ -99,6 +99,8 @@ def build(T, k, sheetno):
     if LOW: NST = 450; NB0 = levels[0] + 300 - NST
     drop1 = (len(levels) == 1 and Hc < 4000)
     drop2 = (len(levels) == 1 and Hc < 3000)
+    if LOW and (levels[1] - beams[1]) - (levels[0] + 300) < 1900:   # short 2nd storey: 3 callouts, tighter
+        drop1 = True; NST = 400; NB0 = levels[0] + 300 - NST
     i0 = 0
     _P, _segs = colgeo.chain([0.0] + list(levels), list(beams))
     y11 = [y2 for (y1, y2, st, c) in _segs if st in (100, 80) and c > 1][0]
@@ -112,8 +114,8 @@ def build(T, k, sheetno):
     add(t='sp_set', h=S('4E8F9B'), pts=[[0] + A(XR + 1300, YB + Htop + 600)])
     bnd = sorted({v for sg in _segs for v in sg[:2]})
     nnote = 4 - (1 if drop1 else 0) - (1 if drop2 else 0)
-    band = (NB0 + NST - 850, NB0 + (nnote - 1) * NST + 350)        # bar callouts on the left
-    beamz = [(L - hb - 1250, L + 150) for L, hb in zip(levels, beams)]  # beam + its С1 note below
+    band = (NB0 + NST - 850, NB0 + (nnote - 1) * NST + 250)        # bar callouts on the left
+    beamz = [(L - hb - 950, L + 150) for L, hb in zip(levels, beams)]   # beam + its С1 note below
     def free(y, up):
         if y < 1000 or y > Hc - 700: return False
         if any(-150 < v - y < up for v in pts_lv(levels, beams)): return False
@@ -130,7 +132,7 @@ def build(T, k, sheetno):
     ys1 = YB + ys1r
     kc = YB + Htop - beams[-1] / 2.0
     add(t='sp_set', h=S('4E8F97'), pts=[[1] + A(XL - 700, YB + Htop + 250)])
-    add(t='sp_set', h=S('4E8FA1'), pts=[[0] + A(XL - 350, ys1), [1] + A(XR + 1000 + 600, ys1)])
+    add(t='sp_set', h=S('4E8FA1'), pts=[[0] + A(XL - 350, ys1), [1] + A(XR + 1000 + 800, ys1)])
     # bars, выпуски, накладки
     xs = [XL + 56 + i * (h - 112) / (nh - 1) for i in range(nh)]
     for i, x in enumerate(xs):
@@ -162,7 +164,8 @@ def build(T, k, sheetno):
     DLR = XR + 1000
     for (y1, y2, st, cnt) in segs:
         if cnt > 1:
-            dim('4E9560', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, txt='%dх%d' % (st, cnt), lfac=1)
+            o_ = dict(tx=A(DLR + 430, YB + (y1 + y2) / 2)) if (y2 - y1) < 600 else {}
+            dim('4E9560', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, txt='%dх%d' % (st, cnt), lfac=1, **o_)
         elif abs(y2 - y1 - 50) < 1 or (y2 - y1) < 400:
             dim('4E954E', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, tx=A(DLR + 260 + (0 if abs(y2 - y1 - 50) < 1 else 60), YB + (y1 + y2) / 2))
         else:
