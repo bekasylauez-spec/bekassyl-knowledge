@@ -7,8 +7,11 @@ for M, p in sh:
     if want and p['no'] not in want: continue
     try:
         log = b4rig.run(M, p)
-        r = subprocess.run([sys.executable, '-X', 'utf8', 'chk1.py', p['no'], str(p['SX']), str(p['SY'])], capture_output=True, text=True, encoding='utf-8', errors='replace')
-        tot = [l for l in r.stdout.splitlines() if l.startswith('TOTAL')]
+        import fix
+        n, out = fix.fix(p['no'], p['SX'], p['SY'], rounds=4)
+        class R: pass
+        r = R(); r.stdout = out
+        tot = ['TOTAL %d' % n]
         errs = [l for l in log if 'ERR' in l]
         print(p['no'], M['mark'], tot, errs[:3], flush=True)
         if tot and tot[0] != 'TOTAL 0':

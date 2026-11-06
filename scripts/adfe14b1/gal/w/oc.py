@@ -9,7 +9,8 @@ from shapely import affinity
 
 doc = ezdxf.readfile(sys.argv[1]); msp = doc.modelspace()
 sheets = json.load(open(sys.argv[2], encoding='utf-8'))
-args = [a for a in sys.argv[3:] if not a.startswith('--geom=')]
+args = [a for a in sys.argv[3:] if not a.startswith('--')]
+DUMP = next((a[7:] for a in sys.argv[3:] if a.startswith('--dump=')), None)
 only = args[0] if args else None
 GEOM = next((a[7:] for a in sys.argv[3:] if a.startswith('--geom=')), None)   # SPDS geometry exploded by AutoCAD (rz.cs geomdump)
 unread = []                                                                      # entities whose geometry could not be read: never skip silently
@@ -159,6 +160,10 @@ for name, (x0, y0, x1, y1) in sheets.items():
     T = [(p, poly, s) for p, poly, s in texts if W.contains(poly.centroid)]
     L = [(p, ls) for p, ls in segs if W.intersects(ls)]
     found = []
+    if DUMP:
+        import pickle
+        pickle.dump(dict(T=[(p, list(poly.exterior.coords), s) for p, poly, s in T], L=[(p, list(ls.coords)) for p, ls in L],
+                         ptype={p: ptype.get(p, '') for p, _, _ in T}), open(DUMP.replace('{}', name), 'wb'))
     for i in range(len(T)):
         pi_, a, sa = T[i]; ash = a.buffer(-0.12 * math.sqrt(a.area / max(len(sa), 1)))
         for j in range(i + 1, len(T)):

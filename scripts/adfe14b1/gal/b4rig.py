@@ -13,7 +13,8 @@ YT, YB = 468700.0, 468150.0
 SEC0 = (305617.0, 462413.0)          # kit section S0: beam bottom-left (xL, yb), drawn x2.5
 SSC = 2.5                            # sections x2.5 (1:20 on the 1:50 sheet, as the analog)
 DIA = 28
-NODE_A = [k for k in K1 if k.startswith('A1:407B') and k not in ('A1:407BC4',)]
+_R65 = set(k[2:] for k in K)
+NODE_A = [k for k in K1 if k.startswith('A1:407B') and k[2:] not in _R65]
 SPL = dict(top=['A1:4038F3', 'A1:4038F2'], bot=['A1:403948', 'A1:403947'], tdim=['A1:4038F1', 'A1:4038F5'],
            bdim=['A1:403992', 'A1:40394A'], tcomb='A1:4038F4', bcomb='A1:403949')
 
@@ -196,8 +197,12 @@ class Sheet:
         n1 = [T('A5:4015B1'), T('A5:40671E')]
         for z in M['zones']:
             if z['fR'] - z['fL'] < 2500 or z['fR'] < u0 + 1 or z['fL'] > u1 - 1: continue
-            xx = z['lines'][1] + 300 if len(z['lines']) > 2 else (z['fL'] + z['fR']) / 2
-            if not (u0 + 300 < xx < u1 - 300): continue
+            busy = [c for _, c, _ in s.part.get('spl', [])] + [x for _, x, _ in s.part['secs']] +                    [(d['a'] + min(600, (d['b'] - d['a']) / 3)) if d['top'] else (d['b'] - min(600, (d['b'] - d['a']) / 3)) for d in M['dops']]
+            cand = ([z['lines'][1] + 300] if len(z['lines']) > 2 else []) + [(z['fL'] + z['fR']) / 2, z['fL'] + (z['fR'] - z['fL']) * 0.35,
+                    z['fL'] + (z['fR'] - z['fL']) * 0.65, z['fL'] + 600, z['fR'] - 600]
+            cand = [c for c in cand if u0 + 300 < c < u1 - 300 and all(abs(c - b) > 1300 for b in busy)]
+            if not cand: continue
+            xx = cand[0]
             h = n1.pop(0) if n1 else s.clone(T('A5:4015B1'), 'N1')
             s.add(t='spmove', h=h, items=[[0, X(xx), s.up(469238.6)], [1, X(xx), s.YBB], [2, X(xx), s.YTB]])
             s.add(t='mcset', h=h, set={'SecondLine': '(ф%d)' % DIA})
@@ -405,7 +410,10 @@ def run(M, part, clone=True, geom=True, tables=True):
         s.elevation(); s.splices(); s.sections(); s.texts()
         out = gx.run(s.ops, 'rg' + part['P'])
         log += [l for l in out.splitlines() if 'ERR' in l or 'done' in l or 'no prop' in l or 'not found' in l][:25]
+    if not part.get('tables', True):
+        gx.run([dict(t='erase', h=[part['P'] + ':' + q for q in ['406488', '4064CF', '4064A2', '4064A3', '4064A6', '4064B8', '40648A', '40648B',
+               '40648C', '40648D', '406493', '406499', '4064A4', '4064A7', '4064A8', '4064AA', '4064AB', '4064B0', '4064B9']])], 'nt' + part['P'])
     if tables and part.get('tables', True):
-        out = gx.run(s.tables() + [dict(t='save')], 'rt' + part['P'])
+        out = gx.run(s.tables(), 'rt' + part['P'])
         log += [l[:160] for l in out.splitlines() if 'ERR' in l or 'done' in l][:10]
     return log

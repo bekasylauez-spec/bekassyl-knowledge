@@ -28,7 +28,14 @@ def sec_layout(G):
     return [(word, (x0 + step * j, SEC_Y), tp, bt, dpos) for j, (word, tp, bt, dpos) in enumerate(defs)]
 
 
+def recycle():
+    # MultiCAD read-opens leak (eAtMaxReaders): save, then discard and reopen the document from disk
+    gx.run([dict(t='save')], 'sv')
+    return gx.run([dict(t='reopen')], 'ro', wait=300)
+
+
 def run_mark(m, k0, no0, mark, count, log=print):
+    recycle()
     F = plan.build_F(m, mark)
     frags = plan.fragments(F)
     G_all = [plan.sheetF(F, fr) for fr in frags]

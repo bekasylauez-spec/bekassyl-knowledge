@@ -774,6 +774,7 @@ namespace RG
                     var d = tr.GetObject(H(db, hh.ToString()), OpenMode.ForWrite) as Dimension; if (d == null) continue;
                     if (Has(m, "lfac")) d.Dimlfac = D(m["lfac"]);
                     if (Has(m, "dscale")) d.Dimscale = D(m["dscale"]);
+                    if (Has(m, "tmove")) d.Dimtmove = Convert.ToInt32(m["tmove"]);
                 }
             }
             else if (t == "movegrp")
