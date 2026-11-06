@@ -95,7 +95,7 @@ def design(m, B):
         a, bb = cols[i]['b'], cols[i + 1]['a']; L = bb - a
         for q in prof:
             if a + L / 4 <= q[0] <= bb - L / 4 and q[3] > legs * AR(dh) * 5: mid_ok = False
-    B['hoop'] = dict(d=dh, s_end=100, s_mid=200 if mid_ok else 100, legs=legs)
+    B['hoop'] = dict(d=dh, s_end=100, s_mid=100, legs=legs)   # maximum: 100 everywhere
     # dop bars: same Ø, in the same row between main bars (b>=450: up to 3), else 2nd row (up to nm)
     slots = 3 if b >= 450 else 0
     dop = []; pos = [2]
@@ -121,23 +121,30 @@ def design(m, B):
             if slots and n <= slots: row = 1
             else: row = 2; n = min(n, nm)
             dop.append(dict(top=top, n=n, d=dd, u0=round(u0, -1), u1=round(u1, -1), row=row))
-    # unify: dop around interior supports get the same n / Ø / row and symmetric length (max) -> one position
+    # MAXIMUM (Bekassyl 06.11 «арматурасын максималды»): on each face where LIRA needs dop anywhere, the same
+    # (largest) dop is put over EVERY support; mid-span bottom dop (if any) into every span
     refs = [((sp['a'] + sp['b']) / 2.0, k) for k, sp in enumerate(B['sup'])]
     nS = len(B['sup'])
+    newdop = []
     for top in (True, False):
         grp = [x for x in dop if x['top'] == top]
-        inner = []
+        if not grp: continue
+        n_ = max(x['n'] for x in grp); d_ = max(x['d'] for x in grp); r_ = max(x['row'] for x in grp)
+        atsup = []; mids = []
         for x in grp:
-            on = [k for c_, k in refs if x['u0'] - 1 <= c_ <= x['u1'] + 1]
-            x['sk'] = on[0] if len(on) == 1 else None
-            if x['sk'] is not None and 0 < x['sk'] < nS - 1: inner.append(x)
-        if inner:
-            ext = max(max(refs[x['sk']][0] - x['u0'], x['u1'] - refs[x['sk']][0]) for x in inner)
-            n_ = max(x['n'] for x in inner); d_ = max(x['d'] for x in inner); r_ = max(x['row'] for x in inner)
-            ext = math.ceil(ext / 100.0) * 100
-            for x in inner:
-                c_ = refs[x['sk']][0]
-                x.update(u0=max(B['END0'] + 20, c_ - ext), u1=min(B['END1'] - 20, c_ + ext), n=n_, d=d_, row=r_)
+            on = [c_ for c_, k in refs if x['u0'] - 1 <= c_ <= x['u1'] + 1]
+            if on: atsup.append(max(max(c_ - x['u0'], x['u1'] - c_) for c_ in on))
+            else: mids.append(x['u1'] - x['u0'])
+        ext = max(atsup + [1500]); ext = math.ceil(ext / 100.0) * 100
+        for c_, k in refs:
+            sp = B['sup'][k]
+            newdop.append(dict(top=top, n=n_, d=d_, row=r_, u0=max(B['END0'] + 20, c_ - ext), u1=min(B['END1'] - 20, c_ + ext)))
+        if mids and not top:
+            Lm = math.ceil(max(mids) / 100.0) * 100
+            for k in range(nS - 1):
+                c_ = (B['sup'][k]['b'] + B['sup'][k + 1]['a']) / 2.0
+                newdop.append(dict(top=top, n=n_, d=d_, row=r_, u0=c_ - Lm / 2.0, u1=c_ + Lm / 2.0))
+    dop = newdop
     # merge dop that overlap on the same face
     dop.sort(key=lambda x: (not x['top'], x['u0']))
     mg = []
