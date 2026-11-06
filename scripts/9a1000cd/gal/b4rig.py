@@ -472,11 +472,11 @@ class Sheet:
         nd = len(rows); tot = nd + o
         ops = []
         if tot < 2: ops.append(dict(t='trows', h=sp, mode='del', at=6 + tot, n=2 - tot))
-        ops.append(dict(t='theight', h=sp, rows=[[r_, 400] for r_ in range(6, 9 + tot)]))   # deleted rows must not stretch the rest
         if tot > 2:
             ops.append(dict(t='trows', h=sp, mode='ins', at=7, n=tot - 2, **{'from': 7}))
             ops.append(dict(t='move', h=[sp], d=[0, 400.0 * (tot - 2)]))
         last = i0 - 1 + nd; conc = last + 2
+        ops.append(dict(t='theight', h=sp, rows=[[r_, 400] for r_ in range(6, conc + 2)]))   # deleted rows must not stretch the rest
         side_row = next((i0 + i for i, q in enumerate(rows) if q[2] is None), 0)
         cells_t = [[2, 2, 'Ригель ' + M['mark']], [3, 0, 'Х1*'], [3, 5, '240']]
         nums = [[3, 3, M['hd'], I], [3, 9, sum(M['X1']), I], [iS, 3, 16, I], [iS, 9, sum(M['SK']), I], [iM, 3, DIA, I]]
