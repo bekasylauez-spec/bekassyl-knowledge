@@ -7,7 +7,7 @@ for k, T in enumerate(TY):
     if T['mark'] in ('Км-1', 'Км-3', 'Км-4', 'Км-5'): T['note7'] = NOTE7
     X0, Y0 = 300000 + k * 29700, 350000
     lib.OPS.clear()
-    lib.op(t='eraseregion', win=[X0 - 2, Y0 - 2, X0 + 29702, Y0 + 21002], mode='intersect')
+    lib.op(t='eraseregion', win=[X0 - 2, Y0 - 2, X0 + 29702, Y0 + 21002], mode='inside')
     st = len(lib.OPS); info = gt.build(X0, Y0, T, '4.%d' % (k + 2)); place.resolve(lib.OPS, st)
     lay = '4.%d' % (k + 2)
     lib.op(t='save')

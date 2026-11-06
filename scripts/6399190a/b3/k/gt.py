@@ -119,6 +119,7 @@ def build(X0, Y0, T, num):
            layer='Размеры', arrow='oblique', fixed=True)
     op(t='note', l1='Х1;Шп1;Шп2', l2='', origin=A(XR + 250, zmid + 600), target=A(XC1, zmid + 300), scale=50, ts=2.5, arrow='oblique', layer='Размеры', align='Center', fixed=True)
     op(t='movegrp', h=[R('18E5B')], d=[0, zmid - 13418.0])
+    if dw > 300: op(t='sp_set', h=R('18E53'), pts=[[1, X0 + XR + 900, Y0 + LT + 235]])
     op(t='mcset', h=R('18E52'), set={'Center': A(XM, (Lb + LT) / 2), 'Rack': A(XM - 900 - dw / 2, Lb - 700)})
     op(t='mcset', h=R('1988A'), set={'Center': A(XC1, TL0 + 600), 'Rack': A(XC1 + 345, TL0 + 600 - 369), 'Knot': 'А'})
     # ---------- sections 1-1 / 2-2 (x2) ----------
@@ -214,6 +215,7 @@ def build(X0, Y0, T, num):
     op(t='dimpts', h=R('18D2D'), p1=A(rx[0], y0), p2=A(rx[-1], y0)); op(t='dimtext', h=R('18D2D'), s='100х%d' % (len(rx) - 1))
     op(t='dimtx', h=R('18D2D'), at=A((rx[0] + rx[-1]) / 2, 11150))
     op(t='dimpts', h=R('18D28'), p1=A(rx[-1], y0), p2=A(x0 + LX, yc))
+    op(t='dimtx', h=R('18D28'), at=A(x0 + LX + 300, 11150))
     op(t='dimpts', h=R('18D1A'), p1=A(x0 + LX, yc), p2=A(x0, yc))
     op(t='dimpts', h=R('18D1D'), p1=A(x0 + LX, yc), p2=A(rx[-1], y0 + LY))
     op(t='dimpts', h=R('18D20'), p1=A(x0 + LX, yc), p2=A(rx[-1], y0))
@@ -231,6 +233,7 @@ def build(X0, Y0, T, num):
     op(t='dimpts', h=R('18D4A'), p1=A(xa2, ry[0]), p2=A(xa2, ry[-1])); op(t='dimtext', h=R('18D4A'), s='100х%d' % (len(ry) - 1))
     op(t='dimtx', h=R('18D4A'), at=A(xa2 - 377, (ry[0] + ry[-1]) / 2))
     op(t='dimpts', h=R('18D45'), p1=A(xa2, ry[-1]), p2=A(xr, yb_ + LY))
+    op(t='dimtx', h=R('18D45'), at=A(xa2 - 377, yb_ + LY + 300))
     op(t='dimpts', h=R('18D37'), p1=A(xr, yb_), p2=A(xr, yb_ + LY))
     op(t='dimpts', h=R('18D3A'), p1=A(xr, yb_ + LY), p2=A(xa2 + LX, ry[-1]))
     op(t='dimpts', h=R('18D3D'), p1=A(xr, yb_ + LY), p2=A(xa2, ry[-1]))
