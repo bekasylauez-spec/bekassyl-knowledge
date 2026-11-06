@@ -39,7 +39,7 @@ def facade2(s, B, part, secmarks):
     obst += [c + d_ for c in bot_ for d_ in (-250, 250)]          # bottom comb leaders rise through the beam
     shelves = []
     def place_x(lo, hi, pref, left=False):
-        L0, L1 = (650, 80) if left else (80, 700)
+        L0, L1 = (800, 100) if left else (100, 850)
         cand = sorted(set([pref] + [pref + d_ for d_ in range(100, 6000, 100)] + [pref - d_ for d_ in range(100, 6000, 100)]), key=lambda v: abs(v - pref))
         for x in cand:
             if not (lo <= x <= hi): continue
@@ -115,6 +115,11 @@ def facade2(s, B, part, secmarks):
             row = yu(469559) if face else yb(467665)
             add(t='clone', h=A(src), base=[0, 0], to=[0, 0], tag=td)
             add(t='dimpts', h=td, p1=[X(q[0]), q[1], 0], p2=[X(p[0]), p[1], 0], dl=[X(p[0]), row, 0])
+            if q[0] - p[0] < 800:
+                nxt = keep[i + 2][0] if i + 2 < len(keep) else None
+                side = 1 if (nxt is None or nxt - q[0] > 1500) else -1
+                tx = X(q[0]) + 320 if side > 0 else X(p[0]) - 320
+                add(t='dimtx', h=td, at=[tx, row + 60, 0])
     add(t='erase', h=[A(h) for h in SPLD])
     # step note, height dim «55» at the top
     add(t='move', h=[A(SPDS['step'])], d=[g['eb'] + 20 - (196582 + D), -150])
@@ -140,6 +145,6 @@ def facade2(s, B, part, secmarks):
         an = [sp.get('axn') for sp in g['sup'] if sp.get('axn')]
         if an: ttl += ' (оси %s - %s)' % (an[0], an[-1])
     if B.get('qty', 1) > 1: ttl += ', %d шт.' % B['qty']
-    add(t='settext', h=A(SPDS['title']), s=ttl)
+    add(t='settext', h=A(SPDS['title']), s=ttl, w=9000)
     # «Узел А» group lower, clear of the axis bubbles
     add(t='movewin', win=[172179 + D, 461900, 181979 + D, 465600], d=[0, -400])

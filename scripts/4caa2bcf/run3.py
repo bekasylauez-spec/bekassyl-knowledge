@@ -25,7 +25,7 @@ def run(mark, pi, log=print):
     for sc in B['secs']:
         on = [u for u in sc['at'] if u0 + 200 <= u <= u1 - 200]
         if not on: continue
-        ok = [u for u in on if abs(u - ut) > 1400]
+        ok = [u for u in on if abs(u - ut) > 2300]
         marks.append(((ok or on)[0], sc['word'])); secs.append(sc)
     rfac2.facade2(s, B, part, marks)
     out = gx.run(s.ops, 'f%d' % k)

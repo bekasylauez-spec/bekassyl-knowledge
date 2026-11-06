@@ -7,7 +7,7 @@ def run(ops, name='ops', doc=None):
     out=r.stdout.decode('utf-8','replace')+r.stderr.decode('utf-8','replace')
     return out
 def tagmap():
-    return json.load(open(os.path.join(os.environ['TEMP'],'rg_map.json'),encoding='utf-8-sig'))
+    return json.load(open(os.path.join(os.environ['TEMP'],'b3_map.json'),encoding='utf-8-sig'))
 if __name__=='__main__':
     print(run(json.load(open(sys.argv[1],encoding='utf-8')),'cli'))
 

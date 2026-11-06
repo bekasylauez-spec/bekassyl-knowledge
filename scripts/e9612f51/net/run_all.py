@@ -2,15 +2,15 @@
 import subprocess, sys, os, time, json
 S = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NET = os.path.join(S, 'net'); W = os.path.join(S, 'w')
-DWG = r'R:\От Шерхан\БДМ Блок 3\Б3.ригели.dwg'
-JD = os.path.join(os.environ['TEMP'], 'acadjob_rg')
+DWG = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'w', 'b3w.dwg')
+JD = os.path.join(os.environ['TEMP'], 'acadjob_b3')
 LOG = os.path.join(W, 'run_all.log')
 def log(*a):
     with open(LOG, 'a', encoding='utf-8') as f: f.write(time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a) + '\n')
 
 def my_acad():
     out = subprocess.run(['powershell', '-NoProfile', '-Command',
-        "Get-Process acad -ErrorAction SilentlyContinue | ? { $_.MainWindowTitle -like '*Б3.ригели*' } | % { $_.Id }"], capture_output=True, text=True).stdout.split()
+        "Get-Process acad -ErrorAction SilentlyContinue | ? { $_.MainWindowTitle -like '*b3w.dwg*' } | % { $_.Id }"], capture_output=True, text=True).stdout.split()
     return [int(x) for x in out]
 
 def restart():
@@ -20,13 +20,18 @@ def restart():
         except Exception: pass
         subprocess.run(['powershell', '-NoProfile', '-Command', 'Stop-Process -Id %d -Force' % pid])
     time.sleep(4)
+    try:
+        import shutil; sys.path.insert(0, W); import bis
+        shutil.copy(DWG, os.path.join(W, 'snap.dwg'))
+        log('integrity', bis.tryplot('integ', [], [172179, 430000, 180579, 435940]))
+    except Exception as ex: log('integrity EXC', repr(ex)[:200])
     for ext in ('.dwl', '.dwl2'):
         try: os.remove(DWG[:-4] + ext)
         except OSError: pass
     for f in ('listening.txt', 'job.txt', 'done.txt'):
         try: os.remove(os.path.join(JD, f))
         except OSError: pass
-    subprocess.Popen([r'C:\Program Files\Autodesk\AutoCAD 2021\acad.exe', DWG, '/nologo', '/b', os.path.join(NET, 'boot.scr')])
+    subprocess.Popen([r'C:\Program Files\Autodesk\AutoCAD 2021\acad.exe', DWG, '/nologo', '/b', os.path.join(NET, 'boot_b3.scr')])
     t0 = time.time()
     while time.time() - t0 < 300 and not os.path.exists(os.path.join(JD, 'listening.txt')):
         time.sleep(5)

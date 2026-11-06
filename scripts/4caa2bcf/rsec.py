@@ -99,7 +99,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
     add(t='dimtx', h=S(d[0]), at=[xL - 75, yd + 40, 0])
     add(t='dimpts', h=S(d[1]), p1=[xL + allx[-1], yb, 0], p2=[xL + allx[0], yb, 0], dl=[xL + allx[0], yd, 0])
     add(t='dimtext', h=S(d[1]), s=chB)
-    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yd + 40, 0])
+    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yd - 120, 0])
     add(t='erase', h=[S(d[2]), S(d[3])])
     add(t='dimpts', h=S(d[4]), p1=[xR, yb, 0], p2=[xL + allx[-1], yb, 0], dl=[xL + allx[-1], yd, 0])
     add(t='dimtx', h=S(d[4]), at=[xR + 75, yd + 40, 0])
@@ -137,7 +137,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
         add(t='levelval', h=tl, old='+4.395', value=B['levels'][0], tag=tl)
     add(t='settext', h=S(SEC['title']), s='Разрез %s - %s' % (sec['word'], sec['word']))
     add(t='move', h=[S(SEC['title'])], d=[(xL + xR) / 2.0 - (OX + 43), h - 400])
-    tags = [S(x) for x in hs if (x not in SEC['brk'] or slab) and x not in SEC['bot'] + SEC['top']] + extra
+    tags = [S(x) for x in hs if (x not in SEC['brk'] or slab) and x not in SEC['bot'] + SEC['top'] and not (nm == 3 and x == SEC['hoop'][1])] + extra
     tags = [t_ for t_ in tags if t_ not in (S(SEC['ml']), S(SEC['lev']), S(SEC['dimb'][2]), S(SEC['dimb'][3]))]
     return ops, tags, [OX + b / 2.0, OY]
 

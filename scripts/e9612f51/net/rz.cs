@@ -28,7 +28,7 @@ namespace RG
         static Point3d P(object o) { var a = L(o); return new Point3d(D(a[0]), D(a[1]), 0); }
         static MG.Point3d MP(object o) { var a = L(o); return new MG.Point3d(D(a[0]), D(a[1]), 0); }
         static Dictionary<string, string> map = new Dictionary<string, string>();
-        static string mapFile = Path.Combine(tmp, "rg_map.json");
+        static string mapFile = Path.Combine(tmp, "b3_map.json");
 
         static ObjectId H(Database db, string h)
         {
@@ -76,7 +76,7 @@ namespace RG
             var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
             var db = doc.Database;
             var js = new JavaScriptSerializer(); js.MaxJsonLength = int.MaxValue;
-            var ops = (IList)js.DeserializeObject(File.ReadAllText(Path.Combine(tmp, "rg_ops.json"), Encoding.UTF8));
+            var ops = (IList)js.DeserializeObject(File.ReadAllText(Path.Combine(tmp, "b3_ops.json"), Encoding.UTF8));
             int nerr = 0;
             if (ops.Count > 0 && S((Dictionary<string, object>)ops[0], "t", "") == "reopen")
             {
@@ -86,7 +86,7 @@ namespace RG
                 try { Autodesk.AutoCAD.ApplicationServices.DocumentExtension.CloseAndDiscard(doc); var o0 = (Dictionary<string, object>)ops[0]; if (Has(o0, "from")) File.Copy(S(o0, "from", ""), path, true); Autodesk.AutoCAD.ApplicationServices.DocumentCollectionExtension.Open(dm, path, false); log.AppendLine("reopened " + path); }
                 catch (System.Exception ex) { nerr++; log.AppendLine("ERR reopen: " + ex.Message); }
                 log.AppendLine("done, errors " + nerr);
-                File.WriteAllText(Path.Combine(tmp, "rg_log.txt"), log.ToString(), Encoding.UTF8);
+                File.WriteAllText(Path.Combine(tmp, "b3_log.txt"), log.ToString(), Encoding.UTF8);
                 return;
             }
             foreach (var o in ops)
@@ -105,7 +105,7 @@ namespace RG
             }
             log.AppendLine("done, errors " + nerr);
             File.WriteAllText(mapFile, new JavaScriptSerializer().Serialize(map), Encoding.UTF8);
-            File.WriteAllText(Path.Combine(tmp, "rg_log.txt"), log.ToString(), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tmp, "b3_log.txt"), log.ToString(), Encoding.UTF8);
         }
 
         static string id2cls(Entity e) { return e.ObjectId.ObjectClass.DxfName; }
