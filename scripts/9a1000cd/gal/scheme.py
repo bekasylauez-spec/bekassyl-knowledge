@@ -30,7 +30,14 @@ def plan(z, ox, oy, P, title):
         ops.append(dict(t='pl', p=p, closed=True, layer='0', lw=30, tag=tag('C')))
         ops.append(dict(t='hatch', pat='ANSI36', sc=5, layer='0', lw=5, loops=[p], tag=tag('H')))
     # rigels: outline per span between supports, hidden line
+    from shapely.geometry import LineString, Polygon, box
+    from shapely import affinity
     runs = [r for r in rr if abs(r['z'] - z) < 0.01]
+    obst = [box(*c) for c in DS.cols_at(z)]
+    for c, v in DS.AXX.items(): obst.append(LineString([(c, -3000), (c, 31000)]))
+    for c, v in DS.AXY.items():
+        if v not in ('В', 'Г', 'Е', 'И'): obst.append(LineString([(50000, c), (90000, c)]))
+    geo = []
     for r in runs:
         A, B, L = r['A'], r['B'], r['L']
         ux, uy = (B[0] - A[0]) / L, (B[1] - A[1]) / L; nx, ny = -uy, ux
@@ -38,17 +45,41 @@ def plan(z, ox, oy, P, title):
         faces = [r['E0']] + [c for a, b, _ in r['sups'] for c in (a, b)] + [r['E1']]
         spans = [(faces[i], faces[i + 1]) for i in range(0, len(faces), 2) if faces[i + 1] - faces[i] > 1]
         for a, b in spans:
-            q = lambda t, s: T(A[0] + ux * t + nx * s, A[1] + uy * t + ny * s)
-            ops.append(dict(t='pl', p=[q(a, -hb), q(b, -hb)], layer='0', lw=30, ltype='ACAD_ISO02W100', ltscale=25, tag=tag('B')))
-            ops.append(dict(t='pl', p=[q(a, hb), q(b, hb)], layer='0', lw=30, ltype='ACAD_ISO02W100', ltscale=25, tag=tag('B')))
-        # mark on the longest span, beside the rigel (above / left)
-        a, b = max(spans, key=lambda s: s[1] - s[0])
-        tm = (a + b) / 2.0
+            P_ = lambda t, s_: (A[0] + ux * t + nx * s_, A[1] + uy * t + ny * s_)
+            q = lambda t, s_: T(*P_(t, s_))
+            for sg in (-hb, hb):
+                ops.append(dict(t='pl', p=[q(a, sg), q(b, sg)], layer='0', lw=30, ltype='ACAD_ISO02W100', ltscale=25, tag=tag('B')))
+                obst.append(LineString([P_(a, sg), P_(b, sg)]))
+        geo.append((r, A, ux, uy, nx, ny, hb, spans))
+    placed = []
+    for r, A, ux, uy, nx, ny, hb, spans in geo:
+        txt = RM[(r['z'], tuple(r['A']), tuple(r['B']))]
         ang = math.atan2(uy, ux)
-        if ang > math.pi / 2 + 0.01 or ang < -math.pi / 2 + 0.01: ang += math.pi       # readable
-        side = hb + 330
-        px, py = A[0] + ux * tm + nx * side, A[1] + uy * tm + ny * side
-        ops.append(dict(t='mtext', at=T(px, py), h=125, att=5, rot=ang, s=RM[(r['z'], tuple(r['A']), tuple(r['B']))], layer='TEXT 2.5', tag=tag('M')))
+        rot = ang + math.pi if (ang > math.pi / 2 + 0.01 or ang < -math.pi / 2 + 0.01) else ang
+        tw, th = 0.62 * 500 * len(txt), 500.0          # text box, real mm (2.5 mm at 1:200)
+        cands = []
+        E0, E1 = r['E0'], r['E1']
+        tl = [a + (b - a) * f for a, b in sorted(spans, key=lambda s_: -(s_[1] - s_[0])) for f in (0.5, 0.3, 0.7, 0.2, 0.8)]
+        tl += [E0 + (E1 - E0) * k / 10.0 for k in range(1, 10)]
+        for t in tl:
+                inspan = any(a + 100 <= t - tw / 2 and t + tw / 2 <= b - 100 for a, b in spans)
+                f = 0.0 if inspan else 1.0
+                for sd, lvl in ((1, 1.0), (-1, 1.0), (1, 2.1), (-1, 2.1), (1, 3.4), (-1, 3.4), (1, 4.8), (-1, 4.8), (1, 6.2), (-1, 6.2)):
+                    off = sd * (hb + 120 + th / 2 * lvl)
+                    cx, cy = A[0] + ux * t + nx * off, A[1] + uy * t + ny * off
+                    bx = affinity.rotate(box(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2), ang, origin=(cx, cy), use_radians=True)
+                    bad = sum(1 for o in obst + placed if bx.buffer(40).intersects(o))
+                    cands.append((bad, f + (lvl > 1) * 0.5 + (lvl > 2.5) * 2, (cx, cy), bx, (A[0] + ux * t + nx * sd * hb, A[1] + uy * t + ny * sd * hb) if lvl > 2.5 else None))
+        if not cands:
+            a, b = max(spans, key=lambda s_: s_[1] - s_[0]); t = (a + b) / 2; off = hb + 120 + th / 2
+            cx, cy = A[0] + ux * t + nx * off, A[1] + uy * t + ny * off
+            cands = [(99, 0, (cx, cy), box(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2), None)]
+        bad, _, (cx, cy), bx, lead = min(cands, key=lambda c_: (c_[0], c_[1]))
+        placed.append(bx)
+        if lead:      # far mark: thin leader from the rigel edge to the text box
+            ex, ey = bx.exterior.interpolate(bx.exterior.project(__import__('shapely.geometry', fromlist=['Point']).Point(*lead))).coords[0]
+            ops.append(dict(t='pl', p=[T(*lead), T(ex, ey)], layer='0', lw=5, tag=tag('LD')))
+        ops.append(dict(t='mtext', at=T(cx, cy), h=125, att=5, rot=rot, s=txt, layer='TEXT 2.5', tag=tag('M')))
     # axes (kit SPDS axis), chains
     xs = sorted(DS.AXX.items()); ys = sorted(DS.AXY.items())
     ybot = oy - 1000; xleft = ox - 1000
@@ -72,7 +103,7 @@ def plan(z, ox, oy, P, title):
     # title
     h = tag('T'); ops.append(dict(t='clone', h='A5:4038B1', tag=h))
     ops.append(dict(t='moveto', h=h, idx=0, to=[ox + 31200 * K / 2, ytop + 700]))
-    ops.append(dict(t='settext', h=h, s=title, w=14000))
+    ops.append(dict(t='settext', h=h, s=title, w=9000))
     return ops
 
 
