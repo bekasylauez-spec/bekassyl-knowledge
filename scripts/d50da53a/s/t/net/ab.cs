@@ -1756,6 +1756,45 @@ else if (t == "sysvar")
                 LayoutManager.Current.DeleteLayout(S(m, "name", ""));
                 log.AppendLine("laydel " + S(m, "name", ""));
             }
+            else if (t == "layren")
+            {
+                LayoutManager.Current.RenameLayout(S(m, "from", ""), S(m, "to", ""));
+                log.AppendLine("layren " + S(m, "from", "") + " -> " + S(m, "to", ""));
+            }
+            else if (t == "notetxt")
+            {
+                var np = MGet(H(db, S(m, "h", ""))) as McNotePosition;
+                try
+                {
+                    if (Has(m, "l1")) np.FirstLine = S(m, "l1", "");
+                    if (Has(m, "l2")) np.SecondLine = S(m, "l2", "");
+                    if (Has(m, "angle")) np.Angle = D(m["angle"]);
+                    np.DbEntity.Update();
+                }
+                finally { var dd = (object)np as IDisposable; if (dd != null) dd.Dispose(); }
+            }
+            else if (t == "tfix")
+            {
+                // column widths, row heights, cell text height; make vertical borders visible (lineweight from reference cell)
+                var tb = (Table)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                if (Has(m, "widths")) { var w = L(m["widths"]); for (int c = 0; c < w.Count && c < tb.Columns.Count; c++) tb.Columns[c].Width = D(w[c]); }
+                if (Has(m, "rowh")) { double rh = D(m["rowh"]); for (int r = 0; r < tb.Rows.Count; r++) tb.Rows[r].Height = rh; }
+                if (Has(m, "rows")) foreach (var q in L(m["rows"])) { var a = L(q); tb.Rows[Convert.ToInt32(a[0])].Height = D(a[1]); }
+                if (Has(m, "th")) { double th = D(m["th"]); for (int r = 0; r < tb.Rows.Count; r++) for (int c = 0; c < tb.Columns.Count; c++) { try { var cl = tb.Cells[r, c]; if (cl.Contents.Count > 0) cl.Contents[0].TextHeight = th; } catch { } } }
+                if (Has(m, "vborders"))
+                {
+                    var lw = (LineWeight)Convert.ToInt32(m["vborders"]);
+                    for (int r = Has(m, "from") ? Convert.ToInt32(m["from"]) : 0; r < tb.Rows.Count; r++)
+                        for (int c = 0; c < tb.Columns.Count; c++)
+                        {
+                            var cl = tb.Cells[r, c];
+                            cl.Borders.Left.IsVisible = true; cl.Borders.Right.IsVisible = true;
+                            cl.Borders.Left.LineWeight = lw; cl.Borders.Right.LineWeight = lw;
+                        }
+                }
+                tb.GenerateLayout();
+                log.AppendLine("tfix " + S(m, "h", "") + " w=" + tb.Width.ToString("0", IC) + " h=" + tb.Height.ToString("0", IC));
+            }
             else if (t == "laycopy")
             {
                 LayoutManager.Current.CopyLayout(S(m, "src", ""), S(m, "dst", ""));

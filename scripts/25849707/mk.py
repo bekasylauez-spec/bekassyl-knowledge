@@ -1,5 +1,14 @@
 # build all sheets of one mark: import analog sheet per fragment, facade, sections, (last sheet) tables
 import gx, rig, rigsec, rigtab, an61, plan, json, math
+
+
+class Stuck(Exception): pass
+
+
+def R(ops, name, wait=900):
+    out = gx.run(ops, name, wait=wait)
+    if out.strip().startswith('timeout') or 'eAtMaxReaders' in out: raise Stuck(name + ': ' + out[-300:])
+    return out
 X0, Y0, PITCH = 133817.0, -1840000.0, 31500.0
 SEC_X0, SEC_X1, SEC_Y = -224000.0, -210800.0, 417700.0
 
@@ -13,7 +22,7 @@ def fresh(k, P):
     ops.append(dict(t='eraseregion', win=[SX - 10, SY - 10, SX + PITCH - 20, SY + 18000]))
     ops.append(dict(t='eraseins', win=[SX - 10, SY - 10, SX + PITCH - 20, SY + 18000]))
     ops.append(dict(t='import', file=an61.SRC, h=an61.SHEET + an61.SECS, base=list(an61.AN0), to=[SX, SY], pre=P))
-    return gx.run(ops, 'imp_' + P.rstrip(':'))
+    return R(ops, 'imp_' + P.rstrip(':'))
 
 
 def sec_layout(G):
@@ -30,8 +39,8 @@ def sec_layout(G):
 
 def recycle():
     # MultiCAD read-opens leak (eAtMaxReaders): save, then discard and reopen the document from disk
-    gx.run([dict(t='save')], 'sv')
-    return gx.run([dict(t='reopen')], 'ro', wait=300)
+    R([dict(t='save')], 'sv')
+    return R([dict(t='reopen')], 'ro', wait=300)
 
 
 def run_mark(m, k0, no0, mark, count, log=print):
@@ -50,12 +59,12 @@ def run_mark(m, k0, no0, mark, count, log=print):
         sh = max(0.0, min(dH - 150.0, 450.0))
         if sh > 0:   # left analog details (node A, a-a, splice node, Ск detail, plate table) down, clear of the deeper facade
             S.add(t='movewin', win=[S.x(-231600), S.y(412300), S.x(-222300), S.y(421300)], d=[0, -sh])
-        out = gx.run(S.ops, 'g_' + P.rstrip(':')); errs += [l for l in out.splitlines() if 'ERR' in l]
+        out = R(S.ops, 'g_' + P.rstrip(':')); errs += [l for l in out.splitlines() if 'ERR' in l]
         S.ops = []
         for j, (word, T0, tp, bt, dpos) in enumerate(sec_layout(G)):
             rigsec.section(S, G, j, word, [T0[0] + S.dx, T0[1] + S.dy], tp, bt, dpos)
         S.add(t='eraseregion', win=[SX - 10, SY + 14860, SX + PITCH - 20, SY + 18000])
-        out = gx.run(S.ops, 's_' + P.rstrip(':')); errs += [l for l in out.splitlines() if 'ERR' in l]
+        out = R(S.ops, 's_' + P.rstrip(':')); errs += [l for l in out.splitlines() if 'ERR' in l]
         S.ops = []
         no = '6.%d' % (no0 + i)
         last = i == len(G_all) - 1
@@ -70,7 +79,7 @@ def run_mark(m, k0, no0, mark, count, log=print):
             P_, geo = rigtab.positions(dict(G, endL='end', endR='end', dopspec=[], nspec={}), 0, 0)
             o = [dict(t='erase', h=[S.A(rigtab.SPEC), S.A(rigtab.STEEL)])]
         o += rigtab.texts(S, G, geo, no, mark)
-        out = gx.run(o + [dict(t='save')], 't_' + P.rstrip(':')); errs += [l for l in out.splitlines() if 'ERR' in l]
+        out = R(o + [dict(t='save')], 't_' + P.rstrip(':')); errs += [l for l in out.splitlines() if 'ERR' in l]
         log('%s sheet %s slot %d frag %s errs %d' % (mark, no, k, frags[i], len(errs)))
     return len(G_all), errs
 

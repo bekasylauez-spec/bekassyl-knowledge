@@ -9,3 +9,27 @@ def tagmap():
     return json.load(open(os.path.join(os.environ['TEMP'],'b1_map.json'),encoding='utf-8-sig'))
 if __name__=='__main__':
     print(run(json.load(open(sys.argv[1],encoding='utf-8')),'cli'))
+
+
+def restart_acad():
+    """kill my AutoCAD (pid in net/pid.txt) and start it again with the boot script (listener + working DWG)"""
+    import time
+    pf = os.path.join(S, 'net', 'pid.txt')
+    try:
+        pid = int(open(pf).read().strip())
+        subprocess.run(['taskkill', '/F', '/PID', str(pid)], capture_output=True)
+    except Exception:
+        pass
+    time.sleep(3)
+    jd = os.path.join(os.environ['TEMP'], 'acadjob_b1')
+    for f in ('job.txt', 'done.txt', 'listening.txt'):
+        try: os.remove(os.path.join(jd, f))
+        except Exception: pass
+    p = subprocess.Popen([r'C:\Program Files\Autodesk\AutoCAD 2021\acad.exe', '/nologo', '/b', os.path.join(S, 'net', 'boot.scr')])
+    open(pf, 'w').write(str(p.pid))
+    for i in range(240):
+        time.sleep(2)
+        if os.path.exists(os.path.join(jd, 'listening.txt')): break
+    time.sleep(25)
+    out = run([dict(t='docinfo')], 'ping', wait=180)
+    return p.pid, out
