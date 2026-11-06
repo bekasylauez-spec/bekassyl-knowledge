@@ -1616,31 +1616,31 @@ namespace B2R
                 if (!lid.IsValid) lid = lm.CreateLayout(nm);
                 var lo = (Layout)tr.GetObject(lid, OpenMode.ForWrite);
                 var v = Autodesk.AutoCAD.DatabaseServices.PlotSettingsValidator.Current;
-                v.SetPlotConfigurationName(lo, "DWG To PDF.pc3", null); v.RefreshLists(lo);
+                try { v.SetPlotConfigurationName(lo, "DWG To PDF.pc3", null); v.RefreshLists(lo); } catch (System.Exception ex_) { log.AppendLine("mkl step 1: " + ex_.Message); }
                 string media = S(m, "media", "User-1"), found = null;
                 foreach (string mn in v.GetCanonicalMediaNameList(lo)) { if (mn == media || v.GetLocaleMediaName(lo, mn) == media) { found = mn; break; } }
                 if (found == null) { var sbm = new StringBuilder(); foreach (string mn in v.GetCanonicalMediaNameList(lo)) sbm.Append(mn + " | "); log.AppendLine("media? " + sbm); return; }
-                v.SetPlotConfigurationName(lo, "DWG To PDF.pc3", found);
-                v.SetPlotPaperUnits(lo, PlotPaperUnit.Millimeters);
-                v.SetPlotRotation(lo, S(m, "rot", "0") == "90" ? PlotRotation.Degrees090 : PlotRotation.Degrees000);
-                v.SetPlotType(lo, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
-                v.SetUseStandardScale(lo, true); v.SetStdScaleType(lo, StdScaleType.StdScale1To1);
-                v.SetPlotCentered(lo, false); v.SetPlotOrigin(lo, new Point2d(0, 0));
+                try { v.SetPlotConfigurationName(lo, "DWG To PDF.pc3", found); } catch (System.Exception ex_) { log.AppendLine("mkl step 2: " + ex_.Message); }
+                try { v.SetPlotPaperUnits(lo, PlotPaperUnit.Millimeters); } catch (System.Exception ex_) { log.AppendLine("mkl step 3: " + ex_.Message); }
+                try { v.SetPlotRotation(lo, S(m, "rot", "0") == "90" ? PlotRotation.Degrees090 : PlotRotation.Degrees000); } catch (System.Exception ex_) { log.AppendLine("mkl step 4: " + ex_.Message); }
+                try { v.SetPlotType(lo, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout); } catch (System.Exception ex_) { log.AppendLine("mkl step 5: " + ex_.Message); }
+                try { v.SetUseStandardScale(lo, true); v.SetStdScaleType(lo, StdScaleType.StdScale1To1); } catch (System.Exception ex_) { log.AppendLine("mkl step 6: " + ex_.Message); }
+                try { v.SetPlotCentered(lo, false); v.SetPlotOrigin(lo, new Point2d(0, 0)); } catch (System.Exception ex_) { log.AppendLine("mkl step 7: " + ex_.Message); }
                 try { v.SetCurrentStyleSheet(lo, "monochrome.ctb"); } catch { }
-                lo.ShowPlotStyles = true; lo.PrintLineweights = true;
+                try { lo.ShowPlotStyles = true; lo.PrintLineweights = true; } catch (System.Exception ex_) { log.AppendLine("mkl step 8: " + ex_.Message); }
                 var pm = lo.PlotPaperMargins;
                 var btr = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForWrite);
                 foreach (ObjectId id in btr) { var e0 = tr.GetObject(id, OpenMode.ForWrite) as Viewport; if (e0 != null && e0.Number != 1) e0.Erase(); }
                 var vp = new Viewport();
                 // paper coordinates are measured from the lower-left printable corner
-                vp.CenterPoint = new Point3d(pw / 2.0 - pm.MinPoint.X, ph / 2.0 - pm.MinPoint.Y, 0);
+                try { vp.CenterPoint = new Point3d(pw / 2.0 - pm.MinPoint.X, ph / 2.0 - pm.MinPoint.Y, 0); } catch (System.Exception ex_) { log.AppendLine("mkl step 9: " + ex_.Message); }
                 vp.Width = pw; vp.Height = ph;
                 btr.AppendEntity(vp); tr.AddNewlyCreatedDBObject(vp, true);
-                vp.ViewDirection = Vector3d.ZAxis; vp.ViewTarget = Point3d.Origin;
-                vp.ViewCenter = new Point2d((D(w[0]) + D(w[2])) / 2.0, (D(w[1]) + D(w[3])) / 2.0);
-                vp.CustomScale = 1.0 / sc;
+                try { vp.ViewDirection = Vector3d.ZAxis; vp.ViewTarget = Point3d.Origin; } catch (System.Exception ex_) { log.AppendLine("mkl step 10: " + ex_.Message); }
+                try { vp.ViewCenter = new Point2d((D(w[0]) + D(w[2])) / 2.0, (D(w[1]) + D(w[3])) / 2.0); } catch (System.Exception ex_) { log.AppendLine("mkl step 11: " + ex_.Message); }
+                try { vp.CustomScale = 1.0 / sc; } catch (System.Exception ex_) { log.AppendLine("mkl step 12: " + ex_.Message); }
                 try { vp.On = true; } catch { }
-                vp.Locked = true;
+                try { vp.Locked = true; } catch (System.Exception ex_) { log.AppendLine("mkl step 13: " + ex_.Message); }
                 log.AppendLine("layout " + nm + " media " + found + " margins " + pm.MinPoint.X.ToString("0.##", IC) + "," + pm.MinPoint.Y.ToString("0.##", IC));
             }
             else if (t == "plotlayout")
@@ -1655,7 +1655,9 @@ namespace B2R
                     int i = 0;
                     foreach (var nn in names)
                     {
-                        var lid = lm.GetLayoutId(nn.ToString()); var lo = (Layout)tr.GetObject(lid, OpenMode.ForRead);
+                        lm.CurrentLayout = nn.ToString(); var lid = lm.GetLayoutId(nn.ToString()); var lo = (Layout)tr.GetObject(lid, OpenMode.ForRead);
+                        var lbt = (BlockTableRecord)tr.GetObject(lo.BlockTableRecordId, OpenMode.ForRead);
+                        foreach (ObjectId vid in lbt) { var vv = tr.GetObject(vid, OpenMode.ForRead) as Viewport; if (vv == null) continue; if (Math.Abs(vv.Width - 630) < 1 && !vv.On) { vv.UpgradeOpen(); try { vv.On = true; } catch (System.Exception exv) { log.AppendLine("vp on: " + exv.Message); } } }
                         var pi = new Autodesk.AutoCAD.PlottingServices.PlotInfo(); pi.Layout = lid;
                         var piv = new Autodesk.AutoCAD.PlottingServices.PlotInfoValidator(); piv.MediaMatchingPolicy = Autodesk.AutoCAD.PlottingServices.MatchingPolicy.MatchEnabled; piv.Validate(pi);
                         if (i == 0) pe.BeginDocument(pi, "doc", null, 1, true, file);
