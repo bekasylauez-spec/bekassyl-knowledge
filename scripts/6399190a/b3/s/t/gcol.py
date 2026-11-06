@@ -112,11 +112,11 @@ def build(T, k, sheetno):
     add(t='sp_set', h=S('4E8F9B'), pts=[[0] + A(XR + 1300, YB + Htop + 600)])
     bnd = sorted({v for sg in _segs for v in sg[:2]})
     nnote = 4 - (1 if drop1 else 0) - (1 if drop2 else 0)
-    band = (NB0 + NST - 350, NB0 + (nnote - 1) * NST + 350)        # bar callouts on the left
-    beamz = [(L - hb - 700, L + 150) for L, hb in zip(levels, beams)]   # beam + its С1 note below
+    band = (NB0 + NST - 850, NB0 + (nnote - 1) * NST + 350)        # bar callouts on the left
+    beamz = [(L - hb - 1250, L + 150) for L, hb in zip(levels, beams)]  # beam + its С1 note below
     def free(y, up):
         if y < 1000 or y > Hc - 700: return False
-        if any(-150 < v - y < up for v in bnd): return False
+        if any(-150 < v - y < up for v in pts_lv(levels, beams)): return False
         if band[0] < y < band[1] or any(a_ < y < b_ for a_, b_ in beamz): return False
         return True
     ys1r = None
@@ -130,7 +130,7 @@ def build(T, k, sheetno):
     ys1 = YB + ys1r
     kc = YB + Htop - beams[-1] / 2.0
     add(t='sp_set', h=S('4E8F97'), pts=[[1] + A(XL - 700, YB + Htop + 250)])
-    add(t='sp_set', h=S('4E8FA1'), pts=[[0] + A(XL - 350, ys1), [1] + A(XR + 350, ys1)])
+    add(t='sp_set', h=S('4E8FA1'), pts=[[0] + A(XL - 350, ys1), [1] + A(XR + 1000 + 600, ys1)])
     # bars, выпуски, накладки
     xs = [XL + 56 + i * (h - 112) / (nh - 1) for i in range(nh)]
     for i, x in enumerate(xs):

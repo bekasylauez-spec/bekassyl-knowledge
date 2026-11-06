@@ -19,7 +19,10 @@ def storey_hoops(lo, beam_bot):
     _, n1, k, r = best
     steps = [100.0] * n1
     mid = [200.0] * k
-    if r > 1e-6: mid.insert(len(mid) // 2, r)
+    if r > 1e-6:
+        kk = int(math.ceil((S - 200.0 * n1) / 200.0)); eq = (S - 200.0 * n1) / kk
+        if S - 200.0 * n1 <= 1000 and abs(eq / 10 - round(eq / 10)) < 1e-6: mid = [eq] * kk   # short middle zone: equal steps
+        else: mid.insert(len(mid) // 2, r)
     steps += mid + [100.0] * n1
     pos = [a]
     for s in steps: pos.append(pos[-1] + s)
@@ -38,7 +41,7 @@ def chain(levels, beams):
     segs = []; k = 0
     while k < len(d):
         m = k
-        while m + 1 < len(d) and abs(d[m + 1] - d[k]) < 1e-6 and d[k] in (80.0, 100.0, 200.0): m += 1
+        while m + 1 < len(d) and abs(d[m + 1] - d[k]) < 1e-6 and 60.0 < d[k] < 300.0: m += 1
         segs.append((pts[k], pts[m + 1], d[k], m - k + 1)); k = m + 1
     return P, segs
 
