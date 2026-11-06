@@ -13,6 +13,7 @@ if (-not $dll) {
 Copy-Item $Ops "$env:TEMP\b2_ops.json" -Force
 $jd = "$env:TEMP\acadjob_b2"; Remove-Item "$jd\done.txt" -ErrorAction SilentlyContinue
 [IO.File]::WriteAllText("$jd\job.txt", "$dll|B2R.Cmds|Apply|$Doc", [Text.Encoding]::UTF8)
-for ($i = 0; $i -lt $Wait -and -not (Test-Path "$jd\done.txt"); $i++) { Start-Sleep 1 }
+$apid = (Get-Content "$net\pid.txt" -ErrorAction SilentlyContinue | Select-Object -First 1)
+for ($i = 0; $i -lt $Wait -and -not (Test-Path "$jd\done.txt"); $i++) { Start-Sleep 1; if ($apid -and ($i % 5 -eq 0) -and -not (Get-Process -Id $apid -ErrorAction SilentlyContinue)) { "ACAD DEAD"; exit 3 } }
 if (Test-Path "$jd\done.txt") { Get-Content "$jd\done.txt" -Encoding UTF8 | Select-Object -First 3 } else { "timeout" }
 Get-Content "$env:TEMP\b2_log.txt" -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 40

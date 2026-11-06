@@ -79,7 +79,10 @@ def run(mark, pi, log=print):
         ops.append(dict(t='settext', h=P + rgen.SPDS['notes'], s='\\pxi-3.3333,l3.3333,t3.3333;1.\tОбщие указания см. л. - 1.1\\P2.\tДанный лист читать совместно с л. КЖ-2.1 ... 2.4'
                         '\\P3.\tСпецификацию и ведомость деталей ригеля %s см. л. %s' % (mark, '6.%d' % sheet_no(mark, 0)), w=9200))
         out = gx.run(ops, 'tb%d' % k); errs += [l for l in out.splitlines() if 'ERR' in l]
-    gx.run([dict(t='save')], 'sv')
+    allout = gx.log()
+    if any('eAtMaxReaders' in e for e in errs): raise RuntimeError('eAtMaxReaders - not saved')
+    out = gx.run([dict(t='save')], 'sv')
+    if 'ERR' in out: raise RuntimeError('save failed ' + out[-200:])
     log('%s part %d -> %s slot %d  errors %d %s' % (mark, pi, part['no'], k, len(errs), errs[:5]))
     return k
 

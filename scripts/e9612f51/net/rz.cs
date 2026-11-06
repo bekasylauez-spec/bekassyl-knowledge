@@ -517,7 +517,7 @@ namespace RG
                     var ids = new ObjectIdCollection(); var olds = new List<string>();
                     foreach (var h in L(m["h"])) { ObjectId id; if (side.TryGetObjectId(new Handle(Convert.ToInt64(h.ToString(), 16)), out id)) { ids.Add(id); olds.Add(h.ToString().ToUpper()); } else log.AppendLine("import: no " + h); }
                     var im = new IdMapping();
-                    side.WblockCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, DuplicateRecordCloning.Ignore, false);
+                    side.WblockCloneObjects(ids, SymbolUtilityServices.GetBlockModelSpaceId(db), im, S(m, "dup", "") == "replace" ? DuplicateRecordCloning.Replace : DuplicateRecordCloning.Ignore, false);
                     int n = 0;
                     for (int i = 0; i < ids.Count; i++)
                     {

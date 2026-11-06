@@ -86,8 +86,14 @@ for y, xs in SPL:
         add(t='pl', p=[W(x - NW / 2, y - NAK / 2), W(x + NW / 2, y - NAK / 2), W(x + NW / 2, y + NAK / 2), W(x - NW / 2, y + NAK / 2)], closed=True, layer=LAY)
 LEG = {20: 200, 22: 220, 25: 250, 28: 280, 32: 320}[int(D)]
 add(t='pl', p=[W(XC[0], TOP - LEG), W(XC[0], TOP), W(XC[1], TOP), W(XC[1], TOP - LEG)], layer='диам16', lw=40)
-LZ = [y - L[0] for y in L]
-P, segs, per = CG.chain(LZ, BEAMS)
+# node zones (beam height, no hoops): overlapping zones of different beams are merged
+ZON = []
+for lv, bh in sorted(zip(L[1:], BEAMS), key=lambda q: q[0] - q[1]):
+    lo_, hi_ = lv - bh, lv
+    if ZON and lo_ <= ZON[-1][1] + 1e-6: ZON[-1] = (ZON[-1][0], max(ZON[-1][1], hi_))
+    else: ZON.append((lo_, hi_))
+LZ = [0.0] + [hi_ - L[0] for lo_, hi_ in ZON]
+P, segs, per = CG.chain(LZ, [hi_ - lo_ for lo_, hi_ in ZON])
 for (p, z) in per:
     n1, nm, n3 = z
     if nm == 0: idx = range(len(p))
@@ -140,8 +146,9 @@ for i, ((h_, y0), y) in enumerate(zip(mk, L)):
 K('111913', '111911', '111910')
 def zone_mid(lo_y, hi_y=1e9):
     best = None
-    for i in range(len(L) - 1):
-        a_ = max(L[i], lo_y); b2 = min(L[i + 1] - BEAMS[i], hi_y)
+    tops = [L[0]] + [hi_ for lo_, hi_ in ZON]; bots = [lo_ for lo_, hi_ in ZON]
+    for i in range(len(bots)):
+        a_ = max(tops[i], lo_y); b2 = min(bots[i], hi_y)
         if b2 - a_ > (best[1] - best[0] if best else 0): best = (a_, b2)
     return best
 ZN = []
@@ -182,7 +189,9 @@ p, (n1, nm, n3) = max(per, key=lambda q: q[0][-1] - q[0][0])
 HLAB = 'Х1;Х2' if NPIN == 0 else ('Х1;Шп1;Шп2' if (NPB and NPH and abs(b - h) > 1) else 'Х1;Шп1')
 add(t='note', l1=HLAB, l2='', origin=W(CR + (420 if len(HLAB) <= 6 else 250), L[0] + p[n1 + 1] + 350),
     targets=[W(CR - 40, L[0] + p[n1]), W(CR - 40, L[0] + p[n1 + 1])], **NOTEo)
-NODE_LV, NODE_BH = next((lv, bh) for lv, bh in zip(L[1:], BEAMS) if bh > 0)
+_cand = [(lv, bh) for lv, bh in zip(L[1:], BEAMS) if bh > 0]
+_far = [(lv, bh) for lv, bh in _cand if lv - bh > SPLV[0] + 1200 + 900 or lv < SPLV[0] - 600]   # knot Б clear of the splice detail А
+NODE_LV, NODE_BH = (_far or _cand)[0]
 c = W(XM, NODE_LV - NODE_BH / 2); add(t='mcset', h=T('1118C7'), set={'Center': c, 'Rack': [c[0] - 880 - (b - 400) / 2, c[1] - 150], 'Knot': 'Б', 'XRadius': 420 + (b - 400) / 2})
 c = W(XC[1], SPL[0][0]); add(t='mcset', h=T('1118D0'), set={'Center': c, 'Rack': [c[0] + 345, c[1] - 369], 'Knot': 'А'})
 add(t='settext', h=T('11116E'), s='{\\L' + 'Колонна ' + MARK + '}')
@@ -373,7 +382,7 @@ fill(r_h, hoop_rows, HD)
 fill(r_sk, sk_rows, 16)
 fill(r_pos, [(lab, list(ls)[0], q) for lab, ls, q in pos_rows], D)
 fill([r_N], [(NM, 10 * D, 2 * n * len(SPLV))], D)
-NMESH_TOT = sum(int(round((bh - 100) / 100)) + 1 for bh in BEAMS if bh > 0)
+NMESH_TOT = sum(int(round((hi_ - lo_ - 100) / 100)) + 1 for lo_, hi_ in ZON if hi_ - lo_ > 0)
 cells += [[r_C1, 10, '%d' % NMESH_TOT], [r_conc, 12, '%.2f' % (b * h / 1e6 * Ltot)]]
 fill(r_mesh, mesh_rows, 10)
 add(t='tset', h=SPM, cells=cells)

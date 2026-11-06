@@ -20,12 +20,12 @@ for k, mark in sorted(MK.items(), key=lambda kv: (int(kv[0].split(',')[1]), int(
     d = ((r['cx'] - sx) ** 2 + (r['cy'] - sy) ** 2) ** 0.5
     assert d < 700, (k, d)
     used.append(r['hd'])
-    tip = (r['x1'] + DX, r['y1'] + DY)                # top-right corner of the column
-    org = (tip[0] + 735, tip[1] + 770)
-    tg = 'SCHM:' + k
-    add(t='clone', h=NOTE, base=[0, 0], to=[0, 0], tag=tg)
-    add(t='spmove', h=tg, items=[[0, org[0], org[1]], [1, tip[0], tip[1]]])
-    add(t='mcset', h=tg, set={'FirstLine': mark})
+    if x >= 53000:                                    # axis 32: neighbour column (axis 33) on the right -> leader to the left
+        tip = (r['x0'] + DX, r['y1'] + DY); org = (tip[0] - 735, tip[1] + 770)
+    else:
+        tip = (r['x1'] + DX, r['y1'] + DY)            # top-right corner of the column
+        org = (tip[0] + 735, tip[1] + 770)
+    add(t='note', l1=mark, l2='', origin=list(org), target=list(tip), arrow='arrow', scale=100, **({'angle': 3.141592653589793} if x >= 53000 else {}), ts=2.5, style='ГОСТ 2.304', layer='Размеры', tag='SCHM:' + k)
 print(len(MK), 'marks;', len(set(used)), 'distinct rects')
 json.dump(ops, open(os.path.join(gx.S, 'ops', 'sch_marks.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 if '--run' in sys.argv: print(gx.run(ops + [{'t': 'save'}], 'sch_marks')[-600:])
