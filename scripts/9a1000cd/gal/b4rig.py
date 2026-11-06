@@ -124,11 +124,13 @@ class Sheet:
             e0 = X(u0) + 20
             s.add(t='plset', h=T('A5:4015C1'), p=[[e0 + L, yb], [e0 + 25, yb], [e0, yb + 25], [e0, yt - 25], [e0 + 25, yt], [e0 + L, yt]])
             s.add(t='moveto', h=T('A5:4015C2'), idx=1, to=[e0, yk])
+            s.add(t='spmove', h=T('A5:4015C2'), items=[[0, e0 - 226, s.up(469197)]])
         if s.cutR: s.add(t='erase', h=[T('A5:4069BF'), T('A5:4069C0')])
         else:
             e1 = X(u1) - 20
             s.add(t='plset', h=T('A5:4069BF'), p=[[e1 - L, yb], [e1 - 25, yb], [e1, yb + 25], [e1, yt - 25], [e1 - 25, yt], [e1 - L, yt]])
             s.add(t='moveto', h=T('A5:4069C0'), idx=1, to=[e1, yk])
+            s.add(t='spmove', h=T('A5:4069C0'), items=[[0, e1 + 226, s.up(469197)]])
         # доп bars of this part
         barp = [T('A5:4274A8'), T('A5:4274AA')]; notep = [T('A5:4274A9'), T('A5:4274AB')]
         s.dopx = []

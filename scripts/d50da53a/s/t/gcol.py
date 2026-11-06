@@ -84,18 +84,24 @@ def build(T, k, sheetno):
     Hc = Htop - beams[-1]
     topd = (YB + Htop) - 13650
     f = min(1.0, (Hc - 200) / 2800.0)
-    NB0, NST = (950, 550) if Hc >= 4000 else (450, 450)
+    H1 = (levels[0] - beams[0]) if len(levels) > 1 else Hc
+    NB0, NST = (950, 550) if H1 >= 4000 else (450, 400)
+    drop1 = (len(levels) == 1 and Hc < 4000)
     i0 = 0
     _P, _segs = colgeo.chain([0.0] + list(levels), list(beams))
     y11 = [y2 for (y1, y2, st, c) in _segs if st == 100 and c > 1][0]
     DY = {'4E95AC': topd, '4E95AA': (YB + Htop - beams[-1]) - 12850, '4E95A8': 0, '4E95A6': (YB - Df) - 5950,
-          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + 3 * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
+          '4E95AD': (YB + NB0 + 2 * NST) - 9000, '4E95AE': (YB + NB0 + (2 if drop1 else 3) * NST) - 9550, '4E95B0': (YB + NB0 + NST) - 8450, '4E95B1': (YB + NB0) - 7900,
           '4E95AF': topd, '4E95B2': 0, '4E95B3': 0, '4E8F9B': topd, '4E8F97': (YB + Htop - beams[-1] / 2) - 13250, '4E8F98': topd,
           '4E8FA1': (YB + y11) - 11054}
     for hh in PARK:
         add(t='move', h=[S(hh)], d=[-300000, DY[hh]])
     ysec = YB + (11054 - 6950) * (Hc / 5900.0)
-    ys1 = YB + NB0 + 3 * NST + 350 if len(levels) == 1 else YB + (levels[-2] + Hc) / 2.0
+    add(t='sp_set', h=S('4E8F9B'), pts=[[0] + A(XR + 1300, YB + Htop + 600)])
+    ys1r = NB0 + (2 if drop1 else 3) * NST + 350
+    bnd = sorted({v for sg in _segs for v in sg[:2]})
+    while any(-90 < v - ys1r < 520 for v in bnd): ys1r += 60
+    ys1 = YB + ys1r
     kc = YB + Htop - beams[-1] / 2.0
     add(t='sp_set', h=S('4E8F97'), pts=[[1] + A(XL - 700, YB + Htop + 250)])
     add(t='sp_set', h=S('4E8FA1'), pts=[[0] + A(XL - 350, ys1), [1] + A(XR + 350, ys1)])
@@ -127,7 +133,7 @@ def build(T, k, sheetno):
             t = tg(); add(t='clone', h=hh, base=A0(0, 0), to=[O[0], O0[1] + (dy0 + dy1) / 2], tag=t)
             if hh == '4E94CE': add(t='move', h=[t], d=[h - 900, 0])
     # chain dims right
-    DLR = XR + 650
+    DLR = XR + 1000
     for (y1, y2, st, cnt) in segs:
         if cnt > 1:
             dim('4E9560', A(XR, YB + y1), A(XR, YB + y2), A(DLR, YB + y1), HP, txt='%dх%d' % (st, cnt), lfac=1)
@@ -157,15 +163,16 @@ def build(T, k, sheetno):
     # facade notes
     add(t='notetxt', h=S('4E95AF'), l2='%d шт.' % nmesh[-1])
     if True:
-        add(t='sp_set', h=S('4E95AF'), pts=[[0] + A(3920, YB + Htop - beams[-1] / 2 + 150), [1] + A(XL + 30, YB + Htop - beams[-1] / 2 - 150)])
+        add(t='sp_set', h=S('4E95AF'), pts=[[0] + A(3920, YB + Htop - beams[-1] - 300), [1] + A(XL + 30, YB + Htop - beams[-1] + 150)])
     for i, (L, hb) in enumerate(zip(levels[:-1], beams[:-1])):
         t = tg(); add(t='clone', h=S('4E95AF'), tag=t)
-        add(t='sp_set', h=t, pts=[[0] + A(3920, YB + L - hb / 2 + 150), [1] + A(XL + 30, YB + L - hb / 2 - 150)])
+        add(t='sp_set', h=t, pts=[[0] + A(3920, YB + L - hb - 300), [1] + A(XL + 30, YB + L - hb + 150)])
         add(t='notetxt', h=t, l2='%d шт.' % nmesh[i])
     vp = T.get('vp', 'см. фундамент')
     add(t='notetxt', h=S('4E95B2'), l2=vp); add(t='notetxt', h=S('4E95B3'), l2=vp)
     ys_ = [r for r in ('4E95AD', '4E95AE')]
-    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + NB0 + 3 * NST - 300)])
+    add(t='sp_set', h=S('4E95AE'), pts=[[1] + A(xs[1], YB + NB0 + (2 if drop1 else 3) * NST - 300)])
+    if drop1: add(t='erase', h=[S('4E95AD')])
     add(t='sp_set', h=S('4E95AD'), pts=[[1] + A(xs[0], YB + NB0 + 2 * NST - 300)])
     add(t='sp_set', h=S('4E95B1'), pts=[[1] + A(xs[0] - 42, YB + 600)])
     zx = min(P, key=lambda z: abs(z - (NB0 + NST - 150)))
@@ -207,12 +214,15 @@ def build(T, k, sheetno):
     # section dims (СПДС М2, lfac 0.5)
     yd1, yd2 = SY - 522, SY - 922
     dim('4E95D7', A(SX, SY), A(bx[0], SY), A(SX, yd1), 0, tx=A(SX - 260, yd1 - 340))
-    sb_ = round((bx[1] - bx[0]) / 2); dim('4E95E6', A(bx[0], SY), A(bx[-1], SY), A(bx[0], yd1), 0, txt='%dх%d=%d' % (sb_, nb - 1, sb_ * (nb - 1)))
+    sb_ = round((bx[1] - bx[0]) / 2); tb_ = '%dх%d=%d' % (sb_, nb - 1, sb_ * (nb - 1))
+    small = (bx[-1] - bx[0]) < len(tb_) * 0.8 * 125 + 150
+    dim('4E95E6', A(bx[0], SY), A(bx[-1], SY), A(bx[0], yd1), 0, txt=tb_, tx=(A((bx[0] + bx[-1]) / 2, yd2 - 230) if small else None))
     dim('4E960D', A(bx[-1], SY), A(SX + 2 * b, SY), A(SX, yd1), 0, tx=A(SX + 2 * b + 260, yd1 - 340))
     dim('4E961C', A(SX, SY), A(SX + 2 * b, SY), A(SX, yd2), 0)
     xd1, xd2 = SX - 617, SX - 1017
     dim('4E9629', A(SX, SY), A(SX, by[0]), A(xd1, SY), HP, tx=A(xd1 - 340, SY - 260))
-    sh_ = round((by[1] - by[0]) / 2); dim('4E9638', A(SX, by[0]), A(SX, by[-1]), A(xd1, by[0]), HP, txt='%dх%d=%d' % (sh_, nh - 1, sh_ * (nh - 1)))
+    sh_ = round((by[1] - by[0]) / 2); th_ = '%dх%d=%d' % (sh_, nh - 1, sh_ * (nh - 1))
+    dim('4E9638', A(SX, by[0]), A(SX, by[-1]), A(xd1, by[0]), HP, txt=th_, tx=(A(xd2 - 230, (by[0] + by[-1]) / 2) if small else None))
     dim('4E966C', A(SX, by[-1]), A(SX, SY + 2 * h), A(xd1, SY), HP, tx=A(xd1 - 340, SY + 2 * h + 260))
     dim('4E967B', A(SX, SY), A(SX, SY + 2 * h), A(xd2, SY), HP)
     # section notes: move with the right edge, targets
@@ -220,7 +230,8 @@ def build(T, k, sheetno):
     NX = SX + 2 * b + 600
     tgt = {'4E9688': (bx[-1], by[-1]), '4E9689': (bx[-1], by[-2]), '4E968A': (bx[-1] + 14, by[gh[0][0]] + 20),
            '4E968B': (bx[-1] + 38, (by[0] + by[1]) / 2), '4E968C': (bx[gb[0][1]] + 38, by[0] + 120)}
-    yrow = {'4E9688': SY + 2 * h - 60, '4E9689': SY + 2 * h - 580, '4E968A': SY + 2 * h - 1100, '4E968B': SY + 2 * h - 1620, '4E968C': SY + 2 * h - 2140}
+    st5 = min(520, (2 * h + 1000) / 4.0); top5 = SY + 2 * h + (0 if h >= 900 else 400)
+    yrow = {'4E9688': top5 - 60, '4E9689': top5 - 60 - st5, '4E968A': top5 - 60 - 2 * st5, '4E968B': top5 - 60 - 3 * st5, '4E968C': top5 - 60 - 4 * st5}
     for hh, (tx_, ty_) in tgt.items():
         add(t='sp_set', h=S(hh), pts=[[0] + A(NX, yrow[hh]), [1] + A(tx_, ty_)])
     add(t='move', h=[S('4E968D'), S('4E96B5')], d=[0, dys])
@@ -251,15 +262,15 @@ def build(T, k, sheetno):
     dim('4E9770', A(MX, MY), A(MX + 2 * mb_, MY), A(MX, MY - 582), 0)
     dim('4E978F', A(MX + 2 * ex, MY), A(MX + 2 * (mb_ - ex), MY), A(MX, MY - 302), 0, txt='100х%d' % (cx - 1))
     dim('4E977D', A(MX, MY), A(MX + 2 * ex, MY), A(MX, MY - 302), 0, tx=A(MX - 260, MY - 302 - 100))
-    dim('4E979C', A(MX + 2 * (mb_ - ex), MY), A(MX + 2 * mb_, MY), A(MX, MY - 302), 0, tx=A(MX + 2 * mb_ + 260, MY - 302 - 100))
+    dim('4E979C', A(MX + 2 * (mb_ - ex), MY), A(MX + 2 * mb_, MY), A(MX, MY - 302), 0, tx=A(MX + 2 * mb_ + 700, MY - 302 - 100))
     RX = MX + 2 * mb_
     dim('4E97AE', A(RX, MY), A(RX, MY + 2 * mh_), A(RX + 582, MY), HP)
     dim('4E97CD', A(RX, MY + 2 * ey), A(RX, MY + 2 * (mh_ - ey)), A(RX + 302, MY), HP, txt='100х%d' % (cy - 1))
-    dim('4E97BB', A(RX, MY), A(RX, MY + 2 * ey), A(RX + 302, MY), HP, tx=A(RX + 302 + 100, MY - 260))
+    dim('4E97BB', A(RX, MY), A(RX, MY + 2 * ey), A(RX + 302, MY), HP, tx=A(RX + 302 + 100, MY - 420))
     dim('4E97DA', A(RX, MY + 2 * (mh_ - ey)), A(RX, MY + 2 * mh_), A(RX + 302, MY), HP, tx=A(RX + 302 + 100, MY + 2 * mh_ + 260))
-    add(t='sp_set', h=S('4E97EC'), pts=[[1] + A(MX + 2 * (ex + 100 * (cx // 2)), MY + 2 * mh_ - 400)])
+    add(t='sp_set', h=S('4E97EC'), pts=[[0] + A(MX - 580, MY + 2 * mh_ - 150), [1] + A(MX + 2 * (ex + 100 * (cx // 2)), MY + 2 * mh_ - 400)])
     add(t='sp_set', h=S('4E97ED'), pts=[[1] + A(MX + 2 * mb_ - 300, MY + 2 * (ey + 100 * (cy // 2)))])
-    add(t='move', h=[S('4E97EE')], d=[0, 2 * mh_ - 1720])
+    add(t='move', h=[S('4E97EE')], d=[0, (MY + 2 * mh_ + 285) - 13505])
     # ---------- Узел Б: top node, beam hb, face h ----------
     hb = beams[-1]
     add(t='pmap', win=A(8400, 8000) + A(12500, 11000), axis='y', pairs=[[O[1] + 9000, O[1] + 9000], [O[1] + 9800, O[1] + 9000 + hb]])
@@ -268,9 +279,9 @@ def build(T, k, sheetno):
     zz = [50 + 100 * j for j in range(int(round((hb - 100) / 100)) + 1)]
     for z in zz: plc('4E96EE', [A(9770, 9000 + z), A(9750 + h - 20, 9000 + z)])
     UR = 9750 + h
-    dim('4E96F6', A(UR, 9000), A(UR, 9050), A(UR + 500, 9000), HP, tx=A(UR + 500 + 390, 9025))
-    dim('4E9708', A(UR, 9050), A(UR, 9000 + hb - 50), A(UR + 500, 9000), HP, txt='100х%d' % (len(zz) - 1))
-    dim('4E9715', A(UR, 9000 + hb - 50), A(UR, 9000 + hb), A(UR + 500, 9000), HP, tx=A(UR + 500 + 390, 9000 + hb - 25))
+    dim('4E96F6', A(UR, 9000), A(UR, 9050), A(UR + 700, 9000), HP, tx=A(UR + 700 + 390, 9025))
+    dim('4E9708', A(UR, 9050), A(UR, 9000 + hb - 50), A(UR + 700, 9000), HP, txt='100х%d' % (len(zz) - 1))
+    dim('4E9715', A(UR, 9000 + hb - 50), A(UR, 9000 + hb), A(UR + 700, 9000), HP, tx=A(UR + 700 + 390, 9000 + hb - 25))
     add(t='notetxt', h=S('4E975F'), l2='%d шт.' % len(zz))
     # ---------- texts ----------
     mk = T['mark']

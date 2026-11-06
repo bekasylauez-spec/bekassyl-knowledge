@@ -11,12 +11,12 @@ n = [0]
 def dh(p1, p2, yd, short=None):
     """horizontal dim between scheme points p1,p2 (same y used for ext origins), dim line at yd"""
     n[0] += 1; tg = 'BD%d' % n[0]
-    o = add(t='dim', h='3E14B8', p1=P(*p1), p2=P(*p2), dl=P(p1[0], yd), rot=0, tag=tg)
+    o = add(t='dim', h='DXB0', p1=P(*p1), p2=P(*p2), dl=P(p1[0], yd), rot=0, tag=tg, layer='0_ANNOT_Dimensions')
     if short:
         o['tx'] = P(short, yd + (450 if yd > p1[1] else -350))
 def dv(p1, p2, xd, short=None):
     n[0] += 1; tg = 'BD%d' % n[0]
-    o = add(t='dim', h='3E14B8', p1=P(*p1), p2=P(*p2), dl=P(xd, p1[1]), rot=HP, tag=tg)
+    o = add(t='dim', h='DXB0', p1=P(*p1), p2=P(*p2), dl=P(xd, p1[1]), rot=HP, tag=tg, layer='0_ANNOT_Dimensions')
     if short:
         o['tx'] = P(xd - 450 if xd < p1[0] else xd + 450, short)
 
@@ -27,7 +27,7 @@ dh((55050, -250), (55299, -250), Y, short=55299 + 450)  # 249
 dh((63700, -250), (64150, -250), Y, short=63700 - 500)  # 450
 dh((64150, -250), (64600, -250), Y, short=64600 + 500)  # 450
 dh((86000, -250), (86250, -250), Y, short=86000 - 450)  # 250
-dh((86250, -250), (86900, -250), Y)                     # 650
+dh((86250, -250), (86900, -250), Y, short=86900 + 500)  # 650
 # --- X bindings above row Д interior columns (dim line 700 over column top 16850) ---
 Y = 16850 + 700
 dh((54400, 16850), (55050, 16850), Y)                   # 650
@@ -35,7 +35,7 @@ dh((55050, 16850), (55100, 16850), Y, short=55100 + 400)  # 50
 dh((63800, 16850), (64150, 16850), Y, short=63800 - 500)  # 350
 dh((64150, 16850), (64500, 16850), Y, short=64500 + 500)  # 350
 dh((86200, 16850), (86250, 16850), Y, short=86200 - 400)  # 50
-dh((86250, 16850), (86900, 16850), Y)                   # 650
+dh((86250, 16850), (86900, 16850), Y, short=86900 + 500)  # 650
 dh((79650, 16850), (83650, 16850), Y)                   # 4000 axis 12 -> column Д/12-13 centre
 # --- Y bindings left of axis-9 columns ---
 X = 54399 - 700
@@ -62,6 +62,7 @@ def mark(cid, sx, sy, d):
     add(t='notetxt', h='MK_' + cid, angle=0 if sx > 0 else math.pi)
 mark('А/13', 1, 1, 1100)
 mark('Б/11', -1, -1, 1300)
+mark('Б/12', -1, -1, 1300)
 mark('А-Б/12-13', 1, 1, 1100)
 mark('Б/12-13', -1, 1, 1300)
 mark('А-Б/11', -1, 1, 1100)

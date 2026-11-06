@@ -432,6 +432,12 @@ namespace GX
                     }
                 }
             }
+            else if (t == "opendoc")
+            {
+                var dm = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager;
+                var nd = Autodesk.AutoCAD.ApplicationServices.DocumentCollectionExtension.Open(dm, S(m, "file", ""), true);
+                log.AppendLine("opened " + nd.Name);
+            }
             else if (t == "frames")
             {
                 var ms = MS(db, tr);

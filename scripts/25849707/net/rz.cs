@@ -191,6 +191,48 @@ namespace B1
                 foreach (var id in ids) { tr.GetObject(id, OpenMode.ForWrite).Erase(); n++; }
                 log.AppendLine("eraseins " + n);
             }
+            else if (t == "spdsexplode")
+            {
+                // explode every SPDS (MultiCAD custom) entity of model space into plain AutoCAD primitives (copy for users without SPDS)
+                var ms = MS(db, tr); var ids = new List<ObjectId>();
+                foreach (ObjectId id in ms) { var dn = id.ObjectClass.DxfName ?? ""; if (dn.StartsWith("SPDS") || dn.StartsWith("MCS")) ids.Add(id); }
+                int ne = 0, nf = 0, np = 0;
+                foreach (var id in ids)
+                {
+                    var ent = (Entity)tr.GetObject(id, OpenMode.ForWrite);
+                    var stack = new List<Entity> { ent }; var outl = new List<Entity>(); int guard = 0; bool ok = true;
+                    while (stack.Count > 0 && guard++ < 50000)
+                    {
+                        var cur = stack[stack.Count - 1]; stack.RemoveAt(stack.Count - 1);
+                        var dn = cur == ent ? (id.ObjectClass.DxfName ?? "") : (cur.GetRXClass().DxfName ?? "");
+                        bool custom = cur == ent || dn.StartsWith("SPDS") || dn.StartsWith("MCS") || cur.GetType().Name == "ImpEntity" || cur.GetType().Name == "ImpCurve";
+                        if (cur is Wipeout) continue;                 // SPDS text masks would hide the exploded texts
+                        if (!custom) { outl.Add(cur); continue; }
+                        var col = new DBObjectCollection();
+                        try { cur.Explode(col); } catch { ok = false; break; }
+                        foreach (DBObject o in col) if (o is Entity) stack.Add((Entity)o);
+                    }
+                    if (!ok) { nf++; continue; }
+                    foreach (var en in outl) { if (en.Layer == "0" || string.IsNullOrEmpty(en.Layer)) en.Layer = ent.Layer; ms.AppendEntity(en); tr.AddNewlyCreatedDBObject(en, true); np++; }
+                    ent.Erase(); ne++;
+                }
+                log.AppendLine("spdsexplode " + ne + " failed " + nf + " primitives " + np);
+            }
+            else if (t == "explodeinfo")
+            {
+                var ent = (Entity)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForRead);
+                var stack = new List<KeyValuePair<Entity, int>> { new KeyValuePair<Entity, int>(ent, 0) }; int g = 0;
+                while (stack.Count > 0 && g++ < 300)
+                {
+                    var kv = stack[stack.Count - 1]; stack.RemoveAt(stack.Count - 1);
+                    var cur = kv.Key; string dn = ""; try { dn = cur.GetRXClass().DxfName; } catch { }
+                    string extra = cur is DBText ? " txt=" + ((DBText)cur).TextString + " h=" + ((DBText)cur).Height : cur is MText ? " mt=" + ((MText)cur).Contents + " h=" + ((MText)cur).TextHeight : "";
+                    log.AppendLine(new string(' ', kv.Value * 2) + cur.GetType().Name + " " + dn + extra);
+                    if (cur is Line || cur is Polyline || cur is DBText || cur is MText || cur is Circle || cur is Arc) continue;
+                    var col = new DBObjectCollection(); try { cur.Explode(col); } catch (System.Exception ex) { log.AppendLine("  !" + ex.Message); continue; }
+                    foreach (DBObject o in col) if (o is Entity) stack.Add(new KeyValuePair<Entity, int>((Entity)o, kv.Value + 1));
+                }
+            }
             else if (t == "einfo")
             {
                 foreach (var hh in L(m["h"]))
