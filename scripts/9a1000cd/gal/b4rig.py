@@ -413,6 +413,7 @@ class Sheet:
                 'A5:4064A7': SK[1], 'A5:4064A8': SK[0], 'A5:4064AB': SK[2], 'A5:4064B0': sum(SK)}
         for r, v in vals.items(): s.add(t='settext', h=T(r), s=str(v))
         s.add(t='move', h=[T('A5:4064B0'), T('A5:4064B9'), T('A5:406499'), T('A5:4064A4')], d=[-260, 0])
+        s.add(t='move', h=[T('A5:40648D')], d=[150, 0])      # X1 sketch: right height text clear of the hoop line
         s.add(t='settext', h=T('A5:404440'), s=s.part['no'])
         s.add(t='settext', h=T('A5:404442'), s='Ригель ' + M['mark'])
         s.add(t='settext', h=T('A5:40443D'), s='\\pxi-3.3333,l3.3333,t3.3333;1.\tОбщие указания см. л. - 1.1\\P2.\tДанный лист читать '
@@ -427,6 +428,7 @@ class Sheet:
         nd = len(rows)
         ops = []
         if nd < 2: ops.append(dict(t='trows', h=sp, mode='del', at=6 + nd, n=2 - nd))
+        ops.append(dict(t='theight', h=sp, rows=[[r_, 400] for r_ in range(6, 9 + nd)]))   # deleted rows must not stretch the rest
         if nd > 2:
             ops.append(dict(t='trows', h=sp, mode='ins', at=7, n=nd - 2, **{'from': 7}))
             ops.append(dict(t='move', h=[sp], d=[0, 400.0 * (nd - 2)]))

@@ -113,12 +113,19 @@ def build(T, k, sheetno):
     bnd = sorted({v for sg in _segs for v in sg[:2]})
     nnote = 4 - (1 if drop1 else 0) - (1 if drop2 else 0)
     band = (NB0 + NST - 350, NB0 + (nnote - 1) * NST + 350)        # bar callouts on the left
-    beamz = [(L - hb - 250, L + 150) for L, hb in zip(levels, beams)]
+    beamz = [(L - hb - 700, L + 150) for L, hb in zip(levels, beams)]   # beam + its С1 note below
+    def free(y, up):
+        if y < 1000 or y > Hc - 700: return False
+        if any(-150 < v - y < up for v in bnd): return False
+        if band[0] < y < band[1] or any(a_ < y < b_ for a_, b_ in beamz): return False
+        return True
     ys1r = None
-    for y in list(range(int(NB0 + (nnote - 1) * NST + 400), int(Hc) - 600, 20)) + list(range(400, int(Hc) - 600, 20)):
-        if any(-90 < v - y < 400 for v in bnd) or any(-300 < v - y < 300 for v in pts_lv(levels, beams)): continue
-        if band[0] < y < band[1] or any(a_ < y < b_ for a_, b_ in beamz): continue
-        ys1r = y; break
+    for up in (650, 450, 400):
+        _st = [(lo_, L - hb) for lo_, (L, hb) in zip([0.0] + list(levels[:-1]), zip(levels, beams))]
+        _lo, _hi = max(_st, key=lambda q: q[1] - q[0]); _mid = (_lo + _hi) / 2
+        for y in sorted(range(1000, int(Hc) - 699, 20), key=lambda y: abs(y - _mid)):
+            if free(y, up): ys1r = y; break
+        if ys1r is not None: break
     if ys1r is None: ys1r = NB0 + (nnote - 1) * NST + 300
     ys1 = YB + ys1r
     kc = YB + Htop - beams[-1] / 2.0
