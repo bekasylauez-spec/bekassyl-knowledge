@@ -69,11 +69,11 @@ def run(mark, pi, log=print):
         ops += [o for o in rtab.table_ops(s3, B, q, len(top) + len(bot)) if isinstance(o, dict)]
         ops += rtab.detail_texts(s3, B, q)
         out = gx.run(ops, 'tb%d' % k); errs += [l for l in out.splitlines() if 'ERR' in l]
-        m = gx.tagmap(); rH = 6 + len(B.get('dop', []))
+        m = gx.tagmap(); rH = 6 + len(rtab.grouped(B))
         out = gx.run(rtab.steel_ops(P + rgen.SPDS['steel'], m[P + rgen.SPDS['spec']], rH, B) +
                      [dict(t='theight', h=P + rgen.SPDS['spec'], rows=[[rH + 1, 400], [rH + 3, 400]])], 'stl%d' % k)
         errs += [l for l in out.splitlines() if 'ERR' in l]
-        if len(B.get('dop', [])) > 2:
+        if len(rtab.grouped(B)) > 2:
             # spec taller than the analog: notes go to the free bottom-left corner (or above the steel table title)
             if not keep_nodes:
                 out = gx.run([dict(t='moveto', h=P + rgen.SPDS['notes'], to=[SX + 800, rgen.FY + 2900])], 'nt%d' % k)

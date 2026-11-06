@@ -21,9 +21,18 @@ def quantities(B, NH):
     return dict(xl=xl, sk=sk, nsk=nm * ends, Lm=Lm, nH=NH * (2 if nm == 4 else 1), conc=conc, nm=nm)
 
 
+def grouped(B):
+    # one spec row per position: n = sum over all its instances
+    g = {}
+    for d in B.get('dop', []):
+        if d['pos'] not in g: g[d['pos']] = dict(d)
+        else: g[d['pos']]['n'] += d['n']
+    return [g[k] for k in sorted(g)]
+
+
 def table_ops(s, B, q, nsplice):
     A = s.A; sp, stl = A(SPDS['spec']), A(SPDS['steel'])
-    dop = sorted(B.get('dop', []), key=lambda d: d['pos'])
+    dop = grouped(B)
     nd = len(dop)
     ops = []
     if nd: ops.append(dict(t='trows', h=sp, mode='ins', at=6, **{'from': 5}, n=nd))
@@ -59,7 +68,7 @@ def table_ops(s, B, q, nsplice):
 
 def steel_ops(stl, sp_handle, rH, B):
     """A500C columns 3..7 get the diameters actually used; each column = sum of the spec rows of that Ø"""
-    dop = sorted(B.get('dop', []), key=lambda d: d['pos'])
+    dop = grouped(B)
     rows = {16: [5]}                                     # Ск1 (spec row 5 in 1-based = M5)
     dm = B['main']['top'][1]
     rows.setdefault(dm, []).extend([6, rH + 1])          # pos 1, Н3

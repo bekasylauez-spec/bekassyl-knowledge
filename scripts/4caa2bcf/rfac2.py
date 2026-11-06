@@ -49,7 +49,7 @@ def facade2(s, B, part, secmarks):
         shelves.append((pref - L0, pref + L1)); return pref
     s.place_x = place_x
     # dop bars (clones of analog pos 2) drawn 50 inside the main bar, callout + end dims
-    k = 0; ev_end = []
+    k = 0; ev_end = []; noted = set()
     for dp in B.get('dop', []):
         a, b = max(dp['u0'], u0), min(dp['u1'], u1)
         if b <= a + 1: continue
@@ -58,6 +58,10 @@ def facade2(s, B, part, secmarks):
         tg = '%sDOP%d' % (s.P, k)
         add(t='clone', h=A(POS2['bar'][0]), base=[0, 0], to=[0, 0], tag=tg)
         add(t='plset', h=tg, p=[[X(a), y], [X(b), y]], layer='диам%d' % dp['d'])
+        if dp['pos'] in noted:
+            ev_end.append((dp['top'], a, y, dp['u0'] >= u0 - 1)); ev_end.append((dp['top'], b, y, dp['u1'] <= u1 + 1))
+            continue
+        noted.add(dp['pos'])
         tn = '%sDOPN%d' % (s.P, k)
         add(t='clone', h=A(POS2['note'][0]), base=[0, 0], to=[0, 0], tag=tn)
         uc = place_x(a + 700, b - 150, a + 900 if dp['u0'] >= u0 else b - 600, left=True)
