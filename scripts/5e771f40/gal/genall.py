@@ -1,5 +1,5 @@
 # generate rigel sheets; AutoCAD hang -> kill, reopen, redo the sheet (saved after every sheet)
-import sys, json, prep, b4rig, stamp2, gx, fix, time
+import sys, os, json, prep, b4rig, stamp2, gx, fix, time
 marks = json.load(open(prep.LIRA + '/marks.json', encoding='utf-8'))
 FIRST = 5
 want = sys.argv[1:]
@@ -12,7 +12,7 @@ for M, p in prep.build(marks, first_no=FIRST):
             log = b4rig.run(M, p)
             st = stamp2.stamp(p)
             errs = [l for l in log + st.splitlines() if 'ERR' in l]
-            n, out = fix.fix(p['no'], p['SX'], p['SY'], rounds=4)
+            n, out = (fix.fix(p['no'], p['SX'], p['SY'], rounds=4) if not os.environ.get('NOFIX') else (-1, ''))
             gx.run([dict(t='save')], 'sv', wait=200)
             print(p['no'], M['mark'], p['suffix'], 'TOTAL', n, 'ERR' if errs else '', errs[:2], '%ds' % (time.time() - t0), flush=True)
             if n: print('\n'.join(l for l in out.splitlines() if l.startswith('  '))[:800], flush=True)
