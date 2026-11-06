@@ -10,7 +10,7 @@ def log(*a):
 
 def my_acad():
     out = subprocess.run(['powershell', '-NoProfile', '-Command',
-        "Get-Process acad -ErrorAction SilentlyContinue | ? { $_.MainWindowTitle -like '*b3w.dwg*' } | % { $_.Id }"], capture_output=True, text=True).stdout.split()
+        "Get-CimInstance Win32_Process -Filter \"Name='acad.exe'\" | ? { $_.CommandLine -like '*e9612f51*b3w.dwg*' } | % { $_.ProcessId }"], capture_output=True, text=True).stdout.split()
     return [int(x) for x in out]
 
 def restart():
@@ -18,6 +18,7 @@ def restart():
     for pid in my_acad():
         try: gx.run([dict(t='save')], 'presave')
         except Exception: pass
+    for pid in my_acad():
         subprocess.run(['powershell', '-NoProfile', '-Command', 'Stop-Process -Id %d -Force' % pid])
     time.sleep(4)
     try:
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         log('RESULT', k, 'OK' if good else 'FAIL')
         if good:
             keep_good(); k += 1; tries = 0
-            if (k - a) % 3 == 0: restart()
+            if (k - a) % 2 == 0: restart()
         else:
             tries += 1
             if tries > 3: log('GIVE UP', k); break

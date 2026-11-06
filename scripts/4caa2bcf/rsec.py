@@ -99,7 +99,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
     add(t='dimtx', h=S(d[0]), at=[xL - 75, yd + 40, 0])
     add(t='dimpts', h=S(d[1]), p1=[xL + allx[-1], yb, 0], p2=[xL + allx[0], yb, 0], dl=[xL + allx[0], yd, 0])
     add(t='dimtext', h=S(d[1]), s=chB)
-    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yb - 648 - 130, 0])
+    add(t='dimtx', h=S(d[1]), at=[xL + b / 2.0, yd - 90, 0], tmove=2)
     add(t='erase', h=[S(d[2]), S(d[3])])
     add(t='dimpts', h=S(d[4]), p1=[xR, yb, 0], p2=[xL + allx[-1], yb, 0], dl=[xL + allx[-1], yd, 0])
     add(t='dimtx', h=S(d[4]), at=[xR + 75, yd + 40, 0])

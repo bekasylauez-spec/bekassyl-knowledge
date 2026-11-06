@@ -37,6 +37,10 @@ def facade2(s, B, part, secmarks):
     obst += [e for dp in B.get('dop', []) if dp['top'] for e in (dp['u0'], dp['u1'])]
     obst += [c + d_ for c in top_ for d_ in (-250, 250)]
     obst += [c + d_ for c in bot_ for d_ in (-250, 250)]          # bottom comb leaders rise through the beam
+    obst += [(sp['ax'] if sp.get('ax') is not None else (sp['a'] + sp['b']) / 2.0) for sp in g['sup']]
+    obst += [e for dp in B.get('dop', []) for e in (dp['u0'], dp['u1'])]
+    obst += [g['u0'] + d_ for d_ in range(0, 1300, 100)] if not part['brkL'] else []   # level mark + Ск1 note at the start
+    obst += [g['u1'] - d_ for d_ in range(0, 900, 100)] if not part['brkR'] else []
     shelves = []
     def place_x(lo, hi, pref, left=False):
         L0, L1 = (800, 100) if left else (100, 850)
@@ -122,8 +126,8 @@ def facade2(s, B, part, secmarks):
             if q[0] - p[0] < 800:
                 nxt = keep[i + 2][0] if i + 2 < len(keep) else None
                 side = 1 if (nxt is None or nxt - q[0] > 1500) else -1
-                tx = X(q[0]) + 320 if side > 0 else X(p[0]) - 320
-                add(t='dimtx', h=td, at=[tx, row + 60, 0])
+                tx = X(q[0]) + 330 if side > 0 else X(p[0]) - 330
+                add(t='dimtx', h=td, at=[tx, row + (60 if i % 2 == 0 else 230) * (1 if face else -1) + (0 if face else 120), 0], tmove=2)
     add(t='erase', h=[A(h) for h in SPLD])
     # step note, height dim «55» at the top
     add(t='move', h=[A(SPDS['step'])], d=[g['eb'] + 20 - (196582 + D), -150])

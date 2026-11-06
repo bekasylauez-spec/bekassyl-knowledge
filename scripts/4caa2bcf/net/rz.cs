@@ -758,7 +758,7 @@ namespace B2R
             else if (t == "dimtx")
             {
                 var d = (Dimension)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
-                d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]); d.RecomputeDimensionBlock(true);
+                if (Has(m, "tmove")) d.Dimtmove = Convert.ToInt32(m["tmove"]); d.UsingDefaultTextPosition = false; d.TextPosition = P(m["at"]); d.RecomputeDimensionBlock(true);
             }
             else if (t == "scalegrp")
             {

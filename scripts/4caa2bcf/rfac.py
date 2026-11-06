@@ -114,7 +114,7 @@ def facade(s, B, part):
         hd = takeD()
         add(t='dimpts', h=hd, p1=[X(p), yb(466361), 0], p2=[X(q), yb(466361), 0], dl=[X(q), yb(466773), 0])
         if abs(q - p) < 800:
-            add(t='dimtx', h=hd, at=[X(p) - 330 if i_ == 0 else X(q) + 330, yb(466773) + 60, 0])
+            add(t='dimtx', h=hd, at=[X(p) - 330 if i_ == 0 else X(q) + 330, yb(466773) + 60, 0], tmove=2)
     add(t='erase', h=restD())
     add(t='dimpts', h=A('401292'), p1=[X(pts[0]), yb(466361), 0], p2=[X(pts[-1]), yb(466361), 0], dl=[X(pts[-1]), yb(466411), 0])
     xl = X(u0)

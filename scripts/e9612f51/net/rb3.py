@@ -125,6 +125,9 @@ def build(B):
     add(t='dimpts', h=A('4015A4'), p1=[X(E0), YT, 0], p2=[X(E0), YB, 0], dl=[174210 + D, YB, 0])
     add(t='dimpts', h=A('4015AD'), p1=[X(E0), YB, 0], p2=[X(E0), YBB, 0], dl=[174745 + D, YBB, 0])
     add(t='dimpts', h=A('401933'), p1=[X(E0), YBB, 0], p2=[X(E0), YTB, 0], dl=[174745 + D, YTB, 0])
+    add(t='dimtx', h=A('4015AD'), at=[174745 + D - 60, YB - 190, 0])
+    add(t='dimtx', h=A('401933'), at=[174745 + D - 60, (YBB + YTB) / 2.0, 0])
+    add(t='dimtx', h=A(SPDS['lm'] if False else '4015A4'), at=[174210 + D - 60, (YB + YT) / 2.0, 0])
     # ---- splices Н4: plates + dims + combs (top groups B['spT'], bottom groups B['spB'] = [(c1, c2, axis)])
     PL = {'T': [('4038F3', '4038F2')], 'B': [('403948', '403947'), ('4039A0', '40399F')]}
     def plate(hh, c, y): add(t='plset', h=hh, p=[[X(c) - 140, y - 15], [X(c) - 140, y + 15], [X(c) + 140, y + 15], [X(c) + 140, y - 15]], closed=True)
@@ -138,9 +141,18 @@ def build(B):
         d1 = A('4038F1') if j == 0 else clone(A('4038F1'), 'PD'); d2 = A('4038F5') if j == 0 else clone(A('4038F5'), 'PD')
         add(t='dimpts', h=d1, p1=[X(c1), YTB, 0], p2=[X(ax), YT, 0], dl=[X(ax), 469559 + dY, 0])
         add(t='dimpts', h=d2, p1=[X(c2), YTB, 0], p2=[X(c1), YTB, 0], dl=[X(c1), 469559 + dY, 0])
+        add(t='dimtx', h=d1, at=[freex(min(c1, ax), max(c1, ax), '%d' % abs(c1 - ax)), 469559 + dY + 60, 0])
+        add(t='dimtx', h=d2, at=[freex(c1, c2, '500'), 469559 + dY + 60, 0])
         cb = cT if j == 0 else extraT[j - 1]
         add(t='move', h=[cb], d=[X(c1) - (185182 + D), dY]); used.append(cb)
     if not B['spT']: add(t='erase', h=[A(x) for x in ('4038F3', '4038F2', '4038F1', '4038F5')] + [cT])
+    vx = sorted(set([x for ln in [zones_any(a, b)[1] for a, b in spans] for x in ln] + [c for s_ in sup for c in s_] + [x for x, _ in B['axes']] + [E0, E1]))
+    def freex(p, q, txt):
+        w = len(txt) * 0.85 * 125 + 60
+        cands = [(p + q) / 2.0 + k * 50 * sg for k in range(0, 60) for sg in (1, -1)]
+        for c in cands:
+            if all(abs(X(v) - X(c)) > w / 2.0 for v in vx): return X(c)
+        return X((p + q) / 2.0)
     BD = [('403992', '40394A'), ('4039A5', '4039A2')]
     REFB = [183682, 192482]
     for j, (c1, c2, ax) in enumerate(B['spB']):
@@ -149,6 +161,8 @@ def build(B):
         plate(p1, c1, YBB); plate(p2, c2, YBB)
         add(t='dimpts', h=h1, p1=[X(c1), YB, 0], p2=[X(ax), YB, 0], dl=[X(ax), 467665, 0])
         add(t='dimpts', h=h2, p1=[X(c2), YBB, 0], p2=[X(c1), YBB, 0], dl=[X(c1), 467665, 0])
+        add(t='dimtx', h=h1, at=[freex(min(c1, ax), max(c1, ax), '%d' % abs(c1 - ax)), 467665 + 60, 0])
+        add(t='dimtx', h=h2, at=[freex(c1, c2, '500'), 467665 + 60, 0])
         cb = cB[j] if j < 2 else extraB[j - 2]
         add(t='move', h=[cb], d=[X(c1) - (REFB[min(j, 1)] if j < 2 else REFB[0]) - D, -150]); used.append(cb)
     for j in range(len(B['spB']), 2):
