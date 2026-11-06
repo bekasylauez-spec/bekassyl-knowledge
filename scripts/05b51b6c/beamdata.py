@@ -62,6 +62,7 @@ def hoops(a, b):
         return p
     S = b - a - 100                                  # first and last hoop 50 from the faces
     k = int(S // 100); r = S - 100 * k
+    if 1e-6 < r < 50 and k > 0: k -= 1; r += 100             # no tiny remainder steps
     steps = [100.0] * k
     if r > 1e-6: steps.insert(len(steps) // 2, r)     # remainder inside the zone, not at the end
     pos = [a + 50]

@@ -107,7 +107,7 @@ if MARK == 'Пм-2':
     note('2(%%C12) верх', 'ш.100', P(9300, yr2), P(9600, 3700))
 else:
     note('1(%%C12)', 'ш.100, 2 сетки', P(9000, yr), P(9600, 5400))
-note('Ск1(%%C12)', 'ш.200 по контуру' + ('' if MARK == 'Пм-1' else ' и у проёмов'), P(29000, y1 - 30), P(29600, y1 + 700))
+note('Ск1(%%C12)', 'ш.200 по контуру' + ('' if MARK == 'Пм-1' else ' и у проёмов'), P(29000, y1 - 30), P(28400, y1 + 700))
 # bar-step chains: top edge (bars along Y), right edge (bars along X)
 nyb = int((x1 - x0 - 2 * SD.C0) // SD.STEP); nxb = int((y1 - y0 - 2 * SD.C0) // SD.STEP)
 xs = [x0, x0 + SD.C0, x0 + SD.C0 + SD.STEP * nyb, x1]
