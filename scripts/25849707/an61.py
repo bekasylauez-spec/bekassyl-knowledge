@@ -8,5 +8,5 @@ for l in open(r'C:\Users\Admin\AppData\Local\Temp\claude\210ab68cad67e8c1\258497
     ROWS.append((r[1], r[2], r[3], [float(v) for v in r[4][1:].split(',')]))
 def handles(x0, y0, x1, y1):
     return [h for t, h, L, e in ROWS if e[0] >= x0 - 5 and e[2] <= x1 + 5 and e[1] >= y0 - 5 and e[3] <= y1 + 5]
-SHEET = handles(-232572, 411799, -201072, 426649) + ['407C02', '40647F']
+SHEET = handles(-232572, 411799, -201072, 426649) + ['407C02', '40647F', '42FC64']
 SECS = handles(-212200, 427400, -208800, 429300)

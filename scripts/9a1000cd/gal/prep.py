@@ -103,7 +103,7 @@ def sections(M, u0, u1):
         a, b = max(z['fL'], u0), min(z['fR'], u1)
         if b - a < 800: continue
         for x in (a + 500, a + 800, (a + b) / 2.0, (a + b) / 2.0 + 400, b - 800, b - 500):
-            if all(abs(x - q) > 1000 for q in axes) and all(abs(x - q) > 900 for q in spl) and u0 + 400 < x < u1 - 400:
+            if all(abs(x - q) > 1000 for q in axes) and all(abs(x - q) > 900 for q in spl) and u0 + 400 < x < u1 - 400 and 1800 < x < M['E'] - 1800:
                 cand.append(x)
     seen = {}; out = []
     for x in cand:

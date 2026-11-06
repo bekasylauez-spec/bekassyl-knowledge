@@ -253,7 +253,7 @@ class Sheet:
             s.add(t='dimpts', h=hd[0], p1=[X(c), s.YB, 0], p2=[X(ref), s.YB, 0], dl=[X(ref), lo(467665), 0])
             s.add(t='dimpts', h=hd[1], p1=[X(c + 500), s.YBB, 0], p2=[X(c), s.YBB, 0], dl=[X(c), lo(467665), 0])
             hc = (s.P + 'N403949') if i == 0 else s.clone((s.P + 'N403949'), 'PC')
-            ysh = s.YB - 260; xa, xb = X(c), X(c + 500)
+            ysh = s.YT + 250; xa, xb = X(c), X(c + 500)          # as the analog: shelf above the beam, leaders down to the plates
             s.add(t='combsegs', h=hc, segs=[[[xa, s.YBB], [xa - 300, ysh]], [[xb, s.YBB], [xa - 300 + 120, ysh]]],
                   start=[xa - 300 + 120, ysh], end=[xa - 300 - 600, ysh], trim=True)
             s.add(t='mcset', h=hc, set={'FirstLine': 'Н4'})
@@ -366,6 +366,12 @@ class Sheet:
                 'A5:4064A7': SK[1], 'A5:4064A8': SK[0], 'A5:4064AB': SK[2], 'A5:4064B0': sum(SK)}
         for r, v in vals.items(): s.add(t='settext', h=T(r), s=str(v))
         s.add(t='move', h=[T('A5:4064B0'), T('A5:4064B9'), T('A5:406499'), T('A5:4064A4')], d=[-260, 0])
+        cx, cy = KX + s.dx + 31250, KY + s.dy + 250
+        s.add(t='import', file=os.path.join(gx.S, 'w', 'scheme4.dwg'), h=['5BC8DC'], base=[469717.3304096889, -1801160.128777295], to=[cx, cy], pre=s.P + '_ST:')
+        s.add(t='scalegrp', h=[s.P + '_ST:5BC8DC'], s=0.5, base=[cx, cy])
+        s.add(t='erase', h=[T('A5:40443F')])
+        s.add(t='moveto', h=T('A5:404440'), idx=0, to=[cx - 1375, cy + 1000])
+        s.add(t='moveto', h=T('A5:404442'), idx=0, to=[cx - 4250, cy + 375])
         s.add(t='settext', h=T('A5:404440'), s=s.part['no'])
         s.add(t='settext', h=T('A5:404442'), s='Ригель ' + M['mark'])
         s.add(t='settext', h=T('A5:40443D'), s='\\pxi-3.3333,l3.3333,t3.3333;1.\tОбщие указания см. л. - 1.1\\P2.\tДанный лист читать '

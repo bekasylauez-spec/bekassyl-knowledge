@@ -78,7 +78,8 @@ def build_F(m, mark, posmap=None):
     r, p0 = m['r'], m['p0']
     sup = supports(m)
     n = r['n']
-    F = dict(mark=mark, level=LEV[round(p0['z'], 2)], h=p0['h'], b=p0['b'], top=dict(n=n, d=r['top']['d'], pos='1'),
+    lv = sorted(set(round(l['z'], 2) for l in m['locs']))
+    F = dict(mark=mark, level=LEV[round(p0['z'], 2)], levels=[LEV[z] for z in lv], h=p0['h'], b=p0['b'], top=dict(n=n, d=r['top']['d'], pos='1'),
              bot=dict(n=n, d=r['bot']['d'], pos='1' if r['bot']['d'] == r['top']['d'] else '2'),
              sk=dict(d=16, pos='Ск1'), hoop=dict(d=r['hoop']['d'], pos='Х1'))
     # доп positions by unique (Ø, L)

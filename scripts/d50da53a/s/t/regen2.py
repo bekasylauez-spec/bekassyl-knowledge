@@ -10,7 +10,7 @@ for k, T in enumerate(TY):
     o, info = gcol.build(T, k, '4.%d' % (k + 2)); ops += o
     lay = '4.%d' % (k + 2)
     ops += [{'t': 'laydel', 'name': lay}, {'t': 'laycopy', 'src': 'x4.1', 'dst': lay}, {'t': 'vpset2', 'layout': lay, 'media': 'ISO_full_bleed_A2_(594.00_x_420.00_MM)', 'win': [x0, y0, x0 + 29700, y0 + 21000], 'scale': 50}, {'t': 'save'}]
-    i = 0; CH = 120
+    i = 0; CH = int(__import__("os").environ.get("CH", "120"))
     while i < len(ops):
         t0 = time.time(); out = mb.run(ops[i:i + CH], 'rg_%d_%d' % (k, i), 1200)
         errs = [l for l in out.splitlines() if 'ERR' in l or 'timeout' in l]

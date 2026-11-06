@@ -656,7 +656,23 @@ namespace RG
                     {
                         bool eq = i <= cur.Length - a.Length;
                         if (eq) for (int k = 0; k < a.Length; k++) if (cur[i + k] != a[k]) { eq = false; break; }
-                        if (eq) { outb.AddRange(r); i += a.Length - 1; cnt++; } else outb.Add(cur[i]);
+                        if (eq)
+                        {
+                            // length-prefixed strings: fix an Int32 prefix (chars or bytes) right before the match
+                            if (r.Length != a.Length && outb.Count > 0 && outb[outb.Count - 1] == (byte)a.Length)
+                            { outb[outb.Count - 1] = (byte)r.Length; log.AppendLine("levelval len1"); }
+                            int pl = outb.Count - 4;
+                            if (false && r.Length != a.Length && pl >= 0)
+                            {
+                                int v = BitConverter.ToInt32(outb.ToArray(), pl);
+                                int ch = enc == Encoding.Unicode ? 2 : 1;
+                                int nv = v == a.Length / ch ? r.Length / ch : v == a.Length ? r.Length : -1;
+                                if (nv < 0 && v == a.Length / ch + 1) nv = r.Length / ch + 1;
+                                if (nv >= 0) { var nb = BitConverter.GetBytes(nv); for (int q = 0; q < 4; q++) outb[pl + q] = nb[q]; log.AppendLine("levelval len " + v + "->" + nv); }
+                            }
+                            outb.AddRange(r); i += a.Length - 1; cnt++;
+                        }
+                        else outb.Add(cur[i]);
                     }
                 }
                 var dd = mo as IDisposable; if (dd != null) dd.Dispose();

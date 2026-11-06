@@ -240,6 +240,12 @@ def build(S, F):
     add(t='erase', h=sp)
     # ---- level mark + title
     add(t='erase', h=[A(ML)])
-    add(t='levelval', h=A(LM), old='-0.100', value=F['level'], tag=A(LM))
+    levels = F.get('levels') or [F['level']]
+    add(t='levelval', h=A(LM), old='-0.100', value=levels[0], tag=A(LM))
+    if len(levels) > 1:       # upper level: one-line multilayer note of the analog sheet 6.6 stacked above the level mark
+        add(t='move', h=[A('42FC64')], d=[-157484.0, 257.0])
+        add(t='levelval', h=A('42FC64'), old='+4.395', value=levels[1], tag=A('42FC64'))
+    else:
+        add(t='erase', h=[A('42FC64')])
     add(t='settext', h=A(TITLE), s='Ригель ' + F['mark'])
     return NH, spans

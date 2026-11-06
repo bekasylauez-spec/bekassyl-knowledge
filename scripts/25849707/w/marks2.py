@@ -14,11 +14,25 @@ def geo(p):
 def geo_rev(p):
     g = geo(p); return (g[0], g[1], g[2][::-1], g[3][::-1], (g[4][1], g[4][0], g[4][3], g[4][2]))
 groups = collections.OrderedDict()
+TOL = 600.0     # Bekassyl 06.11: unify spans within +-600 mm (same b, h, number of spans); sheet = longest member
+def spl(p): return [b - a for a, b in p['spans']]
 for p in sorted(P, key=lambda r: (r['z'], r['d'] == 'Y', r['c'], r['a0'])):
-    g = geo(p); gr = geo_rev(p)
-    if g in groups: groups[g].append((p, False))
-    elif gr in groups: groups[gr].append((p, True))
-    else: groups[g] = [(p, False)]
+    sp = spl(p); hit = None
+    for g, mem in groups.items():
+        q = mem[0][0]; sq = spl(q)
+        if (p['b'], p['h'], len(sp)) != (q['b'], q['h'], len(sq)): continue
+        if all(abs(a - b) <= TOL for a, b in zip(sp, sq)): hit = (g, False); break
+        if all(abs(a - b) <= TOL for a, b in zip(sp, sq[::-1])): hit = (g, True); break
+    if hit: groups[hit[0]].append((p, hit[1]))
+    else: groups[geo(p)] = [(p, False)]
+# representative (drawn geometry) = the longest member, first in the list
+for g in groups:
+    mem = groups[g]
+    i = max(range(len(mem)), key=lambda j: mem[j][0]['endR'] - mem[j][0]['endL'])
+    if i:
+        rev0 = mem[i][1]
+        mem = [mem[i]] + mem[:i] + mem[i + 1:]
+        groups[g] = [(p, r != rev0) for p, r in mem]
 def envelope(members):
     p0 = members[0][0]; Lt = p0['endR'] - p0['endL']
     bins = []

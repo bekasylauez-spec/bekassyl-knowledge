@@ -24,6 +24,20 @@ def e0(k):
     return [float(q) for q in v[1:].split(',')] if v.startswith('E') else None
 
 
+def level_ops(s, h, base, value, off1, off2):
+    """set the value of the SPDS level mark h placed at base (point 0)"""
+    if len(value) <= 6:
+        s.add(t='levelval', h=h, old='-0.100', value=value, tag=h)
+        return
+    t = h + '_L7'
+    s.add(t='clone', h='E3B69', tag=t)
+    s.add(t='mcset', h=t, set={'Scale': 50})
+    s.add(t='levelval', h=t, old='+10.250', value=value, tag=t)
+    s.add(t='moveto', h=t, idx=0, to=base)
+    s.add(t='spmove', h=t, items=[[2, base[0] + off2, base[1]], [1, base[0] + off1, base[1] + 300]])
+    s.add(t='erase', h=[h])
+
+
 class Sheet:
     def __init__(s, M, part):
         s.M = M; s.part = part
@@ -218,7 +232,7 @@ class Sheet:
         s.add(t='erase', h=sp)
         # level: one value (top of rigel) on the analog mark; the two-level note removed
         s.add(t='moveto', h=T('A5:4015A3'), idx=0, to=[x0 + 400, s.YT])
-        s.add(t='levelval', h=T('A5:4015A3'), old='-0.100', value=M['level'], tag=T('A5:4015A3'))
+        level_ops(s, T('A5:4015A3'), [x0 + 400, s.YT], M['level'], -2346.9, -1726.4)
         s.add(t='erase', h=[T('A5_ML')])
         xc = (X(u0) + X(u1)) / 2
         s.add(t='moveto', h=T('A5:4038B1'), idx=0, to=[xc, s.up(470114)])
@@ -326,7 +340,7 @@ class Sheet:
             for hh, x in (('2CB014', b + 173), ('2CB015', -173)):
                 s.add(t='mcset', h=Q(hh), set={'StartPoint': g(x, h - sl), 'EndPoint': g(x, h), 'ClipZonePoint': g(x, h), 'Length': SSC * sl})
             s.add(t='moveto', h=Q('2CB018'), idx=0, to=g(-173, h))
-            s.add(t='levelval', h=Q('2CB018'), old='-0.100', value=M['level'], tag=Q('2CB018'))
+            level_ops(s, Q('2CB018'), g(-173, h), M['level'], -1734.1, -1113.7)
             s.add(t='erase', h=[Q('2CC663')])
             ys = h + 170
             s.add(t='combsegs', h=Q('2CB019'), segs=[[g(x, yT - 1), g(x + 90, ys)] for x in BX], start=g(BX[-1] + 90, ys), end=g(BX[0] + 90, ys), trim=True)
@@ -334,7 +348,7 @@ class Sheet:
             yk = yB - 151
             s.add(t='combsegs', h=Q('2CB01A'), segs=[[g(x, yB - 2), g(x + 75, yk)] for x in BX], start=g(BX[-1] + 115, yk), end=g(BX[0] + 75, yk), trim=True)
             s.add(t='mcset', h=Q('2CB01A'), set={'SecondLine': '(ф%d)' % DIA})
-            ym = (yB + yT) / 2 if not ns else (yB + ysides[0]) / 2
+            ym = max((yB + yT) / 2, yB + 340) if not ns else max((yB + ysides[0]) / 2, yB + 340)
             legs = [[g(BX[-1] + 15, ym), g(b + 190, ym)]] + ([[g(BX[cover] + 15, ym), g(b + 190, ym)]] if nb >= 4 else [])
             s.add(t='combsegs', h=Q('2CB07F'), segs=legs, trim=True)
             s.add(t='spmove', h=Q('2CB07F'), items=[[0] + g(b + 190, ym)])
@@ -369,10 +383,9 @@ class Sheet:
                     xe = [q[1][0] for q in segs]
                     s.add(t='combsegs', h=t, segs=segs, start=[max(xe), segs[0][1][1]], end=[min(xe) - SSC * 220, segs[0][1][1]], trim=True)
                 else:
-                    ysh = yB - 330
-                    segs = [[g(xx, yy - 2), g(xx - (yy - ysh) * 0.45, ysh)] for xx, yy in pts]
-                    xe = [q[1][0] for q in segs]
-                    s.add(t='combsegs', h=t, segs=segs, start=[max(xe), segs[0][1][1]], end=[min(xe) - SSC * 220, segs[0][1][1]], trim=True)
+                    ysh = yB + 105 + (60 if any(yy > yB + 50 for _, yy in pts) else 0)
+                    segs = [[g(xx, yy + 2), g(b + 120, ysh)] for xx, yy in pts]
+                    s.add(t='combsegs', h=t, segs=segs, start=g(b + 120, ysh), end=g(b + 120 + 220, ysh), trim=True)
                 s.add(t='mcset', h=t, set={'FirstLine': d['pos'], 'SecondLine': '(ф%d)' % DIA})
         s.add(t='erase', h=[s.T(r) for r in K if r.startswith('A5S0_')])
         s.add(t='regen')
