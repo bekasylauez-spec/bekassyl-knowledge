@@ -81,11 +81,40 @@ def run(mark, pi, log=print):
         top, bot = rfac2.splices(B)
         ops += rtab.table_ops(s3, B, q, len(top) + len(bot), len(top))
         ops += rtab.detail_texts(s3, B, q)
+        # «Ведомость деталей» grid (analog block 40647F: cell blocks) — import, explode, keep the first column group
+        gx.run([dict(t='import', file=os.path.join(gx.S, 'an', 'a61.dwg'), h=['40647F'], base=list(rgen.AN0), to=[SX, rgen.FY], pre=P + 'VDG:'),
+                dict(t='explode', h=P + 'VDG:40647F', pre=P + 'VD')], 'vdg%d' % k)
+        ops.append(dict(t='erase', h=[P + 'VD%d' % i for i in (2, 3, 4, 6, 7, 8, 10, 11)]))
+        if q['nr']:
+            dy = -1000
+            ops.append(dict(t='clone', h=P + 'VD9', base=[0, 0], to=[0, dy], tag=P + 'VDP'))
+            for src, tg, txt in (('4064A6', 'VPPOS', 'Шп1'), ('4064AA', 'VPAX', 'по оси'), ('4064B9', 'VPL', 'L='), ('4064B0', 'VPLV', str(q['Lp']))):
+                ops.append(dict(t='clone', h=P + src, base=[0, 0], to=[0, dy], tag=P + tg))
+                ops.append(dict(t='settext', h=P + tg, s=txt))
+            span = int(round((B['b'] - 110) + B['main']['top'][1] + B['hoop']['d']))
+            ops.append(dict(t='clone', h=P + '4064A8', base=[0, 0], to=[0, dy - 120], tag=P + 'VPS'))
+            ops.append(dict(t='settext', h=P + 'VPS', s=str(span)))
+            ops.append(dict(t='clone', h=B['pin_src'], base=[0, 0], to=[0, 0], tag=P + 'VPPIN'))
+            ops.append(dict(t='brscale', h=P + 'VPPIN', s=1, rot=0))
+            ops.append(dict(t='insat', h=P + 'VPPIN', at=[SX + 29700, rgen.FY + 10950]))
+            ops.append(dict(t='dyn', h=P + 'VPPIN', prop='Расстояние1', value=600))
         out = gx.run(ops, 'tb%d' % k); errs += [l for l in out.splitlines() if 'ERR' in l]
         m = gx.tagmap(); rH = 6 + len(rtab.extra_rows(B, q))
         out = gx.run(rtab.steel_ops(P + rgen.SPDS['steel'], m[P + rgen.SPDS['spec']], rH, B, q) +
                      [dict(t='theight', h=P + rgen.SPDS['spec'], rows=[[r_, 300 if rH > 9 else 400] for r_ in range(2, rH + 3)] + [[rH + 3, 400]])], 'stl%d' % k)
         errs += [l for l in out.splitlines() if 'ERR' in l]
+        # spec «*» positions must all be in «Ведомость деталей» (07.11 rule)
+        gx.run([dict(t='tdump', h=P + rgen.SPDS['spec'])], 'vchk')
+        star = set(c.strip().rstrip('*') for l in gx.log().splitlines() if l.startswith('R') for c in l.split(' | ')[1:2] if c.strip().endswith('*'))
+        gx.run([dict(t='list', win=[SX + 28000, rgen.FY + 10300, SX + 28950, rgen.FY + 13500])], 'vchk2')
+        import re as _re
+        ids = [l.split('	')[2] for l in gx.log().splitlines() if l.startswith('L	MTEXT')]
+        m_ = gx.tagmap(); inv_ = {v: k_ for k_, v in m_.items()}
+        names = {'4064A2': 'Х1', '4064A6': 'Ск1', 'VPPOS': 'Шп1'}
+        have = set(names[inv_[i].split(':', 1)[1]] for i in ids if i in inv_ and inv_[i].split(':', 1)[1] in names)
+        miss = set(x.replace('X', 'Х') for x in star) - set(x.replace('X', 'Х') for x in have)
+        if miss: errs.append('ERR VEDCHK missing in Ведомость деталей: %s' % sorted(miss))
+        log('ведомость check %s: spec* %s, ведомость %s' % (mark, sorted(star), sorted(have)))
         if len(rtab.extra_rows(B, q)) > 2:
             # spec taller than the analog: notes go to the free bottom-left corner (or above the steel table title)
             if not keep_nodes:

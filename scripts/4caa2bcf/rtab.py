@@ -38,7 +38,7 @@ def extra_rows(B, q):
     rows = []
     if q['nr']: rows.append(dict(kind='side', pos=str(B['side_pos']), d=B['side_d']))
     for d in grouped(B): rows.append(dict(kind='dop', pos=str(d['pos']), d=d['d'], n=d['n'], L=round(d['u1'] - d['u0'])))
-    if q['nr']: rows.append(dict(kind='pin', pos='Шп1', d=B['hoop']['d'], n=q['nP'], L=q['Lp']))
+    if q['nr']: rows.append(dict(kind='pin', pos='Шп1*', d=B['hoop']['d'], n=q['nP'], L=q['Lp']))
     return rows
 
 
