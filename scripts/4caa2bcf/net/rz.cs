@@ -473,6 +473,12 @@ namespace B2R
                 var br = (BlockReference)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
                 br.Position = P(m["at"]);
             }
+            else if (t == "brscale")
+            {
+                var br = (BlockReference)tr.GetObject(H(db, S(m, "h", "")), OpenMode.ForWrite);
+                double sc = D(m["s"]); br.ScaleFactors = new Scale3d(sc, Math.Abs(sc), Math.Abs(sc));
+                if (Has(m, "rot")) br.Rotation = D(m["rot"]) * Math.PI / 180.0;
+            }
             else if (t == "trowcopy")
             {
                 // copy text height / style / alignment of every cell of row "src" to row "dst" (same table)

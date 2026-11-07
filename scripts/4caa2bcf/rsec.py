@@ -6,6 +6,13 @@ XLA, YBA = -211276.0, 428183.0          # analog section: beam left face / botto
 SC = 2.0                                 # 1:50 sheet, section drawn 1:25
 
 
+def side_rows(B):
+    # side (боковые) bars Ø28 for h >= 700: rows at <= 400 mm
+    if B['h'] < 700: return []
+    n = max(1, int(math.ceil((B['h'] - 110) / 400.0)) - 1)
+    return list(range(n))
+
+
 def bar_x(b, n_main, n_dop):
     """bar centres from the left face: 7 slots 55 + 65k when dop present, main at even slots"""
     if n_dop == 0:
@@ -74,7 +81,7 @@ def build_stage(B, sec, OX, OY, P, withML=True):
             sel = xx[i:i + n]; i += n
             for x in sel: put(x, y, dd_)
             groups.append((top, 1, pos, dd_, sel, y))
-    for grp, y, top in ((t2, YTOP - 95, True), (b2, YBOT + 95, False)):
+    for grp, y, top in ((t2, YTOP - 98, True), (b2, YBOT + 98, False)):
         for (pos, n, dd_, row) in grp:
             sel = row2x(n)
             for x in sel: put(x, y, dd_)
@@ -117,18 +124,48 @@ def build_stage(B, sec, OX, OY, P, withML=True):
     add(t='combsegs', h=S(SEC['cbot']), segs=[[[xL + x, YBOT - 2], [xL + x + 70, yk]] for x in mB],
         start=[xR + 330, yk], end=[xL + mB[0] + 70, yk])
     add(t='mcset', h=S(SEC['cbot']), set={'FirstLine': '1', 'SecondLine': '(ф%d)' % B['main']['bot'][1]})
-    # dop combs: shelf at the side of the section at the height of their row (analog 2-2 «2 (ф12)»)
-    off = {(True, 1): -170, (True, 2): -300, (False, 1): 170, (False, 2): 300} if h > 700 else {(True, 1): -80, (True, 2): -95, (False, 1): 80, (False, 2): 95}
+    # side bars (both faces) + Шп1 pins in every side row
+    srows = side_rows(B)
+    sy = [YBOT + (YTOP - YBOT) * (i + 1) / (len(srows) + 1.0) for i in range(len(srows))]
+    for yy in sy:
+        bar(mB[0], yy, B['side_d']); bar(mB[-1], yy, B['side_d'])
+        tp_ = '%sPIN%d' % (P, int(yy))
+        add(t='clone', h=B['pin_src'], base=[0, 0], to=[0, 0], tag=tp_ + ':19EC6')
+        add(t='brscale', h=tp_ + ':19EC6', s=1, rot=0)
+        add(t='insat', h=tp_ + ':19EC6', at=[xL + mB[0] - 12, yy])
+        add(t='dyn', h=tp_ + ':19EC6', prop='Расстояние1', value=mB[-1] - mB[0])
+        extra.append(tp_ + ':19EC6')
+    # right-hand callouts stacked by height, min 230 apart, inside the band yb-230 .. yt+40
+    items = []
     for gi, (top, row, pos, dd_, sel, y0) in enumerate(groups):
-        ysh = (YTOP if top else YBOT) + off[(top, row)]
-        tg = '%sC%d' % (P, gi); add(t='clone', h=S(SEC['ctop'] if top else SEC['cbot']), base=[0, 0], to=[0, 0], tag=tg); extra.append(tg)
-        sg = [[[xL + x + 14, y0 + (ysh - y0) * 14.0 / max(1.0, (xR + 120 - xL - x))], [xR + 120, ysh]] for x in sel]
-        add(t='combsegs', h=tg, segs=sg, start=[xR + 560, ysh], end=[xR + 120, ysh])
-        add(t='mcset', h=tg, set={'FirstLine': str(pos), 'SecondLine': '(ф%d)' % dd_})
+        items.append(dict(y=y0, kind='dop', top=top, pos=pos, d=dd_, sel=sel, y0=y0, gi=gi))
+    if sy: items.append(dict(y=sum(sy) / len(sy), kind='side', sy=sy))
     ym = (YBOT + YTOP) / 2
-    add(t='combsegs', h=S(SEC['cx1']), segs=[[[xL + mB[-2] + 15, ym], [xR + 175, ym]], [[xL + mB[-1] + 15, ym], [xR + 175, ym]]])
-    add(t='spmove', h=S(SEC['cx1']), items=[[0, xR + 175, ym]])
-    add(t='mcset', h=S(SEC['cx1']), set={'FirstLine': 'Х1', 'SecondLine': '(ф%d)' % B['hoop']['d']})
+    items.append(dict(y=ym + (60 if sy else 0), kind='x1'))
+    items.sort(key=lambda it: -it['y'])
+    hi_, lo_ = yt + 40, yb - 230
+    ys = []
+    for it in items:
+        y_ = min(it['y'], hi_ if not ys else ys[-1] - 230); ys.append(y_)
+    if ys and ys[-1] < lo_:
+        sh_ = lo_ - ys[-1]; ys = [min(hi_, v + sh_) for v in ys]
+        for i in range(1, len(ys)): ys[i] = min(ys[i], ys[i - 1] - 230)
+    for it, ysh in zip(items, ys):
+        if it['kind'] == 'dop':
+            top = it['top']; y0 = it['y0']
+            tg = '%sC%d' % (P, it['gi']); add(t='clone', h=S(SEC['ctop'] if top else SEC['cbot']), base=[0, 0], to=[0, 0], tag=tg); extra.append(tg)
+            sg = [[[xL + x + 14, y0 + (ysh - y0) * 14.0 / max(1.0, (xR + 120 - xL - x))], [xR + 120, ysh]] for x in it['sel']]
+            add(t='combsegs', h=tg, segs=sg, start=[xR + 560, ysh], end=[xR + 120, ysh])
+            add(t='mcset', h=tg, set={'FirstLine': str(it['pos']), 'SecondLine': '(ф%d)' % it['d']})
+        elif it['kind'] == 'side':
+            tg = '%sCS' % P; add(t='clone', h=S(SEC['cbot']), base=[0, 0], to=[0, 0], tag=tg); extra.append(tg)
+            sg = [[[xL + mB[-1] + 14, yy], [xR + 120, ysh]] for yy in it['sy']]
+            add(t='combsegs', h=tg, segs=sg, start=[xR + 560, ysh], end=[xR + 120, ysh])
+            add(t='mcset', h=tg, set={'FirstLine': str(B['side_pos']), 'SecondLine': '(ф%d)' % B['side_d']})
+        else:
+            add(t='combsegs', h=S(SEC['cx1']), segs=[[[xL + mB[-2] + 15, ym], [xR + 175, ysh]], [[xL + mB[-1] + 15, ym], [xR + 175, ysh]]])
+            add(t='spmove', h=S(SEC['cx1']), items=[[0, xR + 175, ysh]])
+            add(t='mcset', h=S(SEC['cx1']), set={'FirstLine': 'Х1; Шп1' if sy else 'Х1', 'SecondLine': '(ф%d)' % B['hoop']['d']})
     # level: single-line multilayer from the analog 6.6 section, title
     add(t='erase', h=[S(SEC['ml']), S(SEC['lev'])])
     if withML:

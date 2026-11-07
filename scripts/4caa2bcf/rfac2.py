@@ -62,7 +62,7 @@ def facade2(s, B, part, secmarks):
         a, b = max(dp['u0'], u0), min(dp['u1'], u1)
         if b <= a + 1: continue
         k += 1
-        y = ((YTB - 50) if dp['top'] else (YBB + 50)) if dp.get('row', 1) == 1 else ((YTB - 95) if dp['top'] else (YBB + 95))
+        y = ((YTB - 50) if dp['top'] else (YBB + 50)) if dp.get('row', 1) == 1 else ((YTB - 98) if dp['top'] else (YBB + 98))
         tg = '%sDOP%d' % (s.P, k)
         add(t='clone', h=A(POS2['bar'][0]), base=[0, 0], to=[0, 0], tag=tg)
         add(t='plset', h=tg, p=[[X(a), y], [X(b), y]], layer='диам%d' % dp['d'])
@@ -84,6 +84,15 @@ def facade2(s, B, part, secmarks):
             add(t='spmove', h=tn, items=[[0, xc, yu(469238.6) - 140], [1, xc, y], [2, xc, y]])
         add(t='mcset', h=tn, set={'FirstLine': str(dp['pos']), 'SecondLine': '(ф%d)' % dp['d']})
         ev_end.append((dp['top'], a, y, dp['u0'] >= u0 - 1)); ev_end.append((dp['top'], b, y, dp['u1'] <= u1 + 1))
+    # side bars (Ø28 both faces, one line per row on the elevation) + one callout
+    import rsec as _rs
+    srows = _rs.side_rows(B)
+    s_y = [YBB + (YTB - YBB) * (i + 1) / (len(srows) + 1.0) for i in range(len(srows))]
+    for i, yy in enumerate(s_y):
+        tg = '%sSIDE%d' % (s.P, i)
+        add(t='clone', h=A('4015AE'), base=[0, 0], to=[0, 0], tag=tg)
+        add(t='plset', h=tg, p=[[g['ea'], yy], [g['eb'], yy]], layer='диам%d' % B['side_d'])
+    s.side_y = s_y
     add(t='erase', h=[A(h) for h in POS2['bar'] + POS2['note']])
     for c in top_ + bot_: shelves.append((c - 250 - 150, c - 250 + 1250))
     # «1 (ф25)» per clear segment (shelf above the beam), placed clear of dims / other shelves
@@ -96,6 +105,14 @@ def facade2(s, B, part, secmarks):
         add(t='spmove', h=hn, items=[[0, x, yu(469238.6) - 140], [1, x, YBB], [2, x, YTB]])
         add(t='mcset', h=hn, set={'FirstLine': '1', 'SecondLine': '(ф%d)' % dd})
     add(t='erase', h=rest())
+    if s_y:
+        longest_ = max(g['segs'], key=lambda t: t[1] - t[0])
+        a_, b_ = longest_
+        xs_ = X(place_x(a_ + 200, b_ - 900, a_ + (b_ - a_) * 0.3))
+        tn = '%sSIDEN' % s.P
+        add(t='clone', h=A(SPDS['n1'][0]), base=[0, 0], to=[0, 0], tag=tn)
+        add(t='spmove', h=tn, items=[[0, xs_, yu(469238.6) - 140], [1, xs_, s_y[0]], [2, xs_, s_y[-1]]])
+        add(t='mcset', h=tn, set={'FirstLine': str(B['side_pos']), 'SecondLine': '(ф%d)' % B['side_d']})
     # splices of the main bars (накладки Н3, staggered 2+2 bars, 500 apart)
     top, bot = splices(B)
     top = [c for c in top if on(c)]; bot = [c for c in bot if on(c)]
@@ -151,7 +168,7 @@ def facade2(s, B, part, secmarks):
     add(t='erase', h=[A(h) for h in SPLD])
     # step note, height dim «55» at the top
     add(t='move', h=[A(SPDS['step'])], d=[g['eb'] + 20 - (196582 + D), -150])
-    add(t='mcset', h=A(SPDS['step']), set={'FirstLine': 'Шаг хомута', 'SecondLine': 'Х1(ф%d)' % B['hoop']['d']})
+    add(t='mcset', h=A(SPDS['step']), set={'FirstLine': 'Шаг хомута', 'SecondLine': ('Х1, Шп1(ф%d)' if B['h'] >= 700 else 'Х1(ф%d)') % B['hoop']['d']})
     xl = X(u0)
     add(t='dimpts', h=A('4015A9'), p1=[xl + 20, YTB, 0], p2=[xl, YT, 0], dl=[xl - 562, YT, 0])
     # section marks: secmarks = [(u, word)]
@@ -167,7 +184,7 @@ def facade2(s, B, part, secmarks):
     add(t='move', h=[A(SPDS['lm'])], d=[xl + 500 - (175582 + D), YT - 468700])
     add(t='levelval', h=A(SPDS['lm']), old='-0.100', value=B['levels'][0], tag=A(SPDS['lm']))
     # title centred over the drawing
-    add(t='move', h=[A(SPDS['title'])], d=[(X(u0) + X(u1)) / 2.0 - (185336 + D), 350])
+    add(t='move', h=[A(SPDS['title'])], d=[(X(u0) + X(u1)) / 2.0 - (185336 + D), 150])
     ttl = 'Ригель ' + B['mark']
     if len(B['parts']) > 1:
         an = [sp.get('axn') for sp in g['sup'] if sp.get('axn')]

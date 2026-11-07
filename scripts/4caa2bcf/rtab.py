@@ -18,7 +18,10 @@ def quantities(B, NH):
     cols = [sp for sp in B['sup'] if sp['kind'] in ('col', 'beam')]
     clear = (B['END1'] - B['END0']) - sum(sp['b'] - sp['a'] for sp in cols if B['END0'] <= sp['a'] and sp['b'] <= B['END1'])
     conc = B['b'] / 1000.0 * (h - B.get('slab', 0)) / 1000.0 * clear / 1000.0
-    return dict(xl=xl, sk=sk, nsk=nm * ends, Lm=Lm, nH=NH * (2 if nm == 4 else 1), conc=conc, nm=nm)
+    import rsec as _rs
+    nr = len(_rs.side_rows(B))
+    Lp = int(round(((B['b'] - 110) + dm + 2 * dh + 2 * 10 * dh) / 10.0) * 10)
+    return dict(xl=xl, sk=sk, nsk=nm * ends, Lm=Lm, nH=NH * (2 if nm == 4 else 1), conc=conc, nm=nm, nr=nr, Lp=Lp, nP=NH * nr)
 
 
 def grouped(B):
@@ -30,54 +33,65 @@ def grouped(B):
     return [g[k] for k in sorted(g)]
 
 
-def table_ops(s, B, q, nsplice):
+def extra_rows(B, q):
+    """spec rows after pos 1: side bars, dop positions, Шп1"""
+    rows = []
+    if q['nr']: rows.append(dict(kind='side', pos=str(B['side_pos']), d=B['side_d']))
+    for d in grouped(B): rows.append(dict(kind='dop', pos=str(d['pos']), d=d['d'], n=d['n'], L=round(d['u1'] - d['u0'])))
+    if q['nr']: rows.append(dict(kind='pin', pos='Шп1', d=B['hoop']['d'], n=q['nP'], L=q['Lp']))
+    return rows
+
+
+def table_ops(s, B, q, nsplice, ntop=0):
     A = s.A; sp, stl = A(SPDS['spec']), A(SPDS['steel'])
-    dop = grouped(B)
-    nd = len(dop)
+    ex = extra_rows(B, q); nd = len(ex)
     ops = []
     if nd: ops.append(dict(t='trows', h=sp, mode='ins', at=6, **{'from': 5}, n=nd))
-    rH = 6 + nd; rC = rH + 3
+    rH = 6 + nd
     ops.append(dict(t='trows', h=sp, mode='del', at=rH + 1, n=1))      # empty row
     rC = rH + 2
     dm = B['main']['top'][1]
     cells = [[3, 3, B['hoop']['d'], F0], [3, 9, q['xl']['L'], F0], [4, 3, 16, F0], [4, 9, q['sk']['L'], F0], [5, 3, dm, F0]]
-    for i, d in enumerate(dop):
-        cells += [[6 + i, 3, d['d'], F0], [6 + i, 9, round(d['u1'] - d['u0']), F0]]
-    cells += [[rH, 3, dm, F0], [rH, 9, 10 * dm, F0]]
-    ops.append(dict(t='tnum', h=sp, cells=cells))
-    tx = [[2, 2, 'Ригель ' + B['mark']], [rH, 0, 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[dm]]]
-    for i, d in enumerate(dop):
-        tx += [[6 + i, 0, str(d['pos'])], [6 + i, 8, 'L='], [6 + i, 4, 'A'], [6 + i, 5, '500С'], [6 + i, 1, 'ГОСТ 34028-2016'], [6 + i, 2, '%%C']]
-    tx += [[3, 5, '240']]
-    ops.append(dict(t='tset', h=sp, cells=tx))
+    tx = [[2, 2, 'Ригель ' + B['mark']], [rH, 0, 'Н%d' % {20: 1, 22: 2, 25: 3, 28: 4, 32: 5}[dm]], [3, 5, '240']]
     R = lambda r: r + 1
     fm = [[3, 10, '%d' % q['nH'], F0], [3, 11, 'D4*D4*3.1415926/4*0.00785*J4/1000', F2], [3, 12, 'L4*K4', F2],
           [4, 10, '%d' % q['nsk'], F0], [4, 11, 'D5*D5*3.1415926/4*0.00785*J5/1000', F2], [4, 12, 'L5*K5', F2],
           [5, 10, '%.2f*%d' % (q['Lm'], 2 * q['nm']), F2], [5, 11, 'D6*D6*3.1415926/4*0.00785*1', F2], [5, 12, 'L6*K6', F2]]
-    for i, d in enumerate(dop):
+    for i, e in enumerate(ex):
         r = 6 + i
-        fm += [[r, 10, '%d' % d['n'], F0], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(r), R(r), R(r)), F2], [r, 12, 'L%d*K%d' % (R(r), R(r)), F2]]
-    fm += [[rH, 10, '%d*%d*2' % (nsplice, q['nm']), F0], [rH, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(rH), R(rH), R(rH)), F2], [rH, 12, 'L%d*K%d' % (R(rH), R(rH)), F2],
+        cells.append([r, 3, e['d'], F0])
+        tx += [[r, 0, e['pos']], [r, 8, 'L='], [r, 4, 'A'], [r, 5, '240' if e['kind'] == 'pin' else '500С'], [r, 1, 'ГОСТ 34028-2016'], [r, 2, '%%C']]
+        if e['kind'] == 'side':
+            tx.append([r, 9, 'пог.м.'])
+            fm += [[r, 10, '%.2f*%d' % (q['Lm'], 2 * q['nr']), F2], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*1' % (R(r), R(r)), F2], [r, 12, 'L%d*K%d' % (R(r), R(r)), F2]]
+        else:
+            cells.append([r, 9, e['L'], F0])
+            fm += [[r, 10, '%d' % e['n'], F0], [r, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(r), R(r), R(r)), F2], [r, 12, 'L%d*K%d' % (R(r), R(r)), F2]]
+    cells += [[rH, 3, dm, F0], [rH, 9, 10 * dm, F0]]
+    nH4 = nsplice * q['nm'] * 2 + ntop * 2 * q['nr'] * 2
+    fm += [[rH, 10, '%d' % nH4, F0], [rH, 11, 'D%d*D%d*3.1415926/4*0.00785*J%d/1000' % (R(rH), R(rH), R(rH)), F2], [rH, 12, 'L%d*K%d' % (R(rH), R(rH)), F2],
            [2, 12, 'Sum(M4:M%d)' % R(rH), F2], [rC, 12, '%.3f' % q['conc'], F2]]
+    ops.append(dict(t='tnum', h=sp, cells=cells))
+    ops.append(dict(t='tset', h=sp, cells=tx))
     ops.append(dict(t='tformula', h=sp, cells=fm))
-    # steel: A240 Øhoop | Итого | A500C Ø12 Ø16 Ø20 Ø25 Ø28 | Итого | Всего
     ops.append(dict(t='tset', h=stl, cells=[[5, 1, '%%%%C%d' % B['hoop']['d']], [6, 0, 'Ригель ' + B['mark']]]))
-    ops.append(('STEEL', sp, rH))
     return ops
 
 
-def steel_ops(stl, sp_handle, rH, B):
-    """A500C columns 3..7 get the diameters actually used; each column = sum of the spec rows of that Ø"""
-    dop = grouped(B)
-    rows = {16: [5]}                                     # Ск1 (spec row 5 in 1-based = M5)
+def steel_ops(stl, sp_handle, rH, B, q):
+    """A240 = Х1 + Шп1; A500C columns 3..7 get the diameters used; each = sum of the spec rows of that Ø"""
+    ex = extra_rows(B, q)
+    a240 = [4]; rows = {16: [5]}
     dm = B['main']['top'][1]
-    rows.setdefault(dm, []).extend([6, rH + 1])          # pos 1, Н3
-    for i, d in enumerate(dop): rows.setdefault(d['d'], []).append(7 + i)
+    rows.setdefault(dm, []).extend([6, rH + 1])
+    for i, e in enumerate(ex):
+        if e['kind'] == 'pin': a240.append(7 + i)
+        else: rows.setdefault(e['d'], []).append(7 + i)
     used = sorted(rows)
     if len(used) > 5: raise Exception('too many diameters')
     rest = [x for x in (12, 20, 28, 32, 22) if x not in used]
     cols = sorted(used + rest[:5 - len(used)])
-    cells = [[6, 1, 'Table({T:%s}).M4' % sp_handle, F2], [6, 2, 'Sum(B7:B7)', F2]]
+    cells = [[6, 1, '+'.join('Table({T:%s}).M%d' % (sp_handle, r) for r in a240), F2], [6, 2, 'Sum(B7:B7)', F2]]
     hdr = []
     for j, dd in enumerate(cols):
         c = 3 + j; hdr.append([5, c, '%%%%C%d' % dd])

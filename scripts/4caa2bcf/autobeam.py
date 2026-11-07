@@ -157,10 +157,11 @@ def design(m, B):
     seen = {}
     for x in mg:
         k_ = keyof(x)
-        if k_ not in seen: seen[k_] = 2 + len(seen)
+        if k_ not in seen: seen[k_] = (3 if B['h'] >= 700 else 2) + len(seen)
         x['pos'] = seen[k_]
         x.pop('sk', None)
     B['dop'] = mg
+    B['side_d'] = 28; B['side_pos'] = 2 if B['h'] >= 700 else None   # Bekassyl 07.11: боковые Ø28 + Шп1
     return B
 
 

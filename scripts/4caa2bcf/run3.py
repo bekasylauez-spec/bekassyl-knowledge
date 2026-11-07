@@ -18,6 +18,10 @@ def run(mark, pi, log=print):
     gx.run([{'t': 'eraseregion', 'win': [SX + 11, 455950, SX + 31489, 470780], 'mode': 'intersect'},
             {'t': 'eraseregion', 'win': [2599000 + 20000 * k, 250000, 2616000 + 20000 * k, 400000], 'mode': 'intersect'}], 'er')
     out = gx.run([dict(t='import', file=gx.S + r'\an\a61.dwg', h=rgen.sheet_handles(), base=list(rgen.AN0), to=[SX, rgen.FY], pre=P)], 'imp%d' % k)
+    if B['h'] >= 700:
+        ps = 'PIN%d:' % k
+        gx.run([dict(t='import', file=os.path.join(gx.S, 'an', 'tpl.dwg'), h=['19EC6'], base=[0, 0], to=[2600000 + 20000 * k + 9000, 380000], pre=ps)], 'pin%d' % k)
+        B['pin_src'] = ps + '19EC6'
     s = rgen.Sheet(SX, P)
     g = rfac.facade(s, B, part)
     u0, u1 = g['u0'], g['u1']; ut = (u0 + u1) / 2.0
@@ -75,14 +79,14 @@ def run(mark, pi, log=print):
     if pi == 0:
         q = rtab.quantities(B, total_hoops(B))
         top, bot = rfac2.splices(B)
-        ops += [o for o in rtab.table_ops(s3, B, q, len(top) + len(bot)) if isinstance(o, dict)]
+        ops += rtab.table_ops(s3, B, q, len(top) + len(bot), len(top))
         ops += rtab.detail_texts(s3, B, q)
         out = gx.run(ops, 'tb%d' % k); errs += [l for l in out.splitlines() if 'ERR' in l]
-        m = gx.tagmap(); rH = 6 + len(rtab.grouped(B))
-        out = gx.run(rtab.steel_ops(P + rgen.SPDS['steel'], m[P + rgen.SPDS['spec']], rH, B) +
-                     [dict(t='theight', h=P + rgen.SPDS['spec'], rows=[[rH + 1, 400], [rH + 3, 400]])], 'stl%d' % k)
+        m = gx.tagmap(); rH = 6 + len(rtab.extra_rows(B, q))
+        out = gx.run(rtab.steel_ops(P + rgen.SPDS['steel'], m[P + rgen.SPDS['spec']], rH, B, q) +
+                     [dict(t='theight', h=P + rgen.SPDS['spec'], rows=[[r_, 300 if rH > 9 else 400] for r_ in range(2, rH + 3)] + [[rH + 3, 400]])], 'stl%d' % k)
         errs += [l for l in out.splitlines() if 'ERR' in l]
-        if len(rtab.grouped(B)) > 2:
+        if len(rtab.extra_rows(B, q)) > 2:
             # spec taller than the analog: notes go to the free bottom-left corner (or above the steel table title)
             if not keep_nodes:
                 out = gx.run([dict(t='moveto', h=P + rgen.SPDS['notes'], to=[SX + 800, rgen.FY + 2900])], 'nt%d' % k)
