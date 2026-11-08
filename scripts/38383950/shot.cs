@@ -22,13 +22,13 @@ hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder();
             var black = new Color(0, 0, 0);
             foreach (var bic in new[] { BuiltInCategory.OST_StructuralFraming, BuiltInCategory.OST_StructuralColumns, BuiltInCategory.OST_StructConnections, BuiltInCategory.OST_StructConnectionBolts, BuiltInCategory.OST_StructConnectionWelds })
             { var o = new OverrideGraphicSettings(); o.SetProjectionLineColor(black); o.SetProjectionLineWeight(1); try { v3.SetCategoryOverrides(new ElementId(bic), o); } catch { } }
-            v3.SetSectionBox(new BoundingBoxXYZ { Min = new XYZ(v[0], v[1], v[2]) * MM, Max = new XYZ(v[3], v[4], v[5]) * MM });
+            v3.SetSectionBox(new BoundingBoxXYZ { Min = new XYZ(v[0], v[1], v[2]) / 304.8, Max = new XYZ(v[3], v[4], v[5]) / 304.8 });
             var fw = new XYZ(v[6], v[7], v[8]).Normalize(); var right = fw.CrossProduct(XYZ.BasisZ).Normalize(); var up = right.CrossProduct(fw).Normalize();
-            var ctr = new XYZ((v[0] + v[3]) / 2, (v[1] + v[4]) / 2, (v[2] + v[5]) / 2) * MM;
+            var ctr = new XYZ((v[0] + v[3]) / 2, (v[1] + v[4]) / 2, (v[2] + v[5]) / 2) / 304.8;
             v3.SetOrientation(new ViewOrientation3D(ctr - fw * 100, up, fw));
             t.Commit();
         }
-        var opt = new ImageExportOptions { FilePath = @"C:\Users\beka\AppData\Local\Temp\claude\61d567fc0ab17a45\38383950-ff15-462c-99ed-3b9b23e702df\scratchpad\" + f[0], ExportRange = ExportRange.SetOfViews, ZoomType = ZoomFitType.FitToPage, PixelSize = 1600,
+        var opt = new ImageExportOptions { FilePath = @"C:\Users\beka\AppData\Local\Temp\claude\61d567fc0ab17a45\38383950-ff15-462c-99ed-3b9b23e702df\scratchpad\shots\" + f[0], ExportRange = ExportRange.SetOfViews, ZoomType = ZoomFitType.FitToPage, PixelSize = 1600,
             ImageResolution = ImageResolution.DPI_150, HLRandWFViewsFileType = ImageFileType.PNG, ShadowViewsFileType = ImageFileType.PNG, FitDirection = FitDirectionType.Horizontal };
         opt.SetViewsAndSheets(new List<ElementId> { v3.Id }); nd.ExportImage(opt); sb.AppendLine("shot " + f[0]);
     }
@@ -37,3 +37,4 @@ hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder();
 uiapp.Idling += hnd;
 return "queued";
 }
+static void _end() {
