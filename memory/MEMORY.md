@@ -1,4 +1,4 @@
-﻿## Міндетті ережелер
+## Міндетті ережелер
 - [МІНДЕТТІ: алдымен Obsidian](obsidian-first.md) — кез келген жұмыс алдында D:\РАБОЧКА\Bekassyl ережелері мен аналогын оқы; негізгі жазбалар тізімі
 - [МІНДЕТТІ: қатені қайталамау тексерісі](no-repeat-check-pipeline.md) — көрсетпес бұрын chk.sh: geomdump + oc.py, әр парақ жартылай; қатенің түрін түзет
 - [Обсидианға жазу](obsidian-log-work.md) — стиль/жұмыс жолдарын Bekassyl-ға жұмыс барысында жаз; әр чат 12_Чаты-ға
@@ -87,7 +87,7 @@
 - [Opus + субагенттер](model-delegation-setup.md) — Opus басқарады, haiku/sonnet агенттер; usage_report.py графигі
 
 ## Екі комп, синхрон
-- [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.107) D:\РАБОЧКА = сервер, BEKA-2 (.133) сілтеме арқылы; BEKA-2-де жеке D:\Бекасыл КЖ КМ
+- [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.104, IP емес атпен \\BEKA-1) D:\РАБОЧКА = сервер, BEKA-2 (.133) сілтеме арқылы; BEKA-2-де жеке D:\Бекасыл КЖ КМ
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (junction/symlink; R--\memory → junction, claude-shared.ps1); ортақ ережелер ~/.claude/CLAUDE.md блогында (tools/CLAUDE.global.md); өзгеріс келесі чатта көрінеді
 - [GitHub білім репосы](github-knowledge-repo.md) — public bekassyl-knowledge; автосинхрон Stop/SessionEnd hook → update.ps1; setup.ps1 жаңа компқа
 - [GitHub КЖ КМ репосы (BEKA-2)](github-repo.md) — жабық bekasyl-kzh-km: D:\Бекасыл КЖ КМ толығымен (LFS)
