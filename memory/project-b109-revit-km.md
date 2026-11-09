@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 38383950-ff15-462c-99ed-3b9b23e702df
-  modified: 2026-11-08T17:05:46.632Z
+  modified: 2026-11-09T04:58:09.868Z
 ---
 
 **Request 08.11.2026:** «…КМ (Цех Блок 1, ЛИРА).dwg-ның КМ-ін Revit-те тұрғыз, алдыңғы цех (Алатау) стилінде». User confirmed the LIRA: `Том 14…\Расчет\В_109_v3_КМ.lir`.
@@ -21,4 +21,6 @@ metadata:
 
 **LIRA rebuild (08.11 night).** User: «схеманы қате тұрғыздың, сечениелерді лирадан ал, Автокадта қате жасапты; барлығы листпен жалғанбайды, двгдағы узелдерге мұқият қара». LIRA element stiffness array value v → LIRA type number v+1 (types listed in UTF-16 «N. Двутавр …» records; checked on Р1 □100x5, СВ □160x5/□100x5, БМ1, К3 короб) — the 07.11 album mapped the roof one number off. Correct: ФФ1 ВП 20Ш1, НП □120x5, Р1/Р2 □120x5/□100x3 (Tekla «Ферма ФФ1»), БП2 40Б1, БП1 30Б1, Пр1 [27П, Р1 □100x5, Р2 □100x3, СВ1 □160x5 (both lower tiers), СВ2/СВ3 □100x5, площадка Б1 25Б1, Б2 30Б1, Б4 70Б1, Б7 45Ш1, Б3 50Ш2; ЛИРА 15 «Плита по проф.» = deck (Б5/Б6 removed). Lattice welded straight to the chords: ends cut by «БК_срез» voids on the chord faces (cuts.tsv), K-gap 20, weld beads round footprints. New library: (КМ)швеллер_ГОСТ8240_каркас (fam_07), 50Ш2 in fam_03b. Trap: an existing mark type keeps its old profile — b109_01 now copies the profile's type parameters into the mark type every run. Clash 0 (9139 elements).
 
-How to apply: next — оформление/листы with the user; continue with nodes (truss gussets, brace gussets, caps, welds) in the same scripts; ask the user the open points above. Related: [[project-zavod-b109-km]], [[project-alatau-ceh-km]], [[revit-mcp-bridge]].
+**Bases by the user's own nodes (09.11).** User: «База колоннаны дұрыста… менің сызған узелымды қара, жаныңда болуы керек» — the source is **«КМ Чертеж узелдер.dwg» next to the main DWG** (Tekla album bases were wrong). Sheets 13–18: Б1/Б2 К1 −40×700×950, Б3 К2 −40×700×960, Б4 К3 −40×800×800, Б5 СФ 40Ш2 −40×700×750 (М30), Б6 СФ1 □200 −30×550×550 (М24); all 4 anchors 09Г2С (М42 else), open slots, washer −20×120×120, ribs −12 С245 h310 straight slope; plate bottom −0.400, grout 50, foundation −0.450 → columns start −0.360. Text is in SPDS proxies: read via ezdxf ProxyGraphic virtual_entities. Trap: anchor washers built in world X/Y — pass world offsets for a rotated column. Clash 0.
+
+How to apply: always look first for the user's own node DWG beside the given file before Tekla/album. Next — оформление/листы with the user; continue with nodes (truss gussets, brace gussets, caps, welds) in the same scripts; ask the user the open points above. Related: [[project-zavod-b109-km]], [[project-alatau-ceh-km]], [[revit-mcp-bridge]].
