@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-10T15:47:04.789Z
 ---
 
-Project 12-2025-КЖ/КМ (Гостевой дом, ТОО «Namark Project»), source DWGs on D:\РАБОЧКА\От Мадениет\Ресторан\КЖ\09-11-2025\2.Офис.
+Project 12-2025-КЖ/КМ (Гостевой дом, ТОО «Namark Project»), source DWGs on \\Desktop-0bgbhi9\d\РАБОЧКА\От Мадениет\Ресторан\КЖ\09-11-2025\2.Офис.
 Done 2026-10-10: D:\Бекасыл КЖ КМ\Revit_оформление\12-2025-КЖ_КМ_Гостевой дом.rvt (from BI_Шаблон_КЖ_v3.52, detached) with 69 sheets (КЖ 1.1–8.5, КМ-1.1…КМ-3), each = drafting view with geometry-DWG (DWG_листы) + title block "(основная_надпись)" Форма 3; PDFs in \PDF. Scripts in \_авто and \Инструменты_AutoCAD.
 Template quirks: title block family was customised by another firm (RAS/VSN) — I replaced org text, deleted foreign images, made nested RAS_Фамилия never show "Ошибка в фамилии". Stamp rows: type params Фамилия 2=ГИП, 3=ГАП, instance Фамилия 4=Разраб., type Фамилия 6=Н.контр.
 Then (same day) built the 3D concrete model + rebar in the same .rvt (scripts model_0X / rebar_0X / rebar_colors.cs in \_авто), rebar coloured per diameter by view filters + legend "Легенда арматуры (цвета)".

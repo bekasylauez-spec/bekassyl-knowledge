@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-17T14:23:39.931Z
 ---
 
-"Original" = the user's AutoCAD DWGs on `D:\РАБОЧКА\От Мадениет\Ресторан\КЖ\09-11-2025\2.Офис\<N>.<раздел>.dwg` (one Layout per sheet, drawing in Model at 1:100). Their faithful renders are `_авто\png\sheets\s - Лист - N-N - ….png`. The coloured `Revit_оформление\Лист N-N.png` files come from some other Revit model — not the original.
+"Original" = the user's AutoCAD DWGs on `\\Desktop-0bgbhi9\d\РАБОЧКА\От Мадениет\Ресторан\КЖ\09-11-2025\2.Офис\<N>.<раздел>.dwg` (one Layout per sheet, drawing in Model at 1:100). Their faithful renders are `_авто\png\sheets\s - Лист - N-N - ….png`. The coloured `Revit_оформление\Лист N-N.png` files come from some other Revit model — not the original.
 
 **Why:** 17.10.2026 I rebuilt 3.9 from `Лист 3-9.png` (wrong drawing). The user: «саған жіберген чертежды қара… айнымасын». Their real 3.9 was completely different.
 

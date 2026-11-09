@@ -18,4 +18,3 @@ Working method (04.11.2026):
 
 Related: [[project-zavod-b109-km]], [[user-env-cad]].
 - Untyped SPDS objects (level mark mcsDbObjectLevelMark, welds): read/write via DbObject.ObjectProperties (PropertyDescriptor GetValue/SetValue: Text, Associative, Size…), clone the AutoCAD entity (WblockClone/DeepClone), move with TransformBy, reshape with McEntity.OnGetGripPoints/OnMoveGripPoints. Code: Завод_В109_КМ\_авто\BkLevel.cs.
-- 05.11.2026 SPDS level mark value without BkLevel.cs: own plugin `net\lvl.cs` (session 4c62aff2 scratchpad): McObjectId.FromOldIdPtr(id.OldIdPtr).GetObject() → reflection prop "DbObject" → "ObjectProperties" (Multicad.McProperties, ICustomTypeDescriptor) → PropertyDescriptor "Text" SetValue. Command LVLCOPY clones a mark (DeepCloneObjects) so its lowest grip (= arrow tip) lands on x,y and sets the text. Compile: csc x64 refs accoremgd/acdbmgd/acmgd + mapimgd/mapibasetypes from CSoft …\mg142x64.

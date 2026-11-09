@@ -8,7 +8,7 @@ metadata:
   modified: 2026-10-20T06:59:08.176Z
 ---
 
-Source: `D:\РАБОЧКА\RAS GROUP PROJECT` (lesson videos Урок 1–15 without 11, BI_Шаблон_КЖ_v3.52*.rvt, KeyboardShortcuts.xml). Notes: `D:\Бекасыл КЖ КМ\_Стандарт_КЖ\RAS_курс\КУРС_ҚОРЫТЫНДЫ.md` (summary + proposals awaiting approval) and `урок_NN.md`; template sample sheets with mm layout in `_Стандарт_КЖ\шаблон_каталог\v3.52_парақтар\ПАРАҚ_ҮЛГІЛЕРІ.md`. Read these before starting a new КЖ project or a new kind of element (stairs, slabs, walls, pits, frames).
+Source: `\\Desktop-0bgbhi9\d\РАБОЧКА\RAS GROUP PROJECT` (lesson videos Урок 1–15 without 11, BI_Шаблон_КЖ_v3.52*.rvt, KeyboardShortcuts.xml). Notes: `D:\Бекасыл КЖ КМ\_Стандарт_КЖ\RAS_курс\КУРС_ҚОРЫТЫНДЫ.md` (summary + proposals awaiting approval) and `урок_NN.md`; template sample sheets with mm layout in `_Стандарт_КЖ\шаблон_каталог\v3.52_парақтар\ПАРАҚ_ҮЛГІЛЕРІ.md`. Read these before starting a new КЖ project or a new kind of element (stairs, slabs, walls, pits, frames).
 
 Key points: bent bars with template «(форма)…» shapes (RAS_префикс Х/Ш/Ск/Ф/Г); BI_марка_конструкции set before placing rebar; views carry BI_марка_конструкции/BI_назначение_вида/BI_группирование; templates #01→#02 Опалубка→#03 Армирование; products Кр/С as model groups + «…_изделия_СА»; ModPlus «Смещение размеров».
 
