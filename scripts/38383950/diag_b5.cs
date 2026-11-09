@@ -3,7 +3,7 @@ string log = @"C:\Users\beka\AppData\Local\Temp\claude\61d567fc0ab17a45\38383950
 EventHandler<Autodesk.Revit.UI.Events.IdlingEventArgs> hnd = null;
 hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder();
   try { var d = app.Documents.Cast<Document>().First(x => x.PathName.EndsWith("ВП-В109-КМ_Цех Блок 1.rvt"));
-    var a = d.GetElement(new ElementId(2927365L)); var b = d.GetElement(new ElementId(2927367L));
+    var a = d.GetElement(new ElementId(2931981L)); var b = d.GetElement(new ElementId(2945954L));
     Func<Element, List<Solid>> S = el => el.get_Geometry(new Options()).OfType<Solid>().Where(q => q.Volume > 0).ToList();
     var sa = S(a); var sbs = S(b); sb.AppendLine(a.Name + " | " + b.Name + " " + sa.Count + "/" + sbs.Count);
     Func<Solid, string> BB = q => { var bb = q.GetBoundingBox(); var p = bb.Transform.OfPoint(bb.Min); var r = bb.Transform.OfPoint(bb.Max);
