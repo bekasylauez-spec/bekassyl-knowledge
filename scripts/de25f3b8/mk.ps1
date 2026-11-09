@@ -1,0 +1,1 @@
+﻿try { New-Item -ItemType SymbolicLink -Path 'D:\РАБОЧКА' -Target '\\BEKA-1\РАБОЧКА' -ErrorAction Stop | Out-Null; 'OK' } catch { $_.Exception.Message }
