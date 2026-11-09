@@ -10,7 +10,7 @@ metadata:
 
 The user edited my railing fragments sheet by hand and said «ВЫНОСКА СТИЛЬДЕРІН ОСЫЛАЙ ЖАСА» ("make the callout styles like this"). Their version:
 
-- Each SPDS note: first line = profile ("Тр.50х3", "Тр.20х2", "Л"), second line = element name ("поручень", "стойка", "балясина", "нижний пояс", "косоур", "обвязка площадки").
+- (ескі, 09.11 ауыстырылды) Маркасы бар элементке тек марка; маркасыз бөлшекке (поручень, стойка т.б. маркасыз болса) профиль + атауы.
 - The shelf sits just outside the drawing, right next to the element it names. The leader is short and diagonal, from the shelf end nearest the element. Leaders never cross the drawing or other callouts.
 - Each callout goes on the side where its element is:
   - стойка: beside the post, at mid-height.
