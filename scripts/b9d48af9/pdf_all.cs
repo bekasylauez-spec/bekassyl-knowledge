@@ -3,7 +3,7 @@ string log = @"C:\Users\beka\AppData\Local\Temp\claude\208a25b89c99599c\b9d48af9
 EventHandler<Autodesk.Revit.UI.Events.IdlingEventArgs> hnd = null;
 hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder(); var d = uiapp.ActiveUIDocument.Document;
   try {
-    var sheets = new FilteredElementCollector(d).OfClass(typeof(ViewSheet)).Cast<ViewSheet>().Where(x => !x.IsPlaceholder).OrderBy(x => x.SheetNumber).ToList();
+    var sheets = new FilteredElementCollector(d).OfClass(typeof(ViewSheet)).Cast<ViewSheet>().Where(x => !x.IsPlaceholder).OrderBy(x => int.TryParse(x.SheetNumber, out var nn) ? nn : 999).ToList();
     foreach (var sh in sheets) sb.AppendLine("SHEET " + sh.SheetNumber + " " + sh.Name + " viewports " + sh.GetAllViewports().Count);
     var o = new PDFExportOptions { FileName = "В109_КМ_листы", Combine = true, ExportQuality = PDFExportQualityType.DPI600, ColorDepth = ColorDepthType.Color, ZoomType = ZoomType.Zoom, ZoomPercentage = 100, PaperFormat = ExportPaperFormat.Default, HideCropBoundaries = true, HideScopeBoxes = true, HideReferencePlane = true, HideUnreferencedViewTags = false };
     d.Export(@"D:\Бекасыл КЖ КМ\Завод_В109_КМ\_тексеру", sheets.Select(x => x.Id).ToList(), o); sb.AppendLine("pdf ok");
