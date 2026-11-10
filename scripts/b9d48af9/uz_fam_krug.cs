@@ -31,11 +31,12 @@ hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder();
       foreach (var lb in new FilteredElementCollector(d).OfClass(typeof(TextElement)).Cast<TextElement>()) {
         bool top = lb.Text.Contains("верх") || lb.Text.Contains("Номер");
         lb.HorizontalAlignment = HorizontalTextAlignment.Center; lb.VerticalAlignment = top ? VerticalTextAlignment.Bottom : VerticalTextAlignment.Top;
-        var bb = lb.get_BoundingBox(v);
-        var want = top ? new XYZ(0, 0.9 * M, 0) : new XYZ(0, -0.9 * M, 0);
-        var cur = bb == null ? lb.Coord : new XYZ((bb.Min.X + bb.Max.X) / 2, top ? bb.Min.Y : bb.Max.Y, 0);
-        ElementTransformUtils.MoveElement(d, lb.Id, want - cur);
-        var b2 = lb.get_BoundingBox(v); sb.AppendLine((top ? "top " : "bot ") + (b2 == null ? "nobb" : Math.Round(b2.Min.X/M,2) + "," + Math.Round(b2.Min.Y/M,2) + " .. " + Math.Round(b2.Max.X/M,2) + "," + Math.Round(b2.Max.Y/M,2)));
+        // Coord = the label's insertion point (centre of its box); text 3.5 -> box ~3.5 high: centre 2.9 above / below the diameter line
+        var want = top ? new XYZ(0, 2.9 * M, 0) : new XYZ(0, -2.9 * M, 0);
+        lb.HorizontalAlignment = HorizontalTextAlignment.Center; lb.VerticalAlignment = VerticalTextAlignment.Middle;
+        ElementTransformUtils.MoveElement(d, lb.Id, want - lb.Coord);
+        sb.AppendLine((top ? "top " : "bot ") + "coord " + Math.Round(lb.Coord.X / M, 2) + "," + Math.Round(lb.Coord.Y / M, 2) + " w " + Math.Round(lb.Width / M, 2));
+        lb.Width = 10 * M;
       }
       t.Commit(); }
     d.SaveAs(dst, new SaveAsOptions { OverwriteExistingFile = true }); sb.AppendLine("saved " + dst);
