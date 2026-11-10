@@ -149,6 +149,7 @@
 - [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8, R:/РАБОЧКА offline: copy + notes pending
 - [В113 КМ (аналог ОЗХ-1)](project-v113-km.md) — Ерсұлтаннан WhatsApp архивтері 10.11; Chrome басқа компта, файлдар сонда түсті
 - [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
+
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
