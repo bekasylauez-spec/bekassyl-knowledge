@@ -30,3 +30,5 @@ Status 09.11 (5): section 3 split onto A2 (gen3n.py frames|draw|draw34|layouts; 
 Status 09.11 (6): ALL sections oc TOTAL 0 (5 included: w/fix5z.py — zone callout tips onto the lap line, «below» level text flipped above its shelf, then place6 PWIDE; zone shelf end must stay inside the zone: p0 <= tip − 30 − shelf length). Album 163 p. rebuilt.
 
 Status 10.11.2026 (BEKA-1): котлован + раскатные сваи + гидроизоляция «как в АБК» added as sheets 1.5 (A3x3 plan), 1.6 (A2 spec/section/geology/tables), 1.7 (A2 pile reinforcement) in «1. Общие данные» DWG; Св1 274 (under walls/columns), Св2 116 (rest of mat), pit bottom −5.700, 0.000 = 721.00 from AR (ABK uses 347.90 — unconfirmed). Album 166 p. Work dir D:\_claude_work	sekh_k (BEKA-1; the old D:\_claude_work	sekh is on BEKA-2). Details in Obsidian «КЖ — ход работ». Related: [[project-abk-zavod-make]]
+
+11.11.2026: user — take everything for the котлован from АБК (adjacent buildings): 0.000 = 347.90, ABK geology column, cushion 1000 mm everywhere (stepped pit bottom −5.700/−4.700), ABK notes text. Done; album 166 p. updated. Related: [[project-abk-zavod-make]]
