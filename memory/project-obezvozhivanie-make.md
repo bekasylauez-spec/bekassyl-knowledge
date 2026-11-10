@@ -17,3 +17,5 @@ Related: [[project-abk-zavod-make]], [[lira-model-by-analog]]
 06.11: 6.1–6.17 балки, 7.1/7.2 плиты, КМ-1…6 (AutoCAD, Σ≈12.8 т), 1.1 мәтіні мен 1.2 ведомость жобаға ауыстырылды. ПБ1 детальды парағы жоқ (КМ схемалық бірінші нұсқа). Толығы Obsidian жобалық жазбада.
 
 11.11.2026 (BEKA-1): котлован/сваи/гидроизоляция brought to ABK final: Св1 362 armed + Св2 32 unarmed L=9, 0.000 = 347.90, ABK geology column, new sheet 1.5 pile reinforcement, hydro/steel tables, geomembrane; full КЖ album 45 p. in project folder. Details in Obsidian note. Related: [[project-abk-zavod-make]], [[project-tsekh-predobrabotki]]
+
+11.11.2026: stamps/titles made like ABK (blocks Штамп_ОБЗ_КЖ/КМ from Штамп_АБК, object «Помещение обезвоживания»); КЖ 45 p. + КМ 7 p. PDFs rebuilt.
