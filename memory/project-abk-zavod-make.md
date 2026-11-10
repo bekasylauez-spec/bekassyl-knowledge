@@ -44,3 +44,5 @@ Rule: «жаңадан сызба, тек менікін переделка» �
   - Фм under 1500;
   - PDF album.
 - Trap: `clonexf` with `pre:''` maps old handle → clone, so a second clone of the same handles takes the first clone. Call `maprst` before each clone and omit `pre`.
+
+**10.11.2026 (BEKA-1) — estimator remark (Дарья): pile spec, waterproofing volumes, geotextile.** Done in ВАРИАНТ 2: new sheet 1.5 «Армирование раскатных свай Св1» cloned from analog sheet 5 (1Ø22 A500С + Ø8 A240 fixators every 3 m); Св1 armed under Фм-1 (453), Св2 unarmed under Пм-1 (80), both Ø500 L=11; 1.4 got steel consumption (16883.3 kg), pile concrete 1151.3 m³, waterproofing table by elements (1162.7 m², mastic ГОСТ 30693-2000 per analog) and geomembrane HDPE 1.5 mm 1120 m² over the cushion (analog has membrane, no geotextile — awaiting user/ГИП confirmation). 1.2 list completed, PDF album 40 pages. Work dir `D:\_claude_workbk_gi`, details in the Obsidian note. Related: [[cad-dedicated-instance]]
