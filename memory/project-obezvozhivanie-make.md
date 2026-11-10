@@ -15,3 +15,5 @@ Related: [[project-abk-zavod-make]], [[lira-model-by-analog]]
 05.11 кеш → 06.11: Фм-1 қайта: ЛИРА деңгейі (балка −1.3…−0.7), АБК принципімен 3.1–3.6 (oc 0), PDF «листы 1.3-3.6». 4.1–4.6 колонналар дайын (oc 0), PDF «листы 1.3-4.6». АБК артық парақтары/layout-тары өшірілді (пайдаланушы сұрады); 0/00 обложка-титул қалпына келтірілді (тұзақ: рамкадан тыс мәтіндер). PDF «КЖ Обезвоживание (листы 1.3-3.2).pdf». Шаблондар енді АБК DWG-сынан import арқылы алынады. Келесі: колонна 4.x, балка 6.x, плита 7.x, 1.1/1.2, штамп, рамка тығыздау, КМ.
 
 06.11: 6.1–6.17 балки, 7.1/7.2 плиты, КМ-1…6 (AutoCAD, Σ≈12.8 т), 1.1 мәтіні мен 1.2 ведомость жобаға ауыстырылды. ПБ1 детальды парағы жоқ (КМ схемалық бірінші нұсқа). Толығы Obsidian жобалық жазбада.
+
+11.11.2026 (BEKA-1): котлован/сваи/гидроизоляция brought to ABK final: Св1 362 armed + Св2 32 unarmed L=9, 0.000 = 347.90, ABK geology column, new sheet 1.5 pile reinforcement, hydro/steel tables, geomembrane; full КЖ album 45 p. in project folder. Details in Obsidian note. Related: [[project-abk-zavod-make]], [[project-tsekh-predobrabotki]]
