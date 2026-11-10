@@ -1,13 +1,13 @@
-﻿// Алатау: close-up 3D PNGs. Boxes come from _авто\revit\_audit_shots.txt, one per line: name x0 y0 z0 x1 y1 z1 fx fy fz (mm; f = view direction).
+// Алатау: close-up 3D PNGs. Boxes come from _авто\revit\_audit_shots.txt, one per line: name x0 y0 z0 x1 y1 z1 fx fy fz (mm; f = view direction).
 // A 3D view «КМ проверка» is reused (section box + orientation), scale 1:10, shaded with thin black edges; PNGs go to _тексеру\.
 var app = document.Application; var uiapp = new UIApplication(app);
-string root = @"D:\Бекасыл КЖ КМ\Завод_В109_КМ\";
+string root = @"C:\Users\beka\AppData\Local\Temp\claude\208a25b89c99599c\b9d48af9-f7a2-4623-89d1-541fa9dfc459\scratchpad\";
 EventHandler<Autodesk.Revit.UI.Events.IdlingEventArgs> hnd = null;
 hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder();
   try {
     var nd = app.Documents.Cast<Document>().First(d => d.PathName.EndsWith("ВП-В109-КМ_Цех Блок 1.rvt"));
     var ci = System.Globalization.CultureInfo.InvariantCulture;
-    foreach (var line in System.IO.File.ReadAllLines(@"C:\Users\beka\AppData\Local\Temp\claude\208a25b89c99599c\b9d48af9-f7a2-4623-89d1-541fa9dfc459\scratchpad\shots.txt").Where(l => l.Trim().Length > 0 && !l.StartsWith("#")))
+    foreach (var line in System.IO.File.ReadAllLines(root + @"shots.txt").Where(l => l.Trim().Length > 0 && !l.StartsWith("#")))
     {
         var f = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries); var v = f.Skip(1).Select(x => double.Parse(x, ci)).ToArray();
         View3D v3;
@@ -28,13 +28,12 @@ hnd = (s, e) => { uiapp.Idling -= hnd; var sb = new System.Text.StringBuilder();
             v3.SetOrientation(new ViewOrientation3D(ctr - fw * 100, up, fw));
             t.Commit();
         }
-        var opt = new ImageExportOptions { FilePath = @"C:\Users\beka\AppData\Local\Temp\claude\208a25b89c99599c\b9d48af9-f7a2-4623-89d1-541fa9dfc459\scratchpad\png\" + f[0], ExportRange = ExportRange.SetOfViews, ZoomType = ZoomFitType.FitToPage, PixelSize = 1600,
+        var opt = new ImageExportOptions { FilePath = root + @"png\" + f[0], ExportRange = ExportRange.SetOfViews, ZoomType = ZoomFitType.FitToPage, PixelSize = 1600,
             ImageResolution = ImageResolution.DPI_150, HLRandWFViewsFileType = ImageFileType.PNG, ShadowViewsFileType = ImageFileType.PNG, FitDirection = FitDirectionType.Horizontal };
         opt.SetViewsAndSheets(new List<ElementId> { v3.Id }); nd.ExportImage(opt); sb.AppendLine("shot " + f[0]);
     }
   } catch (Exception ex) { sb.AppendLine("ERR " + ex); }
-  System.IO.File.WriteAllText(@"C:\Users\beka\AppData\Local\Temp\claude\208a25b89c99599c\b9d48af9-f7a2-4623-89d1-541fa9dfc459\scratchpad\_shotlog.txt", sb.ToString()); };
+  System.IO.File.WriteAllText(root + @"shot_log.txt", sb.ToString()); };
 uiapp.Idling += hnd;
 return "queued";
 }
-
