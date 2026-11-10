@@ -1,37 +1,16 @@
-- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8, R:/РАБОЧКА offline: copy + notes pending
-- [Revit КЖ/КМ оформление](revit-kzh-oformlenie.md) — Гостевой дом DWG→Revit sheets via Dynamo; outputs in D:\Бекасыл КЖ КМ\Revit_оформление
-- [Do the work myself](feedback-full-autonomy.md) — user automates; I run Revit/AutoCAD end-to-end, no manual hand-offs
-- [Revit MCP bridge](revit-mcp-bridge.md) — drive Revit 2025 via port 8080 send_code_to_revit C#, Idling trick, UI clicks, DWG text→geometry
-- [Text height rule (all projects)](feedback-text-height.md) — mark/leader text = dimension text = 2.5 mm, every future project
-- [КЖ standard folder](kzh-standard-folder.md) — keep approved rules in D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md, update on every approval
-- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf updater keeps mark leaders on shelf end; Revit nearest-of-4 attach rule
-- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + one dim style, armirovanie sections 1:25, straight leaders, round node callouts, native section marks
-- [Originals are the DWGs](originals-are-dwg.md) — compare with network DWG / png\sheets, never Лист N-N.png; exact-copy pipeline for 3.9
-- [CAD tooling notes](user-env-cad.md) — accoreconsole/LISP pitfalls, Revit 2025 + Dynamo 3.0.3, embedded Python 3.9
-- [Template catalog + template schedules](template-catalog.md) — read шаблон_каталог before any node/spec; specs = template's own СА/ВМ/ВРС/ВД schedules
-- [RAS course notes](ras-course.md) — 14-lesson Revit КЖ course studied; read RAS_курс\КУРС_ҚОРЫТЫНДЫ.md before new projects/elements
-- [3602 КМ порталы](project-3602-km-portals.md) — NRG Maftun Makon portals/portiks/cornice КМ: Revit file, scripts, state 29.10.2026
-- [КМ tube families](km-tube-families.md) — own ГОСТ 30245 framing/column families + КМ_* shared params, reuse in every КМ job
-- [Own template БК_КМ.rte](project-bk-template.md) — prefix БК_, no third-party traces; marks = tube types; API can't edit labels (copy them); cleanup chain t02…t15
-- [КМ error checklist + checker agent](feedback-km-error-checklist.md) — audit КМ model (q20 / km-model-checker) before showing; reply in Kazakh; say «Бәрі бітті» at the end
-- [Оформление together](feedback-oformlenie-together.md) — don't rush КМ оформление alone; go sheet by sheet with the user
-- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
-- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
-- [Алатау цех Блок 1 КМ](project-alatau-ceh-km.md) — full Revit КМ model from the user's own DWG; data file, DWG dump tools, open questions
-- [Match the DWG exactly](feedback-match-dwg-exactly.md) — shapes, sizes, lengths of every part from the user's drawing, read node by node; no generic details
-- [House 3D = web brochure](house-3d-web-format.md) — «үй 3Д» means three.js artifact with renders, not Revit; Edge headless render pipeline
-- [Завод В109 КМ restyle](project-zavod-b109-km.md) — Tekla DWG → user's AutoCAD style in place, live СПДС dims; sheet 03 done, pipeline in Завод_В109_КМ\_авто
-- [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes
-
+## Міндетті ережелер
 - [МІНДЕТТІ: алдымен Obsidian](obsidian-first.md) — кез келген жұмыс алдында D:\РАБОЧКА\Bekassyl ережелері мен аналогын оқы; негізгі жазбалар тізімі
 - [МІНДЕТТІ: қатені қайталамау тексерісі](no-repeat-check-pipeline.md) — көрсетпес бұрын chk.sh: geomdump + oc.py, әр парақ жартылай; қатенің түрін түзет
 - [Обсидианға жазу](obsidian-log-work.md) — стиль/жұмыс жолдарын Bekassyl-ға жұмыс барысында жаз; әр чат 12_Чаты-ға
+- [Do the work myself](feedback-full-autonomy.md) — Revit/AutoCAD жұмысын өзім басынан аяғына дейін істеймін, нұсқаулық бермеймін
 - [Ашық файлды өзім жабамын](close-user-file-myself.md) — DWG пайдаланушыда ашық болса: сақтап жаб / ауыстыр / қайта аш (COM, acad_swap.ps1); сұрамау
 - [Жоба папкасын таза ұста](feedback-keep-project-clean.md) — скрин/утилита/бэкап scratchpad-та; артығы корзинаға
 - [Сақтау орны — жоба папкасы](save-in-project-folder.md) — PDF/DWG тек жоба папкасына, таза атпен; Temp-тен жіберме
 - [Яндексті жаппа](no-hide-yandex.md) — computer-use басқа терезелерді жасырады; файл деңгейінде жұмыс істе
 - [C дискін тазалау](disk-cleanup-rules.md) — D-ге тиіспе, пайдаланушы файлдары тек корзинаға, scratchpad скрипттерін сақта
 - [R: желілік — корзина жоқ](r-drive-no-recycle.md) — R:-дан өшірсең біржола; алдымен жергілікті көшірме
+
+## Сызба ережелері (КЖ/КМ)
 - [Фундамент есеп+аналог](foundation-per-calc-abk.md) — өлшем/деңгей ЛИРА-дан, ұсыну АБК ленточный принципімен, опалубкада қайталанған байлау жоқ
 - [Разрез армирование қайта құру](section-armirovanie-rebuild.md) — созылған аналог разрезінде хомут/Шп/выноска/желдеткішті өшіріп қайта құр; fancheck 0
 - [Лист ориентациясы ғимарат пішіні бойынша](sheet-orientation-by-building.md) — тік созылған план → книжный, көлденең → альбомный
@@ -40,6 +19,8 @@
 - [Колонна өзгерсе — бәрі өзгереді](feedback-column-change-cascade.md) — стена/ригель/плита/выпуск/спец бірге; шеткі колонна сыртқы бетімен тегіс
 - [Атау схеманың ортасында](title-centered-over-drawing.md) — «Схема…/Разрез…/кесте» атауы астындағы сызбаның X-ортасында, барлық парақта
 - [Размер мәтіні, полка, Фм реті](kzh-dim-text-and-shelves.md) — мәтін сызықта стандарт саңылаумен, полка ось/элементті кеспейді, доп. 3.3–3.6 аналогтан
+- [Text height rule (all projects)](feedback-text-height.md) — марка/выноска мәтіні = размер мәтіні = 2.5 мм, барлық жобада
+- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + бір размер стилі, армирование қималары 1:25, түзу выноска, дөңгелек узел
 - [Отступы, штриховка, отверстия](drawing-spacing-hatch-rules.md) — жазулар алшақ, әр қабырғаға жеке штрих, отверстие X емес, разрез размерден тыс
 - [КЖ выноска/штрих/отметка ережелері](kzh-callout-hatch-level-rules.md) — полка стрелкаға қарсы, стрелка элемент қырына, 300–600; ANSI36 20; отметка бөлек
 - [СПДС выноски](cad-callouts-spds.md) — выноски только через СПДС AutoCAD 2021; правила КЖ в Obsidian
@@ -61,6 +42,8 @@
 - [Аналогты көшіріп созу](cad-clone-analog-stretch.md) — аналог стилі: side-DB clone, stretch, SPDS level byte-replace; кесте формулалары өшеді
 - [КМ: пайдаланушы узелдерін көшір](km-copy-user-nodes.md) — узел/кестелерді пайдаланушы листінен көшіріп соз, өз стиліңмен сызба
 - [КМ узел аналогтан — өз сечениесіне](km-analog-nodes-own-sections.md) — колонна/база/балка/связь өз профилімен, ЛИРА бойынша құрам, СПДС выноска, oc TOTAL 0 (08.11)
+- [Match the DWG exactly](feedback-match-dwg-exactly.md) — әр бөлшектің пішіні/өлшемі пайдаланушы DWG-сынан, узел-узел; жалпы деталь ойлап таппа
+- [Originals are the DWGs](originals-are-dwg.md) — салыстыру тек түпнұсқа DWG-мен, Лист N-N.png емес
 - [Кесте рамкадан шықпасын](table-fit-in-frame.md) — insRows-тан кейін кесте табаны ≥ рамка y0+500; «лист N» марка↔парақ кестесінен
 - [PDF тек Layout-тан](pdf-from-layouts.md) — альбом листтерін Layout қойындыларынан; paper-space window 1:1
 - [ФБС + ПБ раскладка](fbs-pb-layout.md) — завод прайсы, доборы монолит, перевязка ≥300, СПДС рамка өз acad.exe-де; Ақтау 3.7–3.10
@@ -74,29 +57,54 @@
 - [КМ спецификация ережелері](km-spec-rules.md) — ұзындық чертежден, тірек листтері мен стекло ауданы міндетті; .lir түйіндерін оқу
 - [КМ расход ЛКМ](km-paint-consumption.md) — ГФ-021/ПФ-115 ведомость спецификация астында, Σ т×м²/т
 - [КМ түйін ережелері 09.11](km-node-rules-purlin-brace-base.md) — прогон артында лист, жоғарғы связь прогон астындағы листке, база фасонкасы плитаға, бос тірек → LIRA жабыны
+- [КМ error checklist](feedback-km-error-checklist.md) — КМ моделін көрсетпес бұрын q20 / km-model-checker; қазақша жауап, соңында «Бәрі бітті»
 - [КМ привязка размері ≥1500 сыртқа](km-binding-dims-1500.md) — екі ұшы элемент/оське, сызық элементтен ≥1500 сыртқа, қысқа мәтін сыртта (07.11)
 - [КМ связь маркасы СВ](km-brace-marks-span-height-section.md) — пролет+биіктік+сечение бірдей → бір марка, біреуі өзгерсе жаңа (07.11)
 - [КМ марка сечение бойынша](km-marks-by-section.md) — К1-ден, бірдей сечение = бір марка, әр СВ-ға жеке схема, план↔разрез (08.11)
 - [Р2→РС2, ВФ1→СВ4](km-same-section-same-mark-rs.md) — бірдей сечение бір марка, тік ферма связі СВ4 связь сызығымен (09.11)
 - [КМ ферма белдеулері бөлек](km-truss-chords-separate.md) — нижний пояс бөлек схема, верхний пояс бөлек (07.11)
+- [Оформление бірге](feedback-oformlenie-together.md) — КМ оформлениені жалғыз асықпа, пайдаланушымен парақ-парақ
+
+## Құралдар мен әдістер
 - [DWG правки через accoreconsole](cad-console-net-workflow.md) — консоль + C# плагин APPLYOPS по JSON, чтение через DXF/ezdxf
 - [Бөлек AutoCAD данасы](cad-dedicated-instance.md) — live СПДС правкалар өз AutoCAD данамда (JOBLISTEN), пайдаланушының AutoCAD-на SendCommand жоқ
+- [SPDS objects by script](reference-spds-api.md) — екінші acad.exe + MultiCAD .NET плагин SPDS марка/рамка/узел оқиды, жасайды
 - [AutoCAD eAtMaxReaders](acad-eatmaxreaders.md) — rz.cs: McObject dispose (MGet), dyn allowed values шақырма; әр партиядан соң сақта
+- [CAD tooling notes (BEKA-2)](user-env-cad.md) — accoreconsole/LISP тұзақтары, Revit 2025 + Dynamo 3.0.3; Python 3.13 бар (04.11)
 - [LIRA модель по аналогу](lira-model-by-analog.md) — генератор txt + РСН/материалы; .lir-ді GUI бөлу + бинар патч
 - [ЛИРА интерфейс қорғанысы](lira-interface-guard.md) — классикалық панель болса Окно→Стиль интерфейса→Лента Плюс
 - [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md) — модель как есть, сейсмика/фундамент қоспа, сечениеге тиіспе; CSV + Word COM
 - [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md) — Revit 2025 add-in csc-пен, job %LOCALAPPDATA%\rvjob, live RBLive; Рампа навесі
+- [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — port 8080 send_code_to_revit C#, Idling, UI басу, DWG мәтін→геометрия
 - [Revit 2025 плагиндері](revit-plugins-2025.md) — екі компта: pyRevit, RevitLookup, ModPlus, KZhTagShelf, mcp; семейство жасау тәртібі
+- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf марка выноскасын полка шетінде ұстайды
+- [КМ tube families](km-tube-families.md) — өз ГОСТ 30245 семействолары + КМ_* параметрлер, әр КМ-де қайта қолдан
+- [Own template БК_КМ.rte](project-bk-template.md) — БК_ префикс, бөгде із жоқ; марка = труба типі; label-ді API өзгертпейді
+- [Template catalog](template-catalog.md) — BI КЖ шаблон каталогы; спец. = шаблонның СА/ВМ/ВРС/ВД кестелері
+- [RAS course notes](ras-course.md) — 14 сабақ Revit КЖ курсы; жаңа жоба алдында RAS_курс\КУРС_ҚОРЫТЫНДЫ.md оқы
+- [КЖ standard folder (BEKA-2)](kzh-standard-folder.md) — бекітілген ережелер D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md; Obsidian-мен қатар жаңарт
+- [House 3D = web brochure](house-3d-web-format.md) — «үй 3Д» = three.js артефакт рендерлермен, Revit емес
 - [Қабырға қалыңдығын ауыстыру](plan-wall-rethickness.md) — аудан сақтап қайта жоспарлау: аймақтық карталар, тексерістер
+
 - [Дауысты видео-сабақ](video-lessons-tts.md) — «видео жасап түсіндір» = MP4 дауыспен: edge-tts kk-KZ-Daulet + PIL 3D + imageio-ffmpeg
 - [Opus + субагенттер](model-delegation-setup.md) — Opus басқарады, haiku/sonnet агенттер; usage_report.py графигі
+
+## Екі комп, синхрон
 - [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.104, IP емес атпен \\BEKA-1) D:\РАБОЧКА = сервер, BEKA-2 (.133) сілтеме арқылы; BEKA-2-де жеке D:\Бекасыл КЖ КМ
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (junction/symlink; R--\memory → junction, claude-shared.ps1); ортақ ережелер ~/.claude/CLAUDE.md блогында (tools/CLAUDE.global.md); өзгеріс келесі чатта көрінеді
 - [GitHub білім репосы](github-knowledge-repo.md) — public bekassyl-knowledge; автосинхрон Stop/SessionEnd hook → update.ps1; setup.ps1 жаңа компқа
+- [GitHub КЖ КМ репосы (BEKA-2)](github-repo.md) — жабық bekasyl-kzh-km: D:\Бекасыл КЖ КМ толығымен (LFS)
+
+## Жобалар
+- [Завод УВПиОС В109 КМ](project-zavod-b109-km.md) — 03.11 бір DWG + ТХ крандар (ПБ үсті +11,000); 04.11 Цех альбомы негізінде жаңадан сызу, 20 бет
 - [Завод В109 КМ Revit](project-b109-revit-km.md) — 08.11 Цех Блок 1 альбом+ЛИРА → gen.py → Revit (Алатау стилі), 2575 элемент + базалар; ашық сұрақтар
+- [Алатау цех Блок 1 КМ](project-alatau-ceh-km.md) — пайдаланушы DWG-сынан толық Revit КМ модель; деректер, ашық сұрақтар
 - [ЦЕХ фахверк Блок 1/2](tsekh-fakhverk.md) — сэндвич фахверк по проёмам; Ст2 окна/Ст3 ворота; 21.10 live, не сохранено
+- [3602 КМ порталы (Revit)](project-3602-km-portals.md) — NRG Maftun Makon порталы/портиктер/карниз КМ: Revit, скрипттер, 29–30.10
 - [3602 Maftun порталы ЛИРА](maftun-portals-lira.md) — 4 модель, бәрі □40×2, Ташкент сейсмикасын кейін ауыстыру
 - [Түйін 40К2 + 30Б1](project-node-40k2-30b1.md) — фланецті және Узел 4 стиліндегі накладкалы нұсқа, D:\РАБОЧКА\Узлы_КМ; BEKA-1-де RBLive+Roslyn; оформление парағы жасалды — Revit КМ түйіндерінің ҮЛГІСІ, толық ереже Obsidian 16_КМ/02_Оформление «Revit КМ түйіні — толық ереже», промпт 09_Автоматизация (10.11)
+- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — қатаң фланецті КМ түйіні, Узлы_КМ; модель дайын, оформление күтуде
+- [Revit КЖ/КМ оформление](revit-kzh-oformlenie.md) — Гостевой дом DWG→Revit sheets via Dynamo (BEKA-2)
 - [Резервуар КЖ](reservoir-kzh.md) — АР↔ЛИРА шешімдері 31.10, листы 2–3 (пайдаланушы AutoCAD-ында сақталмаған), rz.cs ops
 - [ЖК Галакси КЖ схема](galaxy-kzh-scheme.md) — 2.1 + ЛИРА А6 негіз; Фм/колонны/стены; ригели 6.1–6.5: 06.11 негізгі Ø20 + доп. Ø20 ЛИРА As бойынша (Алмас аға ескертуі)
 - [БДМ Блок 1 плиталары](bdm-block1-slabs.md) — Пм1/Пм2 Б3 аналогынан, Б1.плита1.dwg/pdf 06.11, файлды R: жолымен жібер
@@ -117,6 +125,8 @@
 - [Малая Алматинка бетон](malaya-almatinka-concrete.md) — ең қауіпті SO₄/Cl; СНиП РК 2.01-19 табл.4; W8 F200
 - [Бадам ГР.КЖ замечания](badam-kzh-remarks.md) — 23.10 жауаптар; Таза Су штампы; AcObjProp өрістері консольде өшеді
 - [Аэротенк (Маке) КЖ](project-aerotank-make.md) — 59 л.: ОД, схемы, Фм+выпуски 3.9/3.10, Км, стены по осям 5.1–5.24, Рм, Пм; oc 112 (шаблон база)
+
+## Адамдар мен дереккөздер
 - [Шерхан сейсмика группасы](sherkhan-seismic-group.md) — Obsidian 17_Сейсмика; QS Cal логинмен; Telegram Web экспорт
 - [Дос: АЙДОСЪАН](friend-aidosan.md) — пайдаланушының досының аты
 - [Помещение обезвоживания КЖ/КМ](project-obezvozhivanie-make.md) — .lir → КЖ+КМ по стилю АБК, подушка+раскатные сваи; 06.11 КЖ 1.1–7.2 + КМ-1…6 сызылды
@@ -136,6 +146,8 @@
 - [КМ узел разрез бойынша](km-nodes-follow-album-sections.md) — узел құрылымы альбом разрезінен; связь топологиясы ЛИРА бойынша (10.11 Λ/V, №52), қайшылықты сұра
 - [КМ узел DWG-ны plot-тап оқы](km-user-node-dwg-plot-read.md) — пайдаланушы узелдерін толық plot (cp1251 .scr), әр бөлшекті модельде дәл; өз «стандартымды» қоспа (09.11 кеш)
 - [КМ развертка фасадов](km-razvertka-fasad.md) — A4x4 1:100, фахверк □120x5 (РФ2/Ст1), ойық АР-дан, аналог ЦЕХ л.15/16
+- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8, R:/РАБОЧКА offline: copy + notes pending
+
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
