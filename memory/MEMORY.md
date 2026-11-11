@@ -58,6 +58,7 @@
 - [Нахлёст 61d кестеден](lap-table-61d.md) — Ф12=730 (740 емес), аналог нахлёст кестесі B25
 - [Выноска засечкасы](leader-ticks-rule.md) — КЖ-да стрелка жоқ (07.11), КМ-де стрелка бар (10.11); засечка тек сызық стерженьде біткенде…
 - [Полка излом нүктесінен кері жаққа](leader-shelf-opposite-side.md) — барлық выноска, узел белгісі де: стрелка мен полка ұшы тік сызықтың екі жағында (10.11)
+- [Лист болаты қалыңдық бойынша](km-plate-steel-by-thickness.md) — t ≤ 20 С245, t > 20 С345; ұқсас узел — «Узел Nа» ескертпесі, бөлек парақ жоқ (11.11)
 - [КМ спецификация ережелері](km-spec-rules.md) — ұзындық чертежден, тірек листтері мен стекло ауданы міндетті; .lir түйіндерін оқу
 - [КМ расход ЛКМ](km-paint-consumption.md) — ГФ-021/ПФ-115 ведомость спецификация астында, Σ т×м²/т
 - [КМ түйін ережелері 09.11](km-node-rules-purlin-brace-base.md) — прогон артында лист, жоғарғы связь прогон астындағы листке, база фасонкасы плитаға, бос тірек…
@@ -81,6 +82,7 @@
 - [ЛИРА интерфейс қорғанысы](lira-interface-guard.md) — классикалық панель болса Окно→Стиль интерфейса→Лента Плюс
 - [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md) — модель как есть, сейсмика/фундамент қоспа, сечениеге тиіспе; CSV + Word COM
 - [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md) — Revit 2025 add-in csc-пен, job %LOCALAPPDATA%\rvjob, live RBLive; Рампа навесі
+- [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md) — өз Revit + RBLive + v113r\run.ps1 (wrap=b2, pid), разрез нөмірі айнасы (11.11)
 - [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — port 8080 send_code_to_revit C#, Idling, UI басу, DWG мәтін→геометрия
 - [Revit 2025 плагиндері](revit-plugins-2025.md) — екі компта: pyRevit, RevitLookup, ModPlus, KZhTagShelf, mcp; семейство жасау тәртібі
 - [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf марка выноскасын полка шетінде ұстайды
