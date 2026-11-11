@@ -19,3 +19,5 @@ metadata:
 - Spec tables: re-import the template's tables and change only input cells (Ø, L, qty) by text — editing formula cells makes AutoCAD drop neighbouring formulas.
 
 Related: [[column-sheet-scale50]], [[galaxy-kzh-scheme]], [[kzh-template-saveas]], [[rebars-never-overlap]]
+
+**12.11.2026 (пайдаланушы):** колонна мен ригель парағы әрдайым шаблон бойынша (шаблон Онкологиядан алынған); колонна–ригель қиылысында әрдайым сетка, сейсмикада да — тұйық хомут қосылмайды.
