@@ -1,0 +1,1 @@
+if (!document.PathName.EndsWith("ВП-В113-КМ.rvt")) return "WRONG " + document.Title; document.Save(); return "saved";
