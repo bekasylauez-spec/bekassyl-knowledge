@@ -21,3 +21,5 @@ metadata:
 11.11 (5): album now «Том 14 Водоподготовка ВП-В109.dwg» (user merged; open in my acad 15844 — run jobs with -Doc). Facade marks only РФ1/РФ2/Ст1; duplicate annex removed (search ALL sheets before drawing a 'missing' element); annex marks unified БП1/Пр1/ГС1; spec styled as Цех 5BB580; new rz.cs ops tgrid/tgridset.
 11.11 (6): facades 29-37 overlaps fixed (oc 0; mcset Origin does NOT move existing SPDS notes - use move/TransformBy; level marks via sp_set grips 1/2). ОД rewritten by НТП РК + Надстройка analog; rule note 16_КМ/01_Общие правила/Общие данные КМ — по НТП РК…
 11.11 (7): album = sheets 1-37 only; layouts '1'..'37' made by rz.cs mklayout, PDF via plotlayout (close other docs first: closeothers). User removed ведомость ссылочных himself — never restore what the user deleted; ask if an object vanished in a file the user has open.
+
+- 11.11 вечер: марки развертки 29–37 = TEXT «Текст 250» h250 слой «Размеры» без полки (как аналог Цех): ригель над элементом по центру проема, Ст1 у стойки снаружи; od/mk_marks3.py. Листы 30–37 в модели сдвинуты (30 = A3) → sheets.json и Layout 30–37 обновлены. oc_local: justified TEXT по align_point.
