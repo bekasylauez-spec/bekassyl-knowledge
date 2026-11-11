@@ -1,8 +1,11 @@
 ---
 name: project-obezvozhivanie-make
-description: Помещение обезвоживания (Станция очистки, Завод Маке) — КЖ+КМ из .lir по стилю АБК; 06.11: КЖ 1.1–7.2 (42 л.) + КМ-1…КМ-6 сызылды, oc 0
+description: "Помещение обезвоживания (Станция очистки, Завод Маке) — КЖ+КМ из .lir по стилю АБК; 06.11: КЖ 1.1–7.2 (42 л.) + КМ-1…КМ-6 сызылды, oc 0"
 metadata:
+  node_type: memory
   type: project
+  originSessionId: 709ba837-83a0-4b00-b448-39f0aa80a012
+  modified: 2026-11-11T13:31:04.863Z
 ---
 
 05.11.2026 user: «Мынаның кжсын и км сыз. Расходын мейілінше көбейт. Сосын подушка и раскладканы АБК сияқты ал» for `D:\РАБОЧКА\От Маке\Завод\Обезвоживание\Станция очистки - Помещение обезвоживания (1).lir`.
@@ -17,5 +20,7 @@ Related: [[project-abk-zavod-make]], [[lira-model-by-analog]]
 06.11: 6.1–6.17 балки, 7.1/7.2 плиты, КМ-1…6 (AutoCAD, Σ≈12.8 т), 1.1 мәтіні мен 1.2 ведомость жобаға ауыстырылды. ПБ1 детальды парағы жоқ (КМ схемалық бірінші нұсқа). Толығы Obsidian жобалық жазбада.
 
 11.11.2026 (BEKA-1): котлован/сваи/гидроизоляция brought to ABK final: Св1 362 armed + Св2 32 unarmed L=9, 0.000 = 347.90, ABK geology column, new sheet 1.5 pile reinforcement, hydro/steel tables, geomembrane; full КЖ album 45 p. in project folder. Details in Obsidian note. Related: [[project-abk-zavod-make]], [[project-tsekh-predobrabotki]]
+
+11.11.2026 (BEKA-2): separate `КМ Помещение обезвоживания.dwg` split out of the КЖ DWG (D:\_claude_work\obez_km\kmmake.cs, accoreconsole) + АГСК codes (notes: anchors/ГФ-021/ПФ-115 from analog «Кж-склад рулонов»; spec column: sheet 214-101-0201, □120 214-205-0103). Still without a code: Р1 Тр.140х4.5, Пр1 [18П, Св2 □80х4. КМ layouts inside the КЖ DWG left unchanged.
 
 11.11.2026: stamps/titles made like ABK (blocks Штамп_ОБЗ_КЖ/КМ from Штамп_АБК, object «Помещение обезвоживания»); КЖ 45 p. + КМ 7 p. PDFs rebuilt.
