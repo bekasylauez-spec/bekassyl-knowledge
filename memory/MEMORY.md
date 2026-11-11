@@ -65,6 +65,8 @@
 - [КМ ферма белдеулері бөлек](km-truss-chords-separate.md) — нижний пояс бөлек схема, верхний пояс бөлек (07.11)
 - [Оформление бірге](feedback-oformlenie-together.md) — КМ оформлениені жалғыз асықпа, пайдаланушымен парақ-парақ
 
+- [База КМ аналогтар](km-analog-base.md) — D:\РАБОЧКА\База_КМ: 10 КМ альбомы + котельный 100/190; жаңа металл каркас алдында 00_ОҚЫ_АЛДЫМЕН.md оқы (11.11)
+
 ## Құралдар мен әдістер
 - [DWG правки через accoreconsole](cad-console-net-workflow.md) — консоль + C# плагин APPLYOPS по JSON, чтение через DXF/ezdxf
 - [Бөлек AutoCAD данасы](cad-dedicated-instance.md) — live СПДС правкалар өз AutoCAD данамда (JOBLISTEN), пайдаланушының AutoCAD-на SendCommand жоқ
