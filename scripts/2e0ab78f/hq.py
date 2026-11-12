@@ -8,7 +8,7 @@ for ln in open(r'D:\_claude_work\otst\s1\job\geom.txt',encoding='utf-8-sig'):
 doc=ezdxf.readfile(r'D:\_claude_work\otst\s1\job\live.dxf')
 for h in hs:
     e=doc.entitydb.get(h)
-    print('##',h, e.dxftype() if e else None, e.dxf.layer if e else '')
+    print('##',h, e.dxftype() if e else None, (e.dxf.layer if e is not None and e.dxf.hasattr('layer') else ''))
     if e is not None and e.dxftype()=='LWPOLYLINE':
         print('  pts', [(round(p[0]-X0),round(p[1]-Y0)) for p in e.get_points('xy')][:12])
     if e is not None and e.dxftype() in('MTEXT','TEXT'):
