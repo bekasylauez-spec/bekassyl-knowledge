@@ -122,9 +122,23 @@ def ddim(c, r, ang_deg, lfac=None, tx_out=900):
     return op(**d)
 
 
-def note(l1, l2, origin, target, arrow='none', align='Center'):
-    return op(t='note', l1=l1, l2=l2 or '', origin=list(map(float, origin)), target=list(map(float, target)), scale=100, ts=2.5,
-              arrow=arrow, layer=L_DIM, align=align, style='ГОСТ 2.304')
+import sys as _sys
+_sys.path.insert(0, 'D:/Бекасыл КЖ КМ/_Стандарт_КЖ/скрипттер'.replace('/', chr(92)))
+import kzh_note_rule as KNR
+NOTES_LOG = []          # check() үшін: әр выносканың target/origin/ends_on
+
+
+def note(l1, l2, origin, target, on='line', kind='pos', dist=None):
+    """КЖ выноскасы (ЕРЕЖЕЛЕР №119, kzh_note_rule.note_params): target — элементке тиетін нүкте; origin — бағыт береді,
+    излом нүктесі target-тен 300…600 мм-ге келтіріледі (dist берілсе — сол); on: 'line' → засечка, 'dot' → засечкасыз;
+    полка излом нүктесінен элементке кері жаққа."""
+    dx, dy = origin[0] - target[0], origin[1] - target[1]; d = math.hypot(dx, dy) or 1.0
+    dd = dist if dist is not None else min(max(d, KNR.SHELF_MIN), KNR.SHELF_MAX)
+    o = (target[0] + dx / d * dd, target[1] + dy / d * dd)
+    arrow, angle = KNR.note_params(target, o, on, kind)
+    NOTES_LOG.append(dict(l1=l1, target=tuple(target), origin=o, ends_on=on, kind=kind, arrow=arrow, angle=angle))
+    return op(t='note', l1=l1, l2=l2 or '', origin=[float(o[0]), float(o[1])], target=list(map(float, target)), scale=100, ts=2.5,
+              arrow=arrow.lower(), angle=angle, layer=L_DIM, align='Center', style='ГОСТ 2.304')
 
 
 def lev_txt(z):
@@ -267,16 +281,18 @@ def details(x, ytop, items, title='Ведомость деталей', w0=3000, 
         mtext(pos, x + w0 / 2, y - rh / 2, 250, att=5)
         tx = sum(abs(s[0]) for s in segs); ty = sum(abs(s[1]) for s in segs)
         xs = [0.0]; ys = [0.0]
-        for dx, dy, _ in segs: xs.append(xs[-1] + dx); ys.append(ys[-1] + dy)
+        for sg_ in segs: xs.append(xs[-1] + sg_[0]); ys.append(ys[-1] + sg_[1])
         bw, bh = max(xs) - min(xs), max(ys) - min(ys)
         k = min((w1 - 4500) / max(bw, 1), (rh - 1100) / max(bh, 1))
         ox = x + w0 + (w1 - bw * k) / 2 - min(xs) * k - 400; oy = y - rh / 2 - (max(ys) + min(ys)) / 2 * k
         pts = [(ox + a * k, oy + b * k) for a, b in zip(xs, ys)]
         pl(pts, layer='ф18_арм', lw=40, color=7)
-        for i, (dx, dy, tx_) in enumerate(segs):
+        for i, sg_ in enumerate(segs):
+            dx, dy, tx_ = sg_[:3]
             if not tx_: continue
             mx, my = (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2
-            if abs(dx) >= abs(dy): mtext(tx_, mx, my + 130, 250, att=8, layer=L_DIM)
+            if len(sg_) > 3: mtext(tx_, mx + sg_[3][0], my + sg_[3][1], 250, att=sg_[3][2], layer=L_DIM)   # (ox, oy, att): мәтін сызыққа түспесін (қиғаш сегмент)
+            elif abs(dx) >= abs(dy): mtext(tx_, mx, my + 130, 250, att=8, layer=L_DIM)
             else: mtext(tx_, mx + 150, my, 250, att=4, layer=L_DIM)
         if rt: mtext(rt, x + w0 + w1 - 300, y - 450, 250, att=3, layer=L_DIM)
         y -= rh

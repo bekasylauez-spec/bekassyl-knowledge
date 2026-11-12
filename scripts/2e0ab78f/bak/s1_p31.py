@@ -24,7 +24,7 @@ def build():
     L.hatch([L.ring_pts(C, R_COL_O), L.ring_pts(C, R_COL_I)])
     # осьтер (аналог: ГОСТ 2.303 5, lts 100, шеңбер r=350 сол жақта және төменде)
     ax = dict(layer=L.L_DIM, ltype='ГОСТ 2.303 5', ltscale=100, lw=9)
-    L.line((C[0] - 12700, C[1]), (C[0] + 11900, C[1]), **ax)
+    for a_, b_ in ((-12700, -11800), (-10400, 10400)): L.line((C[0] + a_, C[1]), (C[0] + b_, C[1]), **ax)   # разрез белгісінің штрихы оське түспесін
     L.line((C[0], C[1] - 11500), (C[0], C[1] + 11500), **ax)
     L.circle((C[0] - 13050, C[1]), 350, layer=L.L_DIM, lw=25)
     L.circle((C[0], C[1] - 11850), 350, layer=L.L_DIM, lw=25)
@@ -61,7 +61,7 @@ def build():
     yd = y0 + Z_B3 - 1750
     xs = [cx + v for v in (-R_OUT, -R_WO, -R_HT, -R_PT, -R_PB, 0, R_PB, R_PT, R_HT, R_WO, R_OUT)]
     L.chain_h(xs, y0 + Z_B3 - 250, yd)
-    L.dim((cx - R_OUT, y0 + Z_B3 - 250), (cx + R_OUT, y0 + Z_B3 - 250), (cx, yd - 700))
+    L.dim((cx - R_OUT, y0 + Z_B3 - 250), (cx + R_OUT, y0 + Z_B3 - 250), (cx, yd - 1100))
     # отметкалар
     L.lev(Z_FL, S(R_OUT, Z_FL), 'R', ext=1300)
     L.lev(Z_B3, S(R_B3, Z_B3), 'R', ext=R_OUT - R_B3 + 1300)
@@ -107,7 +107,7 @@ def build():
     # днище қалыңдығы 500 (еңіске перпендикуляр)
     rt = 9300.0; nx, nz = (Z_HT - Z_PT) / 7500.0, -1.0; nl = math.hypot(nx, nz); nx, nz = nx / nl, nz / nl
     p1 = (rt, z_top(rt)); p2 = (rt + nx * 500, z_top(rt) + nz * 500)
-    L.note('t=500', '', F(9350, -1150), F(9400, z_top(9400) - 250))
+    L.note('t=500', '', F(9525, -1150), F(9400, z_top(9400) - 250))
     L.note('Подготовка из бетона', 'толщиной 100 мм', F(9250, -2950), F(9600, zp(9600) + 50))
     L.note('Рабочий шов', '', F(10700, -900), F(10250, Z_JOINT))
 
