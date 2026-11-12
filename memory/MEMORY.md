@@ -135,6 +135,11 @@
 - [КМ развертка фасадов](km-razvertka-fasad.md) — A4x4 1:100, фахверк □120x5 (РФ2/Ст1), ойық АР-дан
 - В113 КМ: [В113 КМ (аналог ОЗХ-1)](project-v113-km.md), [В113 Revit түзету 12.11](project-v113-revit-fix-1211.md) — аналог ОЗХ-1; Revit түзету 12.11
 - [КМ стандарты папкасы + промпттар](km-standard-folder-prompts.md) — КМ_стандарт\00_ОҚЫ_АЛДЫМЕН: ережелер
+- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
+- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
+- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
+- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
+
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
@@ -148,12 +153,9 @@
 - [1-КС стат — KYZMET KURYLYS](stat-1ks-kyzmet-kurylys.md) — квартальная 1-КС (шағын), до 4-го числа после квартала, кабинет респондента, штраф 14 МРП
 - [Госзакупки РК — портал](goszakup-portal.md) — zakup.gov.kz, wiki-инструкции поставщика, действующие НПА, тарифы 2026, реестр опыта
 - [Навес 1 ЖК Қарасу](naves1-karasu-abay.md) — ЛИРА по аналогу «Навес Ферма 033», подбор 10.10.2026: файлы в Расчет\, сечения, открытые вопросы
-
-- [GitHub КЖ КМ репосы (BEKA-2)](github-repo.md) — жабық bekasyl-kzh-km: D:\Бекасыл КЖ КМ толығымен (LFS)
 - [Завод В109 КМ Revit](project-b109-revit-km.md) — 08.11 Цех Блок 1 альбом+ЛИРА → gen.py → Revit (Алатау
 - [ЦЕХ фахверк Блок 1/2](tsekh-fakhverk.md) — сэндвич фахверк по проёмам; Ст2 окна/Ст3 ворота
 - [3602 Maftun порталы ЛИРА](maftun-portals-lira.md) — 4 модель, бәрі □40×2, Ташкент сейсмикасын кейін ауыстыру
-- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — қатаң фланецті КМ түйіні, Узлы_КМ; модель дайын
 - [БДМ Блок 1 ригельдері](bdm-block1-rigels.md) — аналог Ресторан 6.1, A4x3 1:50 бөліп, барлық деңгей
 - [БДМ Блок 2 ригельдері](bdm-block2-rigels.md) — 34 марка ЛИРА-дан, схемаға да; барлық арматура Ø28
 - [БДМ Блок 4 ригельдері](bdm-block4-rigels.md) — униф ЛИРА, Ø28, 50 марка / 72 парақ, Галакси 6.5 clone
@@ -175,7 +177,5 @@
 - [Цех предобработки КЖ](project-tsekh-predobrabotki.md) — аналог Онкоцентр бөлім-бөлім DWG, Фм/плита ш.100
 - [ЛИРА-ны толық оқу](lira-read-all-elements.md) — .lir КЭ жойылғанда тоқтама, 0-based жесткость
 - [КМ узел DWG-ны plot-тап оқы](km-user-node-dwg-plot-read.md) — пайдаланушы узелдерін толық plot (cp1251 .scr)
-- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step; 11.11 ОД+штамп+таблица кранов
 - [В113 Revit түзету 12.11](project-v113-revit-fix-1211.md) — қос прогон ±350, Узел 2 фланец 4 М20, q20 v2; 1-кезең
-- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts
 - [КМ узел бір-бірлеп + 3D](km-node-one-by-one-3d.md) — паспорт→модель→сурет→парақ, бір узел бір парақ
