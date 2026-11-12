@@ -52,6 +52,7 @@
 - [Match the DWG exactly](feedback-match-dwg-exactly.md) — әр бөлшектің пішіні/өлшемі пайдаланушы DWG-сынан
 - [Originals are the DWGs](originals-are-dwg.md) — салыстыру тек түпнұсқа DWG-мен, Лист N-N.png емес
 - [Рамка — СПДС форматы, стандарт қағаз](spds-format-frames-standard-paper.md) — А3 және еселері, аналог рамкасы емес
+- [АГСК коды спецификацияда](agsk-code-in-spec.md) — әр материалға ГОСТ жанында жақшада АГСК-3 коды
 - [Кесте рамкадан шықпасын](table-fit-in-frame.md) — insRows-тан кейін кесте табаны ≥ рамка y0+500
 - [PDF тек Layout-тан](pdf-from-layouts.md) — альбом листтерін Layout қойындыларынан
 - [ФБС + ПБ раскладка](fbs-pb-layout.md) — завод прайсы, доборы монолит, перевязка ≥300
