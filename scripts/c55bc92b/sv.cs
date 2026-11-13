@@ -1,3 +1,2 @@
-var d = document; bool was = d.IsModified; d.Save(); return "saved, was modified=" + was + ", now=" + d.IsModified + " " + d.PathName;
-}
-static int Dummy() { return 0;
+var d = document; if (d == null || !d.PathName.EndsWith("РМЦ-КМ.rvt")) return "ABORT " + (d == null ? "null" : d.PathName);
+d.Save(); return "saved " + d.PathName + " IsModified=" + d.IsModified;

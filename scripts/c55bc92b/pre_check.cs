@@ -1,7 +1,7 @@
-// read-only: IsModified + current positions of all framing/column instances -> scratchpad cur_dump.tsv
+// read-only: IsModified + current positions of all framing/column instances -> scratchpad cur_dump_now.tsv
 var d = document; var sb = new System.Text.StringBuilder();
-string outp = @"C:\Users\Admin\AppData\Local\Temp\claude\a7137524bdaa49d0\c55bc92b-0511-4932-9c00-c1294111057c\scratchpad\cur_dump.tsv";
-sb.AppendLine("path " + d.PathName + " IsModified=" + d.IsModified);
+string outp = @"C:\Users\Admin\AppData\Local\Temp\claude\a7137524bdaa49d0\c55bc92b-0511-4932-9c00-c1294111057c\scratchpad\cur_dump_now.tsv";
+sb.AppendLine("path " + d.PathName + " IsModified=" + d.IsModified + " activeview=" + (d == null ? "" : "ok"));
 var all = new FilteredElementCollector(d).OfClass(typeof(FamilyInstance)).Cast<FamilyInstance>().Where(x => (x.get_Parameter(BuiltInParameter.ALL_MODEL_INSTANCE_COMMENTS)?.AsString() ?? "") != "" && x.Category != null && (x.Category.Id.Value == (long)BuiltInCategory.OST_StructuralFraming || x.Category.Id.Value == (long)BuiltInCategory.OST_StructuralColumns)).ToList();
 var lines = new List<string>();
 Func<XYZ, string> f3 = p => p == null ? "\t\t" : Math.Round(p.X * 304.8, 2) + "\t" + Math.Round(p.Y * 304.8, 2) + "\t" + Math.Round(p.Z * 304.8, 2);
