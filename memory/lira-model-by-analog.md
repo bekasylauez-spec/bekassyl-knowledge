@@ -46,3 +46,8 @@ LIRA traps (2026-11-05 evening, АБК v3):
 - The table window replaces LiraSapr's MainWindowHandle. Close it with WM_CLOSE on that handle.
 
 Column check rule (2026-11-05, АБК v3): never judge column rebar by total ΣAs from LIRA (AU1..4 + AS1..4). LIRA lumps steel into the corners. Check per face (2 corners + middle) or run a fiber N–My–Mz check (`АБК\Расчет\col_check.py`: EC2 5.8.9(4) Bresler, MRd by fiber, RSN forces from «Усилия от РСН» CSV tbl04.22_1, columns N;MX;MY;QZ;MZ;QY in t, t·m). Under one-axis seismic, 12Ø28 in 500×500 failed (η 1.20) although 73.9 > ΣAs 68.
+
+LIRA GUI traps (2026-11-13, Касымова):
+- LIRA-SAPR 2024 is single-instance on BEKA-1: a second `LiraSapr.exe` exits within 2 s. Import into the running instance as a second document tab (the open task is not changed), then click the first tab to go back.
+- computer-use app name ` ЛИРА-САПР 2024` (leading space); clicks fail with «desktop shell is frontmost» until the window is activated with SetForegroundWindow from PowerShell.
+- «Сохранить как» can open on the other monitor (EnumWindows by pid shows its rect). In its file name field triple-click does not select: click, Ctrl+A, then type the full path, otherwise the path is appended and LIRA reports «Недопустимое имя файла». Kazakh letters in the path are accepted.
