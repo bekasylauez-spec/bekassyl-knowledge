@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 62d8a218-7d3b-4f20-a503-ee957c18a98a
-  modified: 2026-11-05T08:53:54.433Z
+  modified: 2026-11-13T18:10:36.143Z
 ---
 
 Task pattern "аналог етіп ал, тек каркасты өзгерт": geometry from the DWG, everything else (stiffness, loads, seismic, RSN, design variant, materials) identical to the analog .lir.
@@ -55,4 +55,9 @@ LIRA GUI traps (2026-11-13, Касымова):
 - (2026-11-13) «Создать текстовый файл» on a task linked to a ГРУНТ model asks about recalculating C1/C2: untick the box and press «Подтвердить»; «Отменить» cancels the export. On opening a foreign .lir choose «Отменить» in «Восстановление файлов настроек».
 - (2026-11-13) РПЗ docx of this author keeps «Сбор нагрузок» as EMF pictures: extract from word/media, PIL `im.load(dpi=200)`.
 - (2026-11-13) Подзадачи: the «Открыть» panel for a C1/C2 or D set edits the set of the CURRENT load case's subproblem, not the row selected in the dialog. Make a load case of that subproblem current («Назначить текущим») first, then open the panel; verify by the mosaic scale value. Ctrl+A re-ticks «Стержни» in the C1/C2 panel — untick before ✓. «Изменить в n раз» multiplies the existing value.
+- (2026-11-13, BEKA-2, KAZ layout) SendKeys '^o' does not reach LIRA: send hotkeys with keybd_event VK codes (Ctrl+O 11+4F, Ctrl+S 11+53, Ctrl+Shift+P 11+10+50) and text through clipboard + Ctrl+V. Cyrillic string literals in a BOM-less .ps1 break under PS 5.1. Working scripts: `D:\_claude_work\Kasymova\ui.ps1` (vk action), `assign.ps1`, `settext.ps1`, `wins.ps1`.
+- (2026-11-13) «Создать текстовый файл» writes to LIRA `Data\<task>.txt`, not next to the .lir. Subproblems are in that text (docs 70, 700–703, 71 C1 sets, 72 E factors) — check them there instead of mosaics. Solver protocol = `Work\<task>_01.<task>` (UTF-8); `#pr` is the binary РСН list.
+- (2026-11-13) *.lmcr loads silently empty if the task's ЖБ norm differs: first set Варианты конструирования → ЖБ нормы as in the analog. Type edits in «Редактировать» are committed when another row is clicked.
+- (2026-11-13) PolyFilter «По номерам КЭ» ADDS to the selection; needs «Отметка элементов» mode on. Assigning a Балка type asks about расчётные сечения (Да → N=5 → ✓) and then closes the «Жесткости и материалы» panel. Wall types with «расчётная высота стены» are rejected until Пластины → Местные оси пластин → «Горизонтально (для КЭ стенок)» + «Согласовать оси: по умолчанию».
+- (2026-11-13) With ЖБ materials assigned LIRA starts `ArmaDA` (Подбор арматуры) right after the solver; the main window ignores clicks until that process exits.
 - (2026-11-13) РСН EN «Вид» key counts (▼ then Down×N, Enter): A 3, B 4, C 5, D 6, F 8, H 10, snow>1000 11, wind 13, Ae 17, Ad 18. «Доминирующее»: click cell, click ▼, click «*» in the popup. «Взаимоискл.»: click cell, type number, Enter moves down a row. Then pick each of I…VI and «Добавить»; save with the diskette icon.
