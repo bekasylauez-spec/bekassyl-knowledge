@@ -20,6 +20,7 @@
 
 ## Сызба ережелері (КЖ/КМ)
 - [Контур қабырғасы колонна шетімен, табан = h](perimeter-wall-flush-foundation-overhang.md) — №122/№123: сыртқы беттер тегіс, ось ішкі жақта; фундамент табаны қалыңдыққа тең (800)
+- [Revit бетон штрихы аналогтан](revit-hatch-ansi36-join.md) — №124: ANSI36×20 drafting, қабырға ToHost 135°, колонна 45°; колонна қабырғаны кеседі (SwitchJoinOrder); ойық белгісі таза ойықта
 - [Фундамент есеп+аналог](foundation-per-calc-abk.md) — өлшем/деңгей ЛИРА-дан, ұсыну АБК ленточный принципімен
 - [Разрез армирование қайта құру](section-armirovanie-rebuild.md) — созылған аналог разрезінде хомут/Шп/выноска/желдеткішті
 - [Лист ориентациясы ғимарат пішіні бойынша](sheet-orientation-by-building.md) — тік созылған план → книжный, көлденең → альбомный
@@ -92,6 +93,7 @@
 - [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md) — модель как есть, сейсмика/фундамент қоспа
 - [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md) — Revit 2025 add-in csc-пен, job %LOCALAPPDATA%\rvjob
 - [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md) — өз Revit + RBLive + v113r\run.ps1 (wrap=b2, pid)
+- [rvjob арнасы ортақ — tag/claim](rvjob-shared-channel.md) — live.txt/livedone.txt-ті барлық сессия бөліседі; Kasymova rv.ps1 хаттамасы; тұрып қалса — Revit ескерту терезесі
 - [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — port 8080 send_code_to_revit C#, Idling, UI басу
 - [Revit 2025 плагиндері](revit-plugins-2025.md) — екі компта: pyRevit, RevitLookup, ModPlus, KZhTagShelf
 - [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf марка выноскасын полка шетінде ұстайды
@@ -149,6 +151,8 @@
 - [КМ узел парағы: топтап ортаға, фасонка кішкентай болмасын](km-node-sheet-layout-and-gussets.md) — узел + өз разрездері бір топ, композиция ортада; связь фасонкасы аналог пропорциясымен
 - [Кран рельсі тұтас](km-crane-rail-continuous.md) — Р24 подкрановая балка үстінде басынан аяғына дейін бір дене, узел сайын кесінді емес
 - [КЖ армирование КМ файлының өзінде](kzh-in-km-revit-same-file.md) — бір объектінің КЖ мен КМ-і бір .rvt; BI типтерін CopyElements-пен көшір
+- [Ержан Омар S03/S05 талдауы](omar-3917-yerzhan-analysis.md) — BI Revit КЖ стеновая жүйе: нахлест бетон класымен, доп 4 схема; Obsidian 18\11 (15.11)
+- [Revit 2026 файлын оқу](rvt-2026-files-read-strings.md) — BEKA-1-де тек 2025; rvt_strings.py OLE+gzip мәтінін шығарады, геометрия жоқ
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
