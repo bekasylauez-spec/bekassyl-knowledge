@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 62d8a218-7d3b-4f20-a503-ee957c18a98a
-  modified: 2026-11-13T18:10:36.143Z
+  modified: 2026-11-15T19:14:54.341Z
 ---
 
 Task pattern "аналог етіп ал, тек каркасты өзгерт": geometry from the DWG, everything else (stiffness, loads, seismic, RSN, design variant, materials) identical to the analog .lir.
@@ -68,3 +68,12 @@ LIRA via Windows-MCP (2026-11-14, 3602 портал Блок 1): when computer-u
 - (2026-11-15) АЖТ: Создание -> «Абсолютно жесткое тело»; mark nodes with PolyFilter, press [+] (body is created at once; text doc 25). Axes/levels: «Координационные оси и высотные отметки» button in the Создание panel; an axis = type the mark, then click two nodes with the cursor (pre-marked nodes are ignored); levels = tab 5 with «Указать узел привязки» ticked, click a node in the XOZ projection (the Z field takes no paste). Clear a stray selection with the bottom-bar «Отменить отметку узлов и элементов». Scripts: `D:\_claude_work\Kasymova\ajt.ps1`, `axpick.ps1`.
 - (2026-11-15) Adding geometry to a GUI-built .lir without losing РСН/materials: generate only the new part as a small .txt (nodes, elements, ties, C1, own weight), import it as a second tab, then Расш. редактирование -> «Сборка схем»: attached tab «Присоединяемая», base tab «Базовая», both with «Со смещением» + «По 1 узлу»; click the common node in each (in the base use the XOZ projection — a click in plan takes the TOP node), press «Собрать» in the base, then Упаковка with сшивка (untick «Не сшивать узлы жестких тел»). Subproblem C1 sets (doc 71) and ЖБ materials are not carried to the new elements. Script: `D:\_claude_work\Kasymova\gen_strip.py`.
 - (2026-11-15) «Сборка схем» base pick in XOZ takes the front-most node (min y): pack with «Висячие узлы» before assembling, otherwise a leftover hanging node shifts the whole attached scheme. Assembly carries doc 9 (local axes) but not doc 71/72 (subproblem C1/E sets): set them in Редактор загружений → «Подзадачи» → set → «Открыть» with a load case of that subproblem current. The stiffness/material panel ✓ needs a second click and answers a «Да» warning; check that the status-bar selection count drops to 0. A reopened PolyFilter forgets the «По номерам КЭ» tick — without it ✓ selects everything.
+- (2026-11-16) «Сборка схем»:
+  - It answered «Не с чем собирать!» while an older attached tab was still open. Close stale tabs, re-pick both nodes, then press «Собрать» again.
+  - A successful assembly is silent. The only sign is the node and element counts in the status bar.
+  - Rebuild a superstructure this way: delete it, pack, attach the regenerated part, then pack with сшивка. The АЖТ (doc 25) stay on the foundation nodes, and the new columns join them through сшивка. Check that every column bottom node is in a doc-25 group.
+- (2026-11-16) ЖБ materials are not in the text export:
+  - Re-assign them per group in Ж/Б (`D:\_claude_work\Kasymova\v7\mat.ps1`).
+  - For beams, the «Предупреждение» (rect 0,420,490,591) asks about «количество расчетных сечений»: answer «Да», then in the «Расчетные сечения» panel set N=5 and press ✓. That panel replaces the materials panel, so reopen it with «Жесткость» unticked.
+  - Doc 72 after E×0.5 must list every element.
+- (2026-11-16) A click into the model view to give it focus can open «Выбор элемента». Save from the app menu instead: «Сохранить» at (80,129).

@@ -50,7 +50,7 @@
 ## Құралдар мен әдістер
 - AutoCAD: [DWG правки через accoreconsole](cad-console-net-workflow.md), [Бөлек AutoCAD данасы](cad-dedicated-instance.md), [SPDS objects by script](reference-spds-api.md), [AutoCAD eAtMaxReaders](acad-eatmaxreaders.md), [AutoCAD генератор беріктігі](acad-job-isolation.md) — консоль + APPLYOPS JSON; өз данамда JOBLISTEN; MultiCAD .NET SPDS; McObject dispose; жұмыс D:-да, бөлек job аттары
 - [CAD tooling notes (BEKA-2)](user-env-cad.md) — accoreconsole/LISP тұзақтары, Revit 2025 + Dynamo 3.0.3
-- ЛИРА: [LIRA модель по аналогу](lira-model-by-analog.md), [ЛИРА интерфейс қорғанысы](lira-interface-guard.md), [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md), [ЛИРА CSV-ді өзім шығарамын](lira-csv-export-ui.md), [ЛИРА-ны толық оқу](lira-read-all-elements.md) — генератор txt + РСН/материалы; Окно→Стиль→Лента Плюс; модель как есть; CSV өзім; .lir толық
+- ЛИРА: [LIRA модель по аналогу](lira-model-by-analog.md), [Жесткость реті атауымен](lira-stiffness-order-named.md), [ЛИРА интерфейс қорғанысы](lira-interface-guard.md), [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md), [ЛИРА CSV-ді өзім шығарамын](lira-csv-export-ui.md), [ЛИРА-ны толық оқу](lira-read-all-elements.md) — генератор txt + РСН/материалы; жесткость: фундамент→стена→колонна→ригель→плита, комментариймен; Окно→Стиль→Лента Плюс; модель как есть; CSV өзім; .lir толық
 - Revit runner: [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md), [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md), [Өз Revit данам + MCP автоқосу](revit-own-instance-mcp-autostart.md), [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — add-in csc-пен; RBLive + v113r\run.ps1 (wrap=b2, pid); start.ps1 + OtstBoot; port 8080 send_code_to_revit
 - Revit ортақ арна: [rvjob арнасы ортақ — tag/claim](rvjob-shared-channel.md), [Ортақ арна → жеке ExternalEvent](revit-shared-channel-private-ee.md) — live.txt-ті барлық сессия бөліседі: runner_kas + rv.ps1 tag хаттамасы, тұрып қалса — Revit ескерту терезесі, .rvt екі рет басылса DDE менің данама түседі; бітелсе runner_rmc + _private_job2.txt; бір Revit-те екі сессия → кезекті үстінен жазба, -Doc; .ps1 UTF-8 BOM-мен
 - [Revit КЖ парақ API тәсілдері](revit-kzh-sheet-api-tricks.md) — разрез қорабы +BasisZ, GA выноскасы полка ортасынан, «по» — тип параметрі, BI кестелері БК-файлға көшпейді (РМЦ 15.11)
@@ -68,7 +68,7 @@
 - GitHub репостары: [GitHub білім репосы](github-knowledge-repo.md), [GitHub КЖ КМ репосы (BEKA-2)](github-repo.md) — public bekassyl-knowledge; жабық bekasyl-kzh-km (LFS)
 
 ## Жобалар
-- [Гостиница Касымова (Маке) ЛИРА + Revit КЖ](project-kasymova-hotel.md) — Revit моделі, конструктив арматура, 2. Схема каркаса 10 парақ; штрих №124, жазу қабаттасуы №125 (15.11); қателерін күтуде. ЛИРА v7 (15.11 түн): перемычкалар, лифт қабырғасы, фундамент 1100 — Расчет\Kasymova.lir, есептелмеген
+- [Гостиница Касымова (Маке) ЛИРА + Revit КЖ](project-kasymova-hotel.md) — Revit моделі, конструктив арматура, 2. Схема каркаса 10 парақ; штрих №124, жазу қабаттасуы №125 (15.11); қателерін күтуде. ЛИРА v8 (16.11 түн): аспалы стена алынды (ST1/ST2 ядролары — Revit-пен қайшы, шешім күтілуде), стена 300/250/200, жесткость реті — Расчет\Kasymova.lir, есептелмеген
 - Маке заводы КЖ: [Отстойники (Маке) КЖ](project-otstoiniki-make.md), [Аэротенк (Маке) КЖ](project-aerotank-make.md), [Помещение обезвоживания КЖ/КМ](project-obezvozhivanie-make.md), [АБК завод (Маке) КЖ](project-abk-zavod-make.md), [Цех предобработки КЖ](project-tsekh-predobrabotki.md), [Первичный отстойник (Маке) КЖ Revit](project-otstoinik-make.md), [РМЦ (Маке) КЖ+КМ Revit](project-rmc-make.md) — Отстойники (5 сессия), Аэротенк, Обезвоживание, АБК (1 м подушка + раскатные сваи), Цех; Первичный отстойник — бетон моделі + ЛИРА; РМЦ — .lir 0-based түйін
 - Завод В109 КМ: [Завод УВПиОС В109 КМ](project-zavod-b109-km.md), [Завод В109 КМ Revit](project-b109-revit-km.md), [В109 КМ chain 10.11](b109-km-chain-1011.md), [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — DWG + Revit альбом, крандар, chain/sheets 10–11.11
 - Алатау цех Блок 1 КМ + фахверк: [Алатау цех Блок 1 КМ](project-alatau-ceh-km.md), [ЦЕХ фахверк Блок 1/2](tsekh-fakhverk.md) — Revit КМ модель; сэндвич фахверк
@@ -88,6 +88,19 @@
 ## Адамдар мен дереккөздер
 - [Шерхан сейсмика группасы](sherkhan-seismic-group.md), [Дос: АЙДОСЪАН](friend-aidosan.md) — Obsidian 17_Сейсмика, QS Cal логинмен; пайдаланушының досының аты
 - WhatsApp: [WhatsApp Web — Chrome](whatsapp-web-chrome.md), [WhatsApp: сұрамай бірден жібер](whatsapp-send-fast.md) — Chrome кеңейтімі; сұрамай бірден жібер
+- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
+- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
+- [Do the work myself](feedback-full-autonomy.md) — user automates; I run Revit/AutoCAD end-to-end, no manual hand-offs
+- [Revit MCP bridge](revit-mcp-bridge.md) — drive Revit 2025 via port 8080 send_code_to_revit C#, Idling trick, UI clicks, DWG text→geometry
+- [КЖ standard folder](kzh-standard-folder.md) — keep approved rules in D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md, update on every approval
+- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf updater keeps mark leaders on shelf end; Revit nearest-of-4 attach rule
+- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + one dim style, armirovanie sections 1:25, straight leaders, round node callouts, native section marks
+- [Originals are the DWGs](originals-are-dwg.md) — compare with network DWG / png\sheets, never Лист N-N.png; exact-copy pipeline for 3.9
+- [Own template БК_КМ.rte](project-bk-template.md) — prefix БК_, no third-party traces; marks = tube types; API can't edit labels (copy them); cleanup chain t02…t15
+- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
+- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
+- [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes
+
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
@@ -101,19 +114,6 @@
 - [1-КС стат — KYZMET KURYLYS](stat-1ks-kyzmet-kurylys.md) — квартальная 1-КС (шағын), до 4-го числа после квартала, кабинет респондента, штраф 14 МРП
 - [Госзакупки РК — портал](goszakup-portal.md) — zakup.gov.kz, wiki-инструкции поставщика, действующие НПА, тарифы 2026, реестр опыта
 - [Навес 1 ЖК Қарасу](naves1-karasu-abay.md) — ЛИРА по аналогу «Навес Ферма 033», подбор 10.10.2026: файлы в Расчет\, сечения, открытые вопросы
-
-- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
-- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
-- [Do the work myself](feedback-full-autonomy.md) — user automates; I run Revit/AutoCAD end-to-end, no manual hand-offs
-- [Revit MCP bridge](revit-mcp-bridge.md) — drive Revit 2025 via port 8080 send_code_to_revit C#, Idling trick, UI clicks, DWG text→geometry
-- [КЖ standard folder](kzh-standard-folder.md) — keep approved rules in D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md, update on every approval
-- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf updater keeps mark leaders on shelf end; Revit nearest-of-4 attach rule
-- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + one dim style, armirovanie sections 1:25, straight leaders, round node callouts, native section marks
-- [Originals are the DWGs](originals-are-dwg.md) — compare with network DWG / png\sheets, never Лист N-N.png; exact-copy pipeline for 3.9
-- [Own template БК_КМ.rte](project-bk-template.md) — prefix БК_, no third-party traces; marks = tube types; API can't edit labels (copy them); cleanup chain t02…t15
-- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
-- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
-- [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes
 - [Обсидианға жазу](obsidian-log-work.md) — стиль/жұмыс жолдарын Bekassyl-ға жұмыс барысында жаз
 - [Жоба папкасын таза ұста](feedback-keep-project-clean.md) — скрин/утилита/бэкап scratchpad-та; артығы корзинаға
 - [Сақтау орны — жоба папкасы](save-in-project-folder.md) — PDF/DWG тек жоба папкасына, таза атпен; Temp-тен жіберме
