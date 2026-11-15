@@ -94,6 +94,7 @@
 - [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md) — Revit 2025 add-in csc-пен, job %LOCALAPPDATA%\rvjob
 - [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md) — өз Revit + RBLive + v113r\run.ps1 (wrap=b2, pid)
 - [rvjob арнасы ортақ — tag/claim](rvjob-shared-channel.md) — live.txt/livedone.txt-ті барлық сессия бөліседі; Kasymova rv.ps1 хаттамасы; тұрып қалса — Revit ескерту терезесі
+- [Revit ортақ арна → жеке ExternalEvent](revit-shared-channel-private-ee.md) — live.txt бітелсе: runner_rmc + rv.ps1, _private_job2.txt
 - [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — port 8080 send_code_to_revit C#, Idling, UI басу
 - [Revit 2025 плагиндері](revit-plugins-2025.md) — екі компта: pyRevit, RevitLookup, ModPlus, KZhTagShelf
 - [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf марка выноскасын полка шетінде ұстайды
@@ -149,11 +150,18 @@
 - [РМЦ (Маке) КЖ+КМ Revit](project-rmc-make.md) — 13.11 дерек жиналды, паспорт алдында жауап күтілуде; .lir 0-based түйін
 - [Қорғаныс қабаты бет сынығымен](rebar-cover-follow-surface.md) — стержень бетон бетінің әр сынығында сынады; көрсетпес бұрын қашықтықты санмен тексер
 - [Гостиница Касымова (Маке) ЛИРА + Revit КЖ](project-kasymova-hotel.md) — Revit моделі, конструктив арматура, 2. Схема каркаса 10 парақ (15.11); қателерін күтуде
+- [Ригель жарты рамада 2 марка](km-rafter-two-pieces.md) — монтаж стыгы ортада прогондар арасында, қима ауысуы заводской стык (№127)
+- [Свайлы ростверк торы Ø14/16 ш.200](pile-cap-mesh-14-16.md) — қалғаны доп., қада торы торкөз ортасында (№126)
 - [КМ узел парағы: топтап ортаға, фасонка кішкентай болмасын](km-node-sheet-layout-and-gussets.md) — узел + өз разрездері бір топ, композиция ортада; связь фасонкасы аналог пропорциясымен
 - [Кран рельсі тұтас](km-crane-rail-continuous.md) — Р24 подкрановая балка үстінде басынан аяғына дейін бір дене, узел сайын кесінді емес
 - [КЖ армирование КМ файлының өзінде](kzh-in-km-revit-same-file.md) — бір объектінің КЖ мен КМ-і бір .rvt; BI типтерін CopyElements-пен көшір
 - [Ержан Омар S03/S05 талдауы](omar-3917-yerzhan-analysis.md) — BI Revit КЖ стеновая жүйе: нахлест бетон класымен, доп 4 схема; Obsidian 18\11 (15.11)
 - [Revit 2026 файлын оқу](rvt-2026-files-read-strings.md) — BEKA-1-де тек 2025; rvt_strings.py OLE+gzip мәтінін шығарады, геометрия жоқ
+- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
+- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
+- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
+- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
+
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
@@ -167,11 +175,6 @@
 - [1-КС стат — KYZMET KURYLYS](stat-1ks-kyzmet-kurylys.md) — квартальная 1-КС (шағын), до 4-го числа после квартала, кабинет респондента, штраф 14 МРП
 - [Госзакупки РК — портал](goszakup-portal.md) — zakup.gov.kz, wiki-инструкции поставщика, действующие НПА, тарифы 2026, реестр опыта
 - [Навес 1 ЖК Қарасу](naves1-karasu-abay.md) — ЛИРА по аналогу «Навес Ферма 033», подбор 10.10.2026: файлы в Расчет\, сечения, открытые вопросы
-
-- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
-- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
-- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
-- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
 - [Завод В109 КМ Revit](project-b109-revit-km.md) — 08.11 Цех Блок 1 альбом+ЛИРА → gen.py → Revit (Алатау
 - [ЦЕХ фахверк Блок 1/2](tsekh-fakhverk.md) — сэндвич фахверк по проёмам; Ст2 окна/Ст3 ворота
 - [3602 Maftun порталы ЛИРА](maftun-portals-lira.md) — 4 модель, бәрі □40×2, Ташкент сейсмикасын кейін ауыстыру

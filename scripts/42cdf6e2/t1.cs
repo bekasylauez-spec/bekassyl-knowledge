@@ -1,0 +1,2 @@
+﻿{ var expDoc = System.IO.File.ReadAllText(@"D:\Бекасыл КЖ КМ\3602_Порталы_КМ\_авто\_expect_doc.txt", System.Text.Encoding.UTF8).Trim(); if (document.Title != expDoc) return "WRONG DOC"; }
+return "IsModifiable=" + document.IsModifiable + " IsModified=" + document.IsModified + " active=" + new Autodesk.Revit.UI.UIApplication(document.Application).ActiveUIDocument?.Document.Title + " view=" + document.ActiveView.Name + " " + document.ActiveView.GetType().Name;
