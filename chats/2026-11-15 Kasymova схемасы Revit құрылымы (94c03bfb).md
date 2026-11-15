@@ -95,3 +95,25 @@ Revit-ті іске қосатын скриптте кириллица коди�
 ## Пайдаланушы
 
 Иә, фрагмент қос
+
+## Claude
+
+You've hit your Fable limit · resets 2am (Asia/Qyzylorda). Switch to another model to continue.
+
+## Пайдаланушы
+
+<command-name>/model</command-name>
+            <command-message>model</command-message>
+            <command-args>claude-opus-5-5</command-args>
+
+## Пайдаланушы
+
+<local-command-stdout>Set model to `claude-opus-5-5`</local-command-stdout>
+
+## Пайдаланушы
+
+жалғастыр
+
+## Claude
+
+Жалғастырамын. 2.2 парағын (отм. −3.700) суреттен тексеріп, қалған серияға көшемін.
