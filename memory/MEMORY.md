@@ -119,6 +119,7 @@
 - 3602 Maftun порталы: [3602 КМ порталы (Revit)](project-3602-km-portals.md), [3602 Maftun порталы ЛИРА](maftun-portals-lira.md) — Revit КМ + ЛИРА 4 модель
 - КМ түйіндері 40К2+30Б1, 20К1+25Б1: [Түйін 40К2 + 30Б1](project-node-40k2-30b1.md), [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — фланецті/накладкалы, Узлы_КМ
 - [Revit КЖ/КМ оформление](revit-kzh-oformlenie.md) — Гостевой дом DWG→Revit sheets via Dynamo (BEKA-2)
+- [Revit КМ кестелері мен парақтары](revit-km-tables-sheets-tricks.md) — бос жол/итог сызығы «БК_кесте_вид» шаблонымен, header торы, placeholder парақ, 0,000 «+»-сыз, узел 1:5
 - [Резервуар КЖ](reservoir-kzh.md) — АР↔ЛИРА шешімдері 31.10, листы 2–3 (пайдаланушы
 - [ЖК Галакси КЖ схема](galaxy-kzh-scheme.md) — 2.1 + ЛИРА А6 негіз; Фм/колонны/стены; ригели 6.1–6.5
 - БДМ Блок 1–4 (ригель, плита, колонна): [БДМ Блок 1 плиталары](bdm-block1-slabs.md), [БДМ Блок 1 ригельдері](bdm-block1-rigels.md), [БДМ Блок 2 ригельдері](bdm-block2-rigels.md), [БДМ Блок 3 ригельдер](bdm-block3-rigels.md), [БДМ Блок 3 колонны Км](bdm-block3-columns.md), [БДМ Блок 4 ригельдері](bdm-block4-rigels.md), [БДМ Блок 4 плиталары](bdm-block4-slabs.md) — аналог Ресторан 6.1 / Галакси 6.5, Ø28
