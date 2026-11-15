@@ -6,7 +6,7 @@
 - [МІНДЕТТІ: алдымен Obsidian](obsidian-first.md), [Обсидианға жазу](obsidian-log-work.md) — жұмыс алдында D:\РАБОЧКА\Bekassyl ережелері; стиль/жұмыс жолдарын барысында жаз
 - [МІНДЕТТІ: қатені қайталамау тексерісі](no-repeat-check-pipeline.md) — көрсетпес бұрын chk.sh: geomdump + oc.py
 - [МІНДЕТТІ: КМ қақпасы «дайын» демес бұрын](km-gate-before-done.md) — чек-лист 06 Қ1–Қ10 дәлелмен, q20 жеткіліксіз
-- [МІНДЕТТІ: стена/колонна фундаменттен, стена үстінде ригель жоқ](walls-columns-from-foundation.md) — №129–130; сызбас бұрын struct_check.py: W1 = C1 = W2 = B2 = 0
+- [МІНДЕТТІ: стена/колонна фундаменттен, стена үстінде ригель жоқ](walls-columns-from-foundation.md) — №129–131; колонна бір тұтас (үсті деңгейде, плита кеседі); struct_check.py W1=C1=W2=B2=0, k17_axis.cs = 0
 - [Альбомды бітіріп, бір рет көрсет](feedback-finish-album-then-review.md), [Do the work myself](feedback-full-autonomy.md) — узел сайын растау сұрама; Revit/AutoCAD жұмысын өзім басынан аяғына дейін
 - Файлдар: [Ашық файлды өзім жабамын](close-user-file-myself.md), [Жоба папкасын таза ұста](feedback-keep-project-clean.md), [Сақтау орны — жоба папкасы](save-in-project-folder.md) — DWG пайдаланушыда ашық болса өзім жабамын; скрин/бэкап scratchpad-та; PDF/DWG тек жоба папкасына, таза атпен
 - [Объектілерді жеке файлға, артығын өшір](revit-split-objects-delete-extras.md) — Revit: әр объект жеке .rvt, резерв/архив/жалпы модель корзинаға (15.11)
@@ -53,6 +53,7 @@
 - ЛИРА: [LIRA модель по аналогу](lira-model-by-analog.md), [ЛИРА интерфейс қорғанысы](lira-interface-guard.md), [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md), [ЛИРА CSV-ді өзім шығарамын](lira-csv-export-ui.md), [ЛИРА-ны толық оқу](lira-read-all-elements.md) — генератор txt + РСН/материалы; Окно→Стиль→Лента Плюс; модель как есть; CSV өзім; .lir толық
 - Revit runner: [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md), [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md), [Өз Revit данам + MCP автоқосу](revit-own-instance-mcp-autostart.md), [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — add-in csc-пен; RBLive + v113r\run.ps1 (wrap=b2, pid); start.ps1 + OtstBoot; port 8080 send_code_to_revit
 - Revit ортақ арна: [rvjob арнасы ортақ — tag/claim](rvjob-shared-channel.md), [Ортақ арна → жеке ExternalEvent](revit-shared-channel-private-ee.md) — live.txt-ті барлық сессия бөліседі: runner_kas + rv.ps1 tag хаттамасы, тұрып қалса — Revit ескерту терезесі, .rvt екі рет басылса DDE менің данама түседі; бітелсе runner_rmc + _private_job2.txt; бір Revit-те екі сессия → кезекті үстінен жазба, -Doc; .ps1 UTF-8 BOM-мен
+- [Revit КЖ парақ API тәсілдері](revit-kzh-sheet-api-tricks.md) — разрез қорабы +BasisZ, GA выноскасы полка ортасынан, «по» — тип параметрі, BI кестелері БК-файлға көшпейді (РМЦ 15.11)
 - [Revit 2025 плагиндері](revit-plugins-2025.md), [Tag leader add-in](revit-tag-shelf-addin.md) — екі компта: pyRevit, RevitLookup, ModPlus, KZhTagShelf (марка выноскасы полка шетінде)
 - [Template catalog](template-catalog.md) — BI КЖ шаблон каталогы; спец. = шаблонның СА/ВМ/ВРС/ВД; браузер сүзгісі тұзағы
 - КМ Revit: [КМ tube families](km-tube-families.md), [Own template БК_КМ.rte](project-bk-template.md) — өз ГОСТ 30245 семействолары + КМ_* параметрлер; БК_ префикс, марка = труба типі

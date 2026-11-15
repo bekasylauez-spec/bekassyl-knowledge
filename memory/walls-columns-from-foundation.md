@@ -33,4 +33,6 @@ How to fix:
 - List the walls that existed on only one floor so the user can say whether any are non-structural.
 - Tell the user that the LIRA model needs the same change and must be recalculated.
 
+Also №131 (same night, user sent a 3D screenshot of a column broken at a slab level: «колонна бір тұтас болып кетсін»): columns/walls must be continuous — model their tops AT the next level (offset 0) and join the floor so the floor cuts them; never end them at slab bottom (−200), which leaves 200 mm gaps where there is no slab (double-height space, shafts outside the slab). Check concrete continuity along every column axis (k17_axis.cs = 0), not the column solid itself.
+
 Related: [[perimeter-wall-flush-foundation-overhang]], [[project-kasymova-hotel]], [[kzh-scheme-karkasa]], [[check-levels-by-element]]
