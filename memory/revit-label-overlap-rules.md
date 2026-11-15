@@ -1,6 +1,6 @@
 ---
 name: revit-label-overlap-rules
-description: "Revit КЖ scheme generator — how to keep marks/dims from overlapping (text×text penalty, short-segment rule, placement order, fragment region empty) and how to measure it (k97_overlaps.cs), ЕРЕЖЕЛЕР №125"
+description: "Revit КЖ scheme generator — how to keep marks/dims from overlapping (text×text penalty, short-segment rule, placement order, fragment region empty) and how to measure it (k97_overlaps.cs), ЕРЕЖЕЛЕР №128"
 metadata:
   node_type: memory
   type: feedback
