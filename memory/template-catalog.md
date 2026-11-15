@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 1627bee1-9218-4ed4-bb58-ee22da3b578f
-  modified: 2026-10-19T17:36:08.880Z
+  modified: 2026-11-15T14:03:48.460Z
 ---
 
 Catalog: `D:\Бекасыл КЖ КМ\_Стандарт_КЖ\шаблон_каталог\ШАБЛОН_КАТАЛОГ.md` (index) + `легенды_01-30.md`, `легенды_31-60.md`, `легенды_61-92.md` (each node: what / how built / reuse), `кестелер_шаблондар.md` (schedule system, view templates, naming, groups), `легенды\*.png`. Read it before drawing any node, schedule or view in a new project — the template usually already has it (e.g. «(Фундамент)Сетка С1» legend, parametric nodes «(элементы_узлов)узел_нахлеста», «узел_свай»).
@@ -14,4 +14,4 @@ Specs (user 19.10.2026 «Ведомость спецификацияны осы�
 
 Related: [[revit-kzh-oformlenie]], [[feedback-kzh-sheet-style]], [[kzh-standard-folder]]
 
-**Тұзақ (15.11.2026, Касымова):** BI шаблонының парақ браузері «03_Каркас» ұйымдастыруымен ашылады, оның сүзгісі API-мен жаңа жасалған парақтарды ЖАСЫРАДЫ (AreFiltersSatisfied = false) — пайдаланушы «Ревитте жасағаның қайда?» деді. Шешім: жаңа парақ шаблонның сол бөлімдегі парағының (мыс. 021.2 «Схема расположение элементов каркаса») жазылатын параметрлерін көшіріп алады (BI_штамп_имя_листа_пользовательское = «03.Каркас» т.б.). Көрсетпес бұрын әр парақты `BrowserOrganization.GetCurrentBrowserOrganizationForSheets(doc).AreFiltersSatisfied(id)` арқылы тексер.
+**Тұзақ (15.11.2026, Касымова):** BI шаблонының парақ браузері «03_Каркас» ұйымдастыруымен ашылады, оның сүзгісі API-мен жаңа жасалған парақтарды ЖАСЫРАДЫ (AreFiltersSatisfied = false) — пайдаланушы «Ревитте жасағаның қайда?» деді. Шешім: жаңа параққа бөлім параметрлерін тікелей жаз — BI_штамп_имя_листа_пользовательское = «03.Каркас», BI_штамп_раздел_проекта = «КЖ» (шаблонның үлгі парақтары өшірілуі мүмкін — Касымовада 021.x өшірілді, олардан көшіруге сенбе). Көрсетпес бұрын әр парақты `BrowserOrganization.GetCurrentBrowserOrganizationForSheets(doc).AreFiltersSatisfied(id)` арқылы тексер.
