@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 62d8a218-7d3b-4f20-a503-ee957c18a98a
-  modified: 2026-11-15T19:14:54.341Z
+  modified: 2026-11-15T20:17:37.793Z
 ---
 
 Task pattern "аналог етіп ал, тек каркасты өзгерт": geometry from the DWG, everything else (stiffness, loads, seismic, RSN, design variant, materials) identical to the analog .lir.
@@ -77,3 +77,20 @@ LIRA via Windows-MCP (2026-11-14, 3602 портал Блок 1): when computer-u
   - For beams, the «Предупреждение» (rect 0,420,490,591) asks about «количество расчетных сечений»: answer «Да», then in the «Расчетные сечения» panel set N=5 and press ✓. That panel replaces the materials panel, so reopen it with «Жесткость» unticked.
   - Doc 72 after E×0.5 must list every element.
 - (2026-11-16) A click into the model view to give it focus can open «Выбор элемента». Save from the app menu instead: «Сохранить» at (80,129).
+
+Stairs as in the analog Макатаева (2026-11-16, Касымова v9):
+- Flights are inclined plates and landings are horizontal plates, all h=200 (own stiffness «Лестница (марш, площадка) h=200»).
+- The intermediate landing is at mid-storey. Flights share nodes only at their two ends: the floor-slab edge (or a floor landing) and the landing edge.
+- The landing shares nodes with the walls and columns on its edges. In the analog, a landing beam at landing level runs from a column to a wall.
+- Loads: case 1 = 0.5 t/m² and case 5 «ВРЕМЕННЫЕ А» = 0.25 t/m², kind 16, dir 3. No extra step weight.
+- Materials as for the slab (ЖБ type 5/2/1), plus E×0.5 in subproblem 2.
+- Mesh: flights about 0.45 m along the run. Across lines are shared by flights and landings and include the slab-edge nodes and the wall cell edges.
+- When the wall/column mesh has no row at mid-storey (here 4.2 m and 3.9 m storeys have 7 rows), split only the row band around mid-storey in the walls connected to the landing (BFS through shared vertical edges) and in the columns on those edges. Delete the originals and re-add them split, with the same loads, doc 9, materials and E-factor.
+- Generator: `D:\_claude_work\Kasymova\v9\gen_stairs.py`. It reads the export of the user's model, takes stair geometry from the AR, writes the addition text plus the list of elements to delete, and runs a simulated-merge check.
+- Traps:
+  - «Сборка схем» without «Со смещением» did nothing. With «Со смещением» + «По 1 узлу» it worked. In the attached tab, pick an isolated node (0,0,44.3) in the XOY view. In the base tab, the XOY click at axis 1/А takes the top node (44.3).
+  - Appended stiffness types duplicate the base types. Re-assign them by number ranges: the panel ✓ needs a second click plus «Да» to the warning «уже назначена жесткость». Then pack with «Неиспользуемые жесткости».
+  - Deleted elements stay in the status-bar count until packing.
+  - The «Жесткости и материалы» panel opened 520 px wide. On the Ж/Б tab the ТИП/БЕТОН/АРМАТУРА radios are then at x=377 (y 520/546/572), not at x=286.
+  - The «Со смещением» checkbox is at (21,324), not 305.
+  - A .ps1 written by the Write tool has no BOM. Cyrillic regex literals then break under PS 5.1, so re-save it with BOM.
