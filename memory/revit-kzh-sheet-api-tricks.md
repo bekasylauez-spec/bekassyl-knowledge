@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 5e0bb7e5-4cf8-45cd-890e-18c55e1758cc
-  modified: 2026-11-15T18:32:31.286Z
+  modified: 2026-11-15T19:30:25.069Z
 ---
 
 РМЦ КЖ пилотында (РМЦ-КМ.rvt, БК_КМ шаблоны, Revit 2025) тексерілді, генераторлар `D:\_claude_work\RMC\kzh\kz30…kz36`:
@@ -17,6 +17,13 @@ metadata:
 - **Grid ұзындығы әр көріністе:** `GetCurvesInView(ViewSpecific)` → қисық сызығына проекциялап `SetCurveInView`, шеңбер бір ұшта (`ShowBubbleInView/HideBubbleInView`), әйтпесе viewport қорабы ось ұзындығынан үлкейеді.
 - **Кесте:** ViewSchedule.Split(n) → `ScheduleSheetInstance.Create(…, segmentIndex)`; қайта іске қосқанда `IsSplit()` тексер. Сурет бағаны (Изображение формы) жол биіктігін сурет арақатынасымен үлкейтеді (40,7 мм баған → ~28 мм жол). FormatOptions(UnitTypeId.Fixed) + Accuracy (Number параметрге General қате береді). Көп санатты кестеде HOST_VOLUME_COMPUTED жоқ.
 - **BI шаблон кестелері БК негізді файлға көшпейді:** CopyElements «m_big2SmallMap2 duplicate entries» — файлда шаблондағы BI параметрлердің аттастары басқа GUID-пен тұрса (РМЦ-та 31). Жаңа бос құжатқа көшеді, бірақ одан әрі де көшпейді. Шешім: кесте пішінін (бағандар, ендер, header торы) өз файлында жасау, деректер тұрақты ФОП-тағы КЖ_* параметрлерінен.
+- **Жоспардағы разрез белгісі (BI «(типовая_аннотация)разрез_условный», Касымова 16.11):**
+  - кірістіру нүктесі — бірінші штрихтың ортасы;
+  - «Длина» = ұштар арасы (қағаз мм) − 8,2;
+  - нұсқар штрихқа FacingOrientation бағытымен қарайды (= разрездің қарау бағыты), нұсқар мен нөмір штрихтың қарсы жағында тұрады.
+  - Тік белгі: 90°-қа бұр (`ElementTransformUtils.RotateElement`, ось Z) және «Вертикальный»=1 — нөмір тік тұрады (шаблонның «(Вентблоки)Узлы А, Б» парағындағыдай).
+  - Ұшы ось шеңберіне тисе — қатардан тыс шығар. Тік белгі парақ атауына тисе — атауды көтер.
+  - Генератор: `D:\_claude_work\Kasymova\revit\k10_scheme.cs` (`secs=`), разрез парағы `k11_section.cs`.
 - Қате терезесі (failure dialog) API жұмысында шықса — UIAutomation-мен «Отмена»; Revit уақытша құжатты белсенді етіп тастауы мүмкін → `OpenAndActivateDocument(негізгі.rvt)`, сосын уақытшасын `Close(false)`.
 
 Related: [[project-rmc-make]], [[template-catalog]], [[revit-km-tables-sheets-tricks]], [[kzh-in-km-revit-same-file]]
