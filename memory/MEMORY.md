@@ -67,6 +67,7 @@
 - [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.104, IP емес атпен \\BEKA-1) D:\РАБОЧКА = сервер
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (junction/symlink)
 - [BEKA-2 өшсе — BEKA-1 сақтап өшеді](beka2-off-shutdown-beka1.md) — .claude\shutdown_watch\beka2_watch.ps1, 5 мин өшік → сақтау → shutdown; тоқтату STOP файлы
+- [Жүктеу біткен соң BEKA-2-ні өшіру](download-then-shutdown-beka2.md) — download_then_shutdown.ps1, Task Scheduler арқылы; crdownload өлшемі тек handle арқылы; STOP_DOWNLOAD / shutdown /a
 - GitHub репостары: [GitHub білім репосы](github-knowledge-repo.md), [GitHub КЖ КМ репосы (BEKA-2)](github-repo.md) — public bekassyl-knowledge; жабық bekasyl-kzh-km (LFS)
 
 ## Жобалар
