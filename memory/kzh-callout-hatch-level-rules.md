@@ -36,3 +36,5 @@ metadata:
 **How to apply:** in generators, compute the callout from the element rect: target on the face toward the centre, origin = target ± (400, 400) toward the centre, angle chosen by target side (see gen1.py `mark()` in session 22eb71ac). Render a PDF and zoom in to check before reporting. Vault: `01_Общие правила/Оформление КЖ … СПДС (утверждённые правила).md`, last section.
 
 Related: [[km-callout-style]], [[check-callouts-honestly]], [[reservoir-kzh]], [[drawing-spacing-hatch-rules]]
+
+- **17.11.2026 (РМЦ Revit, №140):** аудан элементіне (пандус, крыльцо, отмостка, түйіндегі қабат/штрих) ұш ішке емес — контурға, сызық полкадан келіп кіретін нүктеге; торға — тор сызығына; үзік сызықта — үзіктің өзіне (саңылауға емес). Плита маркасы өз жоспарында сызықсыз (ГОСТ 21.501). Бүкіл КЖ санмен тексеріледі: `D:\_claude_work\RMC\kzh\kz99_tipedge2.cs` (ұштан көрінетін қырға ≤ 0,6 мм, арматура ось ± радиус) → off-edge 0. Related: [[leader-ticks-rule]]

@@ -8,7 +8,7 @@ for n in sys.argv[1:]:
     a=np.asarray(Image.open(f).convert('L'))<140
     H,W=a.shape
     # frame inner x: find column with longest run near 4560
-    sub=a[60:2300, :4550]
+    sub=a[60:2780, :4550]
     cols=np.nonzero(sub.any(axis=0))[0]
     mx=cols.max()
     ys=np.nonzero(sub[:,mx])[0]

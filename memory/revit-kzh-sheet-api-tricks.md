@@ -40,3 +40,5 @@ metadata:
 Related: [[project-rmc-make]], [[template-catalog]], [[revit-km-tables-sheets-tricks]], [[kzh-in-km-revit-same-file]]
 
 - **Ссылочный разрез маркері (Касымова, 17.11.2026):** `ViewSection.CreateReferenceSection(doc, planId, secViewId, head, tail)` — қарау бағыты = Z × (tail − head); типін «разрез_без_номера_листа_ссылка»-ға ауыстыр; нөмір = разрез видінің Viewport detail number. Маркердің екі жуан ұшы әрқайсысы ~13 мм (қағазда): қысқа сызықта бірігіп кетеді. Разрез виді өшірілсе маркер де өшеді. Блок-белгі («разрез_условный») қолданылмайды — [[project-kasymova-hotel]].
+- FilledRegion шекарасы шын көрінбейтін: `FilledRegion.GetValidLineStyleIdsForFilledRegion` ішінен `GraphicsStyleCategory.Id == OST_InvisibleLines` (РМЦ-да id 621). Аттас «<Невидимые линии>» id 195 — жасыл үзік, көрінеді (17.11).
+- GA выноскасын алып тастау: `AnnotationSymbol.removeLeader()` (кіші әріппен; `RemoveLeader` жоқ).

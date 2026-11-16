@@ -20,3 +20,4 @@ metadata:
 - After resizing, recompute КЖ_длина / масса / эскиз / BI_B and rerun the spec, ВД and 7.1.
 
 Related: [[rebars-never-overlap]], [[rigel-pins-hoop-steps]], [[project-rmc-make]]
+- **ScaleToBox тұзағы (17.11):** қорап нормалі −Y болғанда жиынның таралу бағыты кері ауысты — 37 жиынның 26-сы балкадан тыс шықты. ScaleToBox-тан кейін әр жиын стерженьдері элемент ішінде ме тексер (`kz99_probe_hoop2.cs` → sets outside 0); болмаса `RebarShapeDrivenAccessor.BarsOnNormalSide` кері ауыстыр (`kz99_hoopflip.cs`).
