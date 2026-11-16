@@ -45,6 +45,7 @@
 - КМ узел жасау тәртібі: [КМ узел разрез бойынша](km-nodes-follow-album-sections.md), [КМ узел DWG-ны plot-тап оқы](km-user-node-dwg-plot-read.md), [КМ узел бір-бірлеп + 3D](km-node-one-by-one-3d.md) — альбом разрезінен, DWG-ны plot-тап оқы, бір-бірлеп + 3D
 - КМ қосымша: [Ригель жарты рамада 2 марка](km-rafter-two-pieces.md), [Кран рельсі тұтас](km-crane-rail-continuous.md), [КМ узел парағы: топтап ортаға](km-node-sheet-layout-and-gussets.md), [КМ развертка фасадов](km-razvertka-fasad.md) — монтаж стыгы ортада (№127); Р24 бір дене; узел + разрездері бір топ, фасонка аналог пропорциясымен; A4x4 1:100, фахверк □120x5
 - КЖ қосымша: [Свайлы ростверк торы Ø14/16 ш.200](pile-cap-mesh-14-16.md), [Ростверк П-скобасы 2 тип](pile-cap-skoba-two-types.md), [Ростверк/подколонник маркасы өлшемімен](pile-cap-marks-by-size.md), [Қорғаныс қабаты бет сынығымен](rebar-cover-follow-surface.md), [КЖ армирование КМ файлының өзінде](kzh-in-km-revit-same-file.md), [Ø28 / Ø12 ш.100 / Ø16 — стандарт емес](rebar-sizes-28-12-16.md) — №126, қада торы торкөз ортасында; №133 Ск1/Ск2, аяқ қысқармайды, тисе 50 мм жылжиды; №134 марка өлшемімен, ығысу примечаниемен; стержень бет сынығымен, қашықтықты санмен тексер; бір .rvt, BI типтері CopyElements, КМ көрінісінде КЖ жасыру kz08 (№131); тек есебі жоқ объектіге
+- [КМ база КЖ подколоннигіне сыймаса — анкерді жақындат](km-base-anchor-fit-kzh-pod.md) — №135: подколонник ЛИРА бойынша, анкер траверсадан тыс, шетке ≥150/4d; шайба −20 С245
 - [Көлденең қимада колонна сызылмайды](revit-horizontal-section-columns.md) — №132: Revit +1,9 м-ден жоғары қимада болат колоннаны сызбайды; ColCuts FilledRegion, тексеріс kz22_colcut_scan.cs
 
 ## Құралдар мен әдістер
@@ -60,7 +61,7 @@
 - [RAS course notes](ras-course.md), [КЖ standard folder (BEKA-2)](kzh-standard-folder.md), [КМ стандарты папкасы + промпттар](km-standard-folder-prompts.md) — 14 сабақ Revit КЖ курсы; бекітілген ережелер D:\Бекасыл КЖ; КМ_стандарт\00_ОҚЫ_АЛДЫМЕН
 - [House 3D = web brochure](house-3d-web-format.md), [Қабырға қалыңдығын ауыстыру](plan-wall-rethickness.md), [Дауысты видео-сабақ](video-lessons-tts.md) — «үй 3Д» = three.js артефакт; аудан сақтап қайта жоспарлау; «видео жасап түсіндір» = MP4 дауыспен
 - [Opus + субагенттер](model-delegation-setup.md), [Жұмыс көрініп тұрсын, фонда емес](feedback-work-visible-not-background.md) — Opus басқарады, haiku/sonnet агенттер; ұзақ қадамды өзім көрінетін командамен
-- [Revit 2026 файлын оқу](rvt-2026-files-read-strings.md) — BEKA-1-де тек 2025; rvt_strings.py OLE+gzip мәтінін шығарады, геометрия жоқ
+- [Revit 2026 файлын оқу](rvt-2026-files-read-strings.md) — BEKA-1-де 16.11-ден Revit 2026.4 бар; BI/Ержан локал файлы тек «Отсоединить от хранилища»; жаңа Revit алдында бос жадты тексер; rvt_strings.py — Revit-сіз мәтін
 
 ## Екі комп, синхрон
 - [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.104, IP емес атпен \\BEKA-1) D:\РАБОЧКА = сервер
