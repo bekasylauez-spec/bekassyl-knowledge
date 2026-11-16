@@ -11,7 +11,7 @@
 - Файлдар: [Ашық файлды өзім жабамын](close-user-file-myself.md), [Жоба папкасын таза ұста](feedback-keep-project-clean.md), [Сақтау орны — жоба папкасы](save-in-project-folder.md) — DWG пайдаланушыда ашық болса өзім жабамын; скрин/бэкап scratchpad-та; PDF/DWG тек жоба папкасына, таза атпен
 - [Объектілерді жеке файлға, артығын өшір](revit-split-objects-delete-extras.md) — Revit: әр объект жеке .rvt, резерв/архив/жалпы модель корзинаға (15.11)
 - [Тінтуірге тимеу](revit-no-mouse.md), [Яндексті жаппа](no-hide-yandex.md) — Revit/UI скрипті курсор/фокусқа тимейді; computer-use басқа терезелерді жасырады
-- [C дискін тазалау](disk-cleanup-rules.md), [R: желілік — корзина жоқ](r-drive-no-recycle.md) — D-ге тиіспе, пайдаланушы файлдары тек корзинаға; R:-дан өшірсең біржола
+- [C дискін тазалау](disk-cleanup-rules.md), [Claude/Codex дерегі D-де (junction)](claude-data-on-d-junctions.md), [R: желілік — корзина жоқ](r-drive-no-recycle.md) — D-ге тиіспе, пайдаланушы файлдары тек корзинаға; `.claude\projects` пен `Documents\Codex` — D-ге junction, олар арқылы рекурсивті өшірме; R:-дан өшірсең біржола
 
 ## Сызба ережелері (КЖ/КМ)
 - [Контур қабырғасы колонна шетімен, табан = h](perimeter-wall-flush-foundation-overhang.md) — №122/№123: сыртқы беттер тегіс, ось ішкі жақта; фундамент табаны қалыңдыққа тең (800)
