@@ -33,6 +33,12 @@ metadata:
   - long names wrap at «, »;
   - «Марка элемента» column is sized to the text.
 - **Summary list (7.1, M_20):** Примечание = Кол. × Масса ед.
+- **Ведомость деталей (X2/M_15):**
+  - table «Поз. | Эскиз» 15 | 48 mm, header 12 mm, rows 20 mm; more than 4 positions → two groups side by side;
+  - sketches drawn on the sheet in the X2 style, not Revit shape images: U «[» (long base → «⊔»), L «_|», hoop with crossed hooks at the top-right, pin;
+  - numbers, «по н.г.» (U, L) / «по в.г.» (hoop, pin), «L=…»;
+  - hoop numbers: bottom = width, left = height, top = width + C, right = height + C;
+  - generator `kz99_vd.cs` (detail group «КЖ_ВД_<sheet>»).
 - **Placement:** in free space, anchored to the title point so that re-runs don't move the table.
 - **Before showing:**
   - inspect a 300 dpi PNG crop of every table;
