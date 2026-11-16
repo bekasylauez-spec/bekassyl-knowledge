@@ -3,7 +3,7 @@
 - [МІНДЕТТІ: аналог → GitHub → сұрау](analog-first-then-github-then-ask.md) — берілген аналог бойынша өзіне келтір, жетпесе GitHub
 - [МІНДЕТТІ: КЖ жүйесі](kzh-system-ar-lira-album.md) — АР+ЛИРА → альбом: паспорт бірінші, дерек бір рет
 - [МІНДЕТТІ: тұрақты блоктар шаблоннан](constant-blocks-from-template.md) — ведомость деталей, спецификация, узел, примечание клондалады; өзім тек схема
-- [МІНДЕТТІ: BI Group жобасы — жеке ережелер](bi-group-rules.md) — тек BI жобасына: Obsidian 19_BI Group / GitHub BI_Group (№136); пм тор, BI_фильтр, MRA поз., стена парақтары; «СҰРАҚ»-ты өзім шешпеймін
+- [МІНДЕТТІ: BI Group жобасы — жеке ережелер](bi-group-rules.md) — тек BI жобасына: Obsidian 19_BI Group / GitHub BI_Group (№136); пм тор, BI_фильтр, MRA поз., стена парақтары; 17.11 пайдаланушы үлгі тәсілдерін толық сол күйі қабылдады (А1, курсив, B25/B30 кестесі т.б.) — жалпы ережемен түзетпе
 - [МІНДЕТТІ: алдымен Obsidian](obsidian-first.md), [Обсидианға жазу](obsidian-log-work.md) — жұмыс алдында D:\РАБОЧКА\Bekassyl ережелері; стиль/жұмыс жолдарын барысында жаз
 - [МІНДЕТТІ: қатені қайталамау тексерісі](no-repeat-check-pipeline.md) — көрсетпес бұрын chk.sh: geomdump + oc.py
 - [МІНДЕТТІ: КМ қақпасы «дайын» демес бұрын](km-gate-before-done.md) — чек-лист 06 Қ1–Қ10 дәлелмен, q20 жеткіліксіз
@@ -68,6 +68,7 @@
 - [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.104, IP емес атпен \\BEKA-1) D:\РАБОЧКА = сервер
 - [Общая память двух компов](shared-memory-two-pcs.md) — memory = D:\РАБОЧКА\.claude\memory (junction/symlink)
 - [BEKA-2 өшсе — BEKA-1 сақтап өшеді](beka2-off-shutdown-beka1.md) — .claude\shutdown_watch\beka2_watch.ps1, 5 мин өшік → сақтау → shutdown; тоқтату STOP файлы
+- [Барлық сессия біткен соң BEKA-1-ді өшіру](sessions-done-then-shutdown.md) — оятқыш sessions_idle_wait.py → list_sessions + «Бәрі бітті» → beka2_watch.ps1 -SaveOnlyNow → shutdown /t 180; STOP_SESSIONS
 - [Жүктеу біткен соң BEKA-2-ні өшіру](download-then-shutdown-beka2.md) — download_then_shutdown.ps1, Task Scheduler арқылы; crdownload өлшемі тек handle арқылы; STOP_DOWNLOAD / shutdown /a
 - GitHub репостары: [GitHub білім репосы](github-knowledge-repo.md), [GitHub КЖ КМ репосы (BEKA-2)](github-repo.md) — public bekassyl-knowledge; жабық bekasyl-kzh-km (LFS)
 
