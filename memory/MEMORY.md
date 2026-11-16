@@ -3,6 +3,7 @@
 - [МІНДЕТТІ: аналог → GitHub → сұрау](analog-first-then-github-then-ask.md) — берілген аналог бойынша өзіне келтір, жетпесе GitHub
 - [МІНДЕТТІ: КЖ жүйесі](kzh-system-ar-lira-album.md) — АР+ЛИРА → альбом: паспорт бірінші, дерек бір рет
 - [МІНДЕТТІ: тұрақты блоктар шаблоннан](constant-blocks-from-template.md) — ведомость деталей, спецификация, узел, примечание клондалады; өзім тек схема
+- [МІНДЕТТІ: BI Group жобасы — жеке ережелер](bi-group-rules.md) — тек BI жобасына: Obsidian 19_BI Group / GitHub BI_Group (№136); пм тор, BI_фильтр, MRA поз., стена парақтары; «СҰРАҚ»-ты өзім шешпеймін
 - [МІНДЕТТІ: алдымен Obsidian](obsidian-first.md), [Обсидианға жазу](obsidian-log-work.md) — жұмыс алдында D:\РАБОЧКА\Bekassyl ережелері; стиль/жұмыс жолдарын барысында жаз
 - [МІНДЕТТІ: қатені қайталамау тексерісі](no-repeat-check-pipeline.md) — көрсетпес бұрын chk.sh: geomdump + oc.py
 - [МІНДЕТТІ: КМ қақпасы «дайын» демес бұрын](km-gate-before-done.md) — чек-лист 06 Қ1–Қ10 дәлелмен, q20 жеткіліксіз
@@ -52,7 +53,7 @@
 - AutoCAD: [DWG правки через accoreconsole](cad-console-net-workflow.md), [Бөлек AutoCAD данасы](cad-dedicated-instance.md), [SPDS objects by script](reference-spds-api.md), [AutoCAD eAtMaxReaders](acad-eatmaxreaders.md), [AutoCAD генератор беріктігі](acad-job-isolation.md) — консоль + APPLYOPS JSON; өз данамда JOBLISTEN; MultiCAD .NET SPDS; McObject dispose; жұмыс D:-да, бөлек job аттары
 - [CAD tooling notes (BEKA-2)](user-env-cad.md) — accoreconsole/LISP тұзақтары, Revit 2025 + Dynamo 3.0.3
 - ЛИРА: [LIRA модель по аналогу](lira-model-by-analog.md), [Жесткость реті атауымен](lira-stiffness-order-named.md), [Пайдаланушы түзеткенге тиіспе](lira-keep-user-edits.md), [ЛИРА интерфейс қорғанысы](lira-interface-guard.md), [РПЗ по аналогу из ЛИРА](rpz-by-analog-lira.md), [ЛИРА CSV-ді өзім шығарамын](lira-csv-export-ui.md), [ЛИРА-ны толық оқу](lira-read-all-elements.md) — генератор txt + РСН/материалы; жесткость: фундамент→стена→колонна→ригель→плита, комментариймен; Окно→Стиль→Лента Плюс; модель как есть; CSV өзім; .lir толық
-- Revit runner: [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md), [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md), [Өз Revit данам + MCP автоқосу](revit-own-instance-mcp-autostart.md), [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md) — add-in csc-пен; RBLive + v113r\run.ps1 (wrap=b2, pid); start.ps1 + OtstBoot; port 8080 send_code_to_revit
+- Revit runner: [Revit модель плагинмен (BEKA-1)](revit-build-via-addin.md), [BEKA-1-де BEKA-2 Revit скрипттері](beka1-run-beka2-revit-scripts.md), [Өз Revit данам + MCP автоқосу](revit-own-instance-mcp-autostart.md), [Revit MCP bridge (BEKA-2)](revit-mcp-bridge.md), [Өз Revit данам — жеке журнал папкасы](revit-own-instance-journal-folder.md) — add-in csc-пен; RBLive + v113r\run.ps1 (wrap=b2, pid); start.ps1 + OtstBoot; port 8080 send_code_to_revit; манифесті Addins-ке ҚОЙМА (ашық Revit жүктеп алады) — журнал папкасынан, жинақ BI_Group\скрипттер
 - Revit ортақ арна: [rvjob арнасы ортақ — tag/claim](rvjob-shared-channel.md), [Ортақ арна → жеке ExternalEvent](revit-shared-channel-private-ee.md) — live.txt-ті барлық сессия бөліседі: runner_kas + rv.ps1 tag хаттамасы, тұрып қалса — Revit ескерту терезесі, .rvt екі рет басылса DDE менің данама түседі; бітелсе runner_rmc + _private_job2.txt; бір Revit-те екі сессия → кезекті үстінен жазба, -Doc; .ps1 UTF-8 BOM-мен
 - [Revit КЖ парақ API тәсілдері](revit-kzh-sheet-api-tricks.md) — разрез қорабы +BasisZ, GA выноскасы полка ортасынан, «по» — тип параметрі, BI кестелері БК-файлға көшпейді (РМЦ 15.11)
 - [Revit 2025 плагиндері](revit-plugins-2025.md), [Tag leader add-in](revit-tag-shelf-addin.md) — екі компта: pyRevit, RevitLookup, ModPlus, KZhTagShelf (марка выноскасы полка шетінде)
@@ -86,7 +87,7 @@
 - Баспалдақ/навес: [Қарасу ЛК навестері](karasu-lk1-canopy.md), [Склад Рикаус пандус](sklad-rikaus-ramp.md), [Пожарная лестница — жеке үй КМ](project-pozharnaya-lestnitsa-dom.md) — ЛК альбомдары, Рампа КМ; 41/42 парақ, RAMPOPS; фотодан 8 парақ, аналог Қарасу ЛК-1.2
 - Тассай: [Тассай АР стены из схемы](tassay-ar-walls-from-scheme.md), [Тассай Revize v2](tassay-revize-v2.md), [Тассай Revize v4 кірпіш+размер](tassay-revize-v4-brick-dims.md) — АР стены из схемы, Revize v2/v4
 - [Малая Алматинка бетон](malaya-almatinka-concrete.md), [Бадам ГР.КЖ замечания](badam-kzh-remarks.md) — ең қауіпті SO₄/Cl, СНиП РК 2.01-19 табл.4, W8 F200; 23.10 жауаптар, Таза Су штампы, 11.11 ОД↔ИГИ
-- [Ержан Омар S03/S05 талдауы](omar-3917-yerzhan-analysis.md) — BI Revit КЖ стеновая жүйе: нахлест бетон класымен, доп 4 схема; Obsidian 18\11 (15.11)
+- [Ержан Омар S03/S05 талдауы](omar-3917-yerzhan-analysis.md) — BI Revit 2026 КЖ, стеновая жүйе; 17.11 толық оқылды → ережелер 19_BI Group; шикі дерек D:\_claude_work\BI_Group (out, pdf, tool)
 
 ## Адамдар мен дереккөздер
 - [Шерхан сейсмика группасы](sherkhan-seismic-group.md), [Дос: АЙДОСЪАН](friend-aidosan.md) — Obsidian 17_Сейсмика, QS Cal логинмен; пайдаланушының досының аты
