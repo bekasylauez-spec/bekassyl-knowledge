@@ -30,3 +30,11 @@ User requires the leader to stay joined to the mark text/shelf («ажырауы
 **How to apply:** don't remove tag elbows; new tag scripts can just create Free-end tags — the updater adds elbows. Related: [[revit-mcp-bridge]], [[revit-kzh-oformlenie]]
 - v18–v20 (30.10.2026, _addin_build20.cs; manifest + package → v20): new file `addin\KmJoints.cs` — «КЖ» tab panel «КМ түйін», button «Ус» (KmMitreCmd: pick two framing tubes → mitre). KmJoint.Mitre is also called by m05 via reflection (newest KZhTagShelf_v*). Mitre = both ends +40 mm, two face-based void instances «БК_срез» hosted on reference planes through the node (normal checked via instance BasisZ, re-made flipped if wrong; work-plane-based voids did NOT orient), InstanceVoidCutUtils on each piece, weld band DirectShape «шов ус». Revit's own framing end join on braces gives a butt cut, not a mitre. A runtime ribbon button keeps the DLL path it was created with — repoint with PushButton.AssemblyName after a rebuild.
 - v17 (20.10.2026, _addin_build17.cs): KZhSketch L = REBAR_ELEM_LENGTH rounded to 10 (same as template 2СА/4ВД Р_Длина), not Σ outer segments + hooks; manifest + package → v17. The v16 spec updater could not be unregistered in-session (AddInId mismatch) — restart Revit so only v17 runs.
+
+- BEKA-1 (17.11.2026, РМЦ):
+  - The GA callouts «БК_типовая_аннотация_текст_с_выноской» are kept by **BKLeaderShelf** (`%APPDATA%\Autodesk\Revit\Addins\2025\BKLeaderShelf`, source `D:\_claude_work\uzel40\addin\BKLeaderShelf.cs`).
+  - On every add/modify it re-sets the elbow 1 mm from the shelf end, along the line to the tip. A script that sets the Elbow is reverted at commit.
+  - If the tip lies under the shelf (inside its horizontal span), that elbow falls inside the shelf. Revit then attaches the leader to the text's bottom-centre: an extra diagonal line through the text (24 callouts on 5.1 / 6.x).
+  - Fix by moving the shelf so the tip is ≥3 mm outside its end.
+  - `ElementTransformUtils.MoveElement` on a GA moves the leader End too — reset End afterwards (`kz99_fixlbl2/3.cs`).
+  - Check: `kz99_fixlbl.cs` (anchor within 1.5 mm of the shelf end).
