@@ -68,6 +68,7 @@
 - [House 3D = web brochure](house-3d-web-format.md), [Қабырға қалыңдығын ауыстыру](plan-wall-rethickness.md), [Дауысты видео-сабақ](video-lessons-tts.md) — «үй 3Д» = three.js артефакт; аудан сақтап қайта жоспарлау
 - [Opus + субагенттер](model-delegation-setup.md), [Жұмыс көрініп тұрсын, фонда емес](feedback-work-visible-not-background.md) — Opus басқарады, haiku/sonnet агенттер; ұзақ қадамды өзім көрінетін командамен
 - [Revit 2026 файлын оқу](rvt-2026-files-read-strings.md) — BEKA-1-де 16.11-ден Revit 2026.4 бар
+- [ЕГКН кадастр картасынан учаске іздеу](egkn-cadastre-map-search.md) — map.gov4c.kz/egkn: нөмір сызықшасыз, іздеу тек таңдалған ауданда; Іле 03-046 бөлігі → г. Алатау (03-341)
 
 ## Екі комп, синхрон
 - [Барлығы негізгі компта](main-pc-central.md) — BEKA-1 (.104, IP емес атпен \\BEKA-1) D:\РАБОЧКА = сервер
