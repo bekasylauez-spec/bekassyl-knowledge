@@ -735,3 +735,107 @@ If this event is something the user would act on now, send a PushNotification. R
 ## Claude
 
 Фм-1 жаңа доп. аймақтарымен қайта шықты, 7 парақ. Енді оның белгілері қойылады, стена сериясы қатар жүріп жатыр.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>22:12:02 -&gt; 22:54:58 СЖм-1 (5.1): 8 sheets; bars 1200, groups, MRA 122, tags 0, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+СЖм-1 (5.1) дайын: 8 парақ, 122 MRA, қате жоқ. Доп. түзету кезекте тұрғандықтан 43 минутқа созылды, ендігі маркалар жылдамырақ өтеді. Қалғаны: 17 стена маркасы, плита, колонна, ригель, баспалдақ, схемалар, PDF.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>22:56:59   Фм-1 ДопНиз_X tags: MRA 145, chains 145, tags 0, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 ДопНиз_X белгілері дайын: 145 MRA мен 145 «200х..=» тізбегі, қатесіз. Бұрынғы 293 жиынның орнында енді 145 ірі аймақ тұр.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>22:59:19   Фм-1 ДопНиз_Y tags: MRA 172, chains 172, tags 2, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 ДопНиз_Y дайын: 172 MRA мен 172 тізбек, 2 жеке белгі, қатесіз. Небәрі 2,5 мин кетті, бұрын 10 мин еді.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>22:59:40   Фм-1 ДопВерх_X tags: MRA 46, chains 46, tags 0, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 ДопВерх_X дайын: 46 MRA, қатесіз. Соңғысы ДопВерх_Y қалды.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>23:00:35   Фм-1 ДопВерх_Y tags: MRA 101, chains 101, tags 0, errors 0
+POST_DONE</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 толық жаңартылды: 7 парақ, доп. белгілері барлығы 464 MRA мен тізбек, қатесіз. Енді Revit тек альбом сериясымен айналысады, қазір СЖм-2 стенасынан бастап жалғасып жатыр.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>22:54:58 -&gt; 23:01:38 СЖм-2 (5.2): 8 sheets; bars 156, groups, MRA 22, tags 0, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+СЖм-2 (5.2) дайын: 8 парақ, 22 MRA, қатесіз. Стена бойынша дайын 2 марка, 16 марка қалды.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>23:01:38 -&gt; 23:02:57 СЖм-3 (5.3): 8 sheets; bars 142, groups, MRA 23, tags 2, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+СЖм-3 (5.3) дайын: 8 парақ, 23 MRA, 2 белгі, қатесіз (1,5 мин). 15 стена маркасы қалды, келесісі СЖм-4 (ең ауыры, ~15 мин).
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bi9200jef</task-id>
+<summary>Monitor event: "Альбом сериясы + Фм-1 жаңарту барысы"</summary>
+<event>[Monitor expired after 30m with 8 events delivered. Re-arm it if you still need the watch.]</event>
+</task-notification>
+
+## Claude
+
+Бақылау жаңартылды. Қазір СЖм-4 стенасының парақтары шығып жатыр.
