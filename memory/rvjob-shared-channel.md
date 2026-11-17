@@ -36,3 +36,5 @@ On BEKA-1 several Claude sessions run their own Revit instances, and every insta
 - Diagnose with the journal `%LOCALAPPDATA%\Autodesk\Revit\Autodesk Revit 2025\Journals\journal.NNNN.txt`. Open it with FileShare.ReadWrite; `Jrn.` lines show the user's clicks and commands.
 
 Related: [[beka1-run-beka2-revit-scripts]], [[revit-own-instance-mcp-autostart]], [[project-kasymova-hotel]]
+
+**17.11.2026 (Касымова):** live.txt-ті менің Revit-ім (pid дұрыс) алмай тұрды. Диалог жоқ, процессор бос, тінтуірді жылжыту да көмектеспеді. Себебі — RBLive `OnIdling` ішіндегі `busy` жалауы: алдыңғы бір жұмыс біткен жоқ немесе ілініп қалды, сондықтан жаңа жұмыс оқылмайды. Шешім: соңғы сақтаудан кейін өзгеріс жоқ екенін тексеремін, сосын тек өз данамды тоқтатамын (`_pid.txt`) және `start.ps1 -Rvt "D:\_claude_work\Kasymova\revit\Гостиница Касымова КЖ.rvt"` арқылы қайта ашамын. Кезектегі өз live.txt-ім (tag бойынша) мен job файлдарын алдын ала өшіремін.
