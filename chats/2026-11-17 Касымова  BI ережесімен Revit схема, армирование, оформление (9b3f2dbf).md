@@ -52,3 +52,7 @@ Task:
 Пайдаланушының Revit данасын жаппа.
 
 Shared notes folder for this group of sessions (outside the repo; read siblings' notes there, leave hand-over notes or large findings there instead of pasting them into messages): C:\Users\beka\AppData\Local\Claude-Data\claude_pzs8sxrjxfjjc\side-session-notes\local_c23e4dff-cd03-4afa-acb1-932ba63c9b1a
+
+## Claude
+
+Скрипт іске қосу орамын (нәтижені UTF-8 файлға жазу) жөндеп жатырмын — шағын техникалық ақау.
