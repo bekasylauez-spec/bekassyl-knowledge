@@ -279,3 +279,35 @@ API Error: Connection refused — a firewall or proxy may be blocking it (ECONNR
 - соңында бөлім-бөлімімен PDF.
 
 Әр марка шыққан сайын хабарлаймын. ЛИРА v10 нәтижесі шамамен 19:20-да күтіліп тұр. Сол кезде соңғы As бойынша арматура мен парақтарды жаңартамын.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bo4c4g8lu</task-id>
+<summary>Monitor event: "Альбом сериясы: әр марка/бөлім шыққаны"</summary>
+<event>18:46:08 Фм-1: 7 sheets</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 бөлімі шықты, 7 парақ:
+- 2.1 опалубка;
+- 2.2 негізгі арматура;
+- 2.3–2.6 доп. арматура, төмен/жоғары және X/Y бағыттары бойынша төрт парақ;
+- 2.7 кестелер.
+
+Енді позиция белгілері мен MRA тізбектері қойылады, одан кейін стена маркаларына көшеді.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bo4c4g8lu</task-id>
+<summary>Monitor event: "Альбом сериясы: әр марка/бөлім шыққаны"</summary>
+<event>18:46:49   Фм-1 main tags: Фм-1. Схема расположения основной арматуры: bars 13, MRA 5, chains 5, tags 8, errors</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 негізгі арматура парағына белгілер қойылды: 5 MRA, оларға сәйкес 5 тізбек, 8 позиция белгісі. Қазір төрт доп. парақтың белгілері қойылып жатыр.
