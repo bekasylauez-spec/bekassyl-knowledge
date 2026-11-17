@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: reference
   originSessionId: 7f13e48d-e330-4f2a-9476-26f9df9418c6
-  modified: 2026-11-17T17:20:07.246Z
+  modified: 2026-11-17T17:31:11.314Z
 ---
 
 17.11.2026, БЦ Лестница («лестницаны айнадай аудар»): a whole album (plans, sections, railing sheets with SPDS marks) was mirrored view by view by script.
@@ -21,6 +21,8 @@ metadata:
 - Dimension texts placed outside with a leader (small dims like «540», «370») get a new default side → set TextPosition to the mirrored original (measure the tp ↔ text-box relation once: it changes for rotation-180 dims).
 - Vertical dimension texts stay on the readable (left) side of the dim line, i.e. ~3.8 mm away from the mirror image → can run into a neighbouring callout; check and move the callout.
 - Horizontal no-leader notes shift by about one text width along their line (harmless).
+- SPDS section marks with a vertical cut line (3-3, 4-4, Р4, Р5): the number drops from above to below the arrow (~3 mm lower) and touches the dim chain / tick → move the mark up 300 or sideways 100, and check on the plot that its arrow does not cross a callout leader (the independent checker caught this, not my regression).
+- Table sums are computed from unrounded cells → shown parts can differ from the shown total by 0.01; write new formulas as `round(…*100)/100` (works in AutoCAD table formulas).
 
 **Checking**
 - Exploded text boxes of mirrored SPDS notes are unreliable (off by the text width) — judge notes on the plot, not on geomdump boxes. Dimension text boxes are reliable.
