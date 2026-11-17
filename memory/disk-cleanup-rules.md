@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 7eaff2d3-1bbc-4cc2-b79d-28c2183dad49
-  modified: 2026-11-17T06:40:40.460Z
+  modified: 2026-11-17T06:43:31.462Z
 ---
 
 C дискісін тазалағанда D дискке мүлде тиіспе. Пайдаланушы файлдарын (Downloads, құжаттар) ешқашан Remove-Item-пен біржола өшірме — тек корзинаға жібер (Shell.Application / Microsoft.VisualBasic.FileIO RecycleOption.SendToRecycleBin). 2026-10-27 Downloads Remove-Item-пен өшірілді, бірнеше минуттан кейін пайдаланушы «не бар қайтар» деді; C — NVMe SSD, TRIM қосулы, қалпына келтіру мүмкін болмады.
@@ -60,6 +60,7 @@ D-ге көшкені (`treecmp.exe` байт-байт салыстырған с
 
 Қалдырылғаны:
 - hiberfil.sys 6,4 ГБ — `powercfg /h off` админ құқығын талап етеді, пайдаланушы шешеді.
+- C корзинасы (13,5 ГБ, пайдаланушы өшірген Downloads). Тазалауды ұсындым, жауабы: «Жоқ, қалсын». Корзинаны пайдаланушы өзі шешеді, келесі тазалауда қайта ұсынба.
 - C:\Windows 28,7 ГБ — «Очистка диска» → «системные файлы».
 - Бүгінгі Revit 2026 орнату қалдығы: `odis_download_dest` + `AdAppMgrRollBackBackup`.
 - ChatGPT ашық тұрғанда `.codex` пен `codex-primary-runtime`.
