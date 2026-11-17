@@ -1,7 +1,7 @@
 ## Міндетті ережелер
 - [МІНДЕТТІ: ережеден ауытқу серияны тоқтатады](rule-deviation-stops-series.md) — «келісілмеген» шешімнің үстіне серия құрма; әр элемент алдында маркалау + аналог парақ тізімімен салыстыр (17.11, Касымова стеналары)
 - [МІНДЕТТІ: алдымен GitHub стандарты](github-standards-first.md) — чертеж алдында std-pull.ps1 → 00_ЧЕРТЕЖ_ЖҮЙЕСІ.md
-- [МІНДЕТТІ: аналог → GitHub → сұрау](analog-first-then-github-then-ask.md) — берілген аналог бойынша өзіне келтір, жетпесе GitHub
+- [МІНДЕТТІ: аналог → GitHub → сұрау](analog-first-then-github-then-ask.md) — аналог бірінші, сосын ереже (17.11); берілген аналог бойынша өзіне келтір, жетпесе GitHub
 - [МІНДЕТТІ: КЖ жүйесі](kzh-system-ar-lira-album.md) — АР+ЛИРА → альбом: паспорт бірінші, дерек бір рет
 - [МІНДЕТТІ: тұрақты блоктар шаблоннан](constant-blocks-from-template.md) — ведомость деталей, спецификация, узел, примечание клондалады; өзім тек схема
 - [МІНДЕТТІ: BI Group жобасы — жеке ережелер](bi-group-rules.md) — тек BI жобасына: Obsidian 19_BI Group / GitHub BI_Group (№136–137), файлдар 00…12; S03 негіз
@@ -100,19 +100,6 @@
 ## Адамдар мен дереккөздер
 - [Шерхан сейсмика группасы](sherkhan-seismic-group.md), [Дос: АЙДОСЪАН](friend-aidosan.md) — Obsidian 17_Сейсмика, QS Cal логинмен; пайдаланушының досының аты
 - WhatsApp: [WhatsApp Web — Chrome](whatsapp-web-chrome.md), [WhatsApp: сұрамай бірден жібер](whatsapp-send-fast.md) — Chrome кеңейтімі; сұрамай бірден жібер
-- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
-- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
-- [Do the work myself](feedback-full-autonomy.md) — user automates; I run Revit/AutoCAD end-to-end, no manual hand-offs
-- [Revit MCP bridge](revit-mcp-bridge.md) — drive Revit 2025 via port 8080 send_code_to_revit C#, Idling trick, UI clicks, DWG text→geometry
-- [КЖ standard folder](kzh-standard-folder.md) — keep approved rules in D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md, update on every approval
-- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf updater keeps mark leaders on shelf end; Revit nearest-of-4 attach rule
-- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + one dim style, armirovanie sections 1:25, straight leaders, round node callouts, native section marks
-- [Originals are the DWGs](originals-are-dwg.md) — compare with network DWG / png\sheets, never Лист N-N.png; exact-copy pipeline for 3.9
-- [Own template БК_КМ.rte](project-bk-template.md) — prefix БК_, no third-party traces; marks = tube types; API can't edit labels (copy them); cleanup chain t02…t15
-- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
-- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
-- [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes
-
 - [Схема каркаса — правила построения](shema-karkasa-pravila.md) — строится в AutoCAD, архитектура первична, ЛИРА ориентир, размер от стены кратен 200 с запасом 100
 - [БЦ Байтурсынова — каркас](bc-baytursynova-karkas.md) — РП КЖ Блок 1/2: сетка, отметки, сечения; геология Инжгео 2025; исправленная ОПЗ
 - [Кіріс-шығыс қосымшасы](kirisi-shygys-qosymshasy.md) — Artifact сілтемесі, екі кіріс ағыны, төрт шығыс категориясы, қарапайым сөз талабы
@@ -126,6 +113,19 @@
 - [1-КС стат — KYZMET KURYLYS](stat-1ks-kyzmet-kurylys.md) — квартальная 1-КС (шағын), до 4-го числа после квартала, кабинет респондента, штраф 14 МРП
 - [Госзакупки РК — портал](goszakup-portal.md) — zakup.gov.kz, wiki-инструкции поставщика, действующие НПА, тарифы 2026, реестр опыта
 - [Навес 1 ЖК Қарасу](naves1-karasu-abay.md) — ЛИРА по аналогу «Навес Ферма 033», подбор 10.10.2026: файлы в Расчет\, сечения, открытые вопросы
+
+- [В109 КМ chain 10.11](b109-km-chain-1011.md) — b109_13 slots step, push a82d0c8; R: copy done 10.11 19:42, Obsidian notes 53–55 still pending
+- [В109 КМ sheets 10.11](b109-km-sheets-1011.md) — album in Revit: 1–13, 15–25 done; scripts; Revit API pitfalls (section flip, grid/level extents)
+- [Do the work myself](feedback-full-autonomy.md) — user automates; I run Revit/AutoCAD end-to-end, no manual hand-offs
+- [Revit MCP bridge](revit-mcp-bridge.md) — drive Revit 2025 via port 8080 send_code_to_revit C#, Idling trick, UI clicks, DWG text→geometry
+- [КЖ standard folder](kzh-standard-folder.md) — keep approved rules in D:\Бекасыл КЖ КМ\_Стандарт_КЖ\ЕРЕЖЕЛЕР.md, update on every approval
+- [Tag leader add-in](revit-tag-shelf-addin.md) — KZhTagShelf updater keeps mark leaders on shelf end; Revit nearest-of-4 attach rule
+- [КЖ sheet style rules](feedback-kzh-sheet-style.md) — ISOCPEUR + one dim style, armirovanie sections 1:25, straight leaders, round node callouts, native section marks
+- [Originals are the DWGs](originals-are-dwg.md) — compare with network DWG / png\sheets, never Лист N-N.png; exact-copy pipeline for 3.9
+- [Own template БК_КМ.rte](project-bk-template.md) — prefix БК_, no third-party traces; marks = tube types; API can't edit labels (copy them); cleanup chain t02…t15
+- [GitHub repo](github-repo.md) — whole folder in private bekasylauez-spec/bekasyl-kzh-km (LFS, no Revit backups); refresh Claude_жады copy before push
+- [Node 20К1 + 25Б1](project-node-20k1-25b1.md) — rigid flanged КМ joint file in Узлы_КМ, I-beam/rib families, model done, оформление pending
+- [SPDS objects by script](reference-spds-api.md) — second acad.exe + MultiCAD .NET plugin reads/creates SPDS marks, frames, nodes
 - [Обсидианға жазу](obsidian-log-work.md) — стиль/жұмыс жолдарын Bekassyl-ға жұмыс барысында жаз
 - [Жоба папкасын таза ұста](feedback-keep-project-clean.md) — скрин/утилита/бэкап scratchpad-та; артығы корзинаға
 - [Сақтау орны — жоба папкасы](save-in-project-folder.md) — PDF/DWG тек жоба папкасына, таза атпен; Temp-тен жіберме
