@@ -11,6 +11,7 @@
 - [Альбомды бітіріп, бір рет көрсет](feedback-finish-album-then-review.md), [Do the work myself](feedback-full-autonomy.md) — узел сайын растау сұрама; Revit/AutoCAD жұмысын өзім басынан аяғына дейін
 - Файлдар: [Ашық файлды өзім жабамын](close-user-file-myself.md), [Жоба папкасын таза ұста](feedback-keep-project-clean.md), [Сақтау орны — жоба папкасы](save-in-project-folder.md) — DWG пайдаланушыда ашық болса өзім жабамын; скрин/бэкап scratchpad-та
 - [МІНДЕТТІ: арматура ↔ жазба аудиті](revit-rebar-shift-audit.md) — №141: Revit жиындарды өзі жылжытады (join, жасау кезінде); парақ алдында k45 = 0
+- [МІНДЕТТІ: парақтағы барлық арматура модельде 3D](kzh-model-all-rebar-3d.md) — №142: плита пола/пандус торы да модельде; «КЖ 3D …» көріністер + PNG пайдаланушыға
 - [Объектілерді жеке файлға, артығын өшір](revit-split-objects-delete-extras.md) — Revit: әр объект жеке .rvt, резерв/архив/жалпы модель корзинаға (15.11)
 - [Тінтуірге тимеу](revit-no-mouse.md), [Яндексті жаппа](no-hide-yandex.md) — Revit/UI скрипті курсор/фокусқа тимейді; computer-use басқа терезелерді жасырады
 - [C дискін тазалау](disk-cleanup-rules.md), [Claude/Codex дерегі D-де (junction)](claude-data-on-d-junctions.md), [R: желілік — корзина жоқ](r-drive-no-recycle.md) — D-ге тиіспе, пайдаланушы файлдары тек корзинаға
