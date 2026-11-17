@@ -522,3 +522,28 @@ If this event is something the user would act on now, send a PushNotification. R
 ## Claude
 
 Колонна дайын: 17 373 жиын, қатесіз. Енді ригель (9 807 жиын, ~16 мин), сосын плита.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bpqtel3u2</task-id>
+<summary>Monitor event: "v10 соңғы арматура және альбом сериясы"</summary>
+<event>[Monitor expired after 30m with 1 event delivered. Re-arm it if you still need the watch.]</event>
+</task-notification>
+
+## Claude
+
+Ригель арматурасы қойылып жатыр (20:37-ден, ~16 мин). Бақылау қайта қосылды.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bmcs8oj8u</task-id>
+<summary>Monitor event: "v10 соңғы арматура және альбом сериясы"</summary>
+<event>20:37:27 -&gt; 20:51:24 ^beam [.]: records: 9807 / 71518 cleared 9726 saved 835 s  bad=0 fail=0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Ригель дайын: 9 807 жиын, қатесіз. Енді плита (18 982 жиын, ~40 мин), сосын выпуск, Фм-1, баспалдақ және СЖм-4/7/13 түзетуі.
