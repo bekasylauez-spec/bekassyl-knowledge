@@ -3,7 +3,7 @@
 - [МІНДЕТТІ: аналог → GitHub → сұрау](analog-first-then-github-then-ask.md) — берілген аналог бойынша өзіне келтір, жетпесе GitHub
 - [МІНДЕТТІ: КЖ жүйесі](kzh-system-ar-lira-album.md) — АР+ЛИРА → альбом: паспорт бірінші, дерек бір рет
 - [МІНДЕТТІ: тұрақты блоктар шаблоннан](constant-blocks-from-template.md) — ведомость деталей, спецификация, узел, примечание клондалады; өзім тек схема
-- [МІНДЕТТІ: BI Group жобасы — жеке ережелер](bi-group-rules.md) — тек BI жобасына: Obsidian 19_BI Group / GitHub BI_Group (№136–137), файлдар 00…12
+- [МІНДЕТТІ: BI Group жобасы — жеке ережелер](bi-group-rules.md) — тек BI жобасына: Obsidian 19_BI Group / GitHub BI_Group (№136–137), файлдар 00…12; S03 негіз
 - [МІНДЕТТІ: алдымен Obsidian](obsidian-first.md), [Обсидианға жазу](obsidian-log-work.md) — жұмыс алдында D:\РАБОЧКА\Bekassyl ережелері; стиль/жұмыс жолдарын барысында жаз
 - [МІНДЕТТІ: қатені қайталамау тексерісі](no-repeat-check-pipeline.md) — көрсетпес бұрын chk.sh: geomdump + oc.py
 - [МІНДЕТТІ: КМ қақпасы «дайын» демес бұрын](km-gate-before-done.md) — чек-лист 06 Қ1–Қ10 дәлелмен, q20 жеткіліксіз
