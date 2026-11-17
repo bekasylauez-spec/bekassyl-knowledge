@@ -681,3 +681,15 @@ If this event is something the user would act on now, send a PushNotification. R
 - **Альбом:** қазір стеналар (СЖм-1…), одан кейін плита, колонна, ригель, баспалдақ, схемалар, түйіндер, PDF. Аяқталуы шамамен 02:30.
 
 Әр марка біткенде хабарлап отырамын.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bfa876a6j</task-id>
+<summary>Monitor event: "Альбом сериясы (v10): әр марка/бөлім"</summary>
+<event>[Monitor expired after 30m with 4 events delivered. Re-arm it if you still need the watch.]</event>
+</task-notification>
+
+## Claude
+
+Бұл ескі бақылаушы еді, мерзімі бітті. Серия мен доп. түзетуді жаңа бақылаушы қадағалап отыр.
