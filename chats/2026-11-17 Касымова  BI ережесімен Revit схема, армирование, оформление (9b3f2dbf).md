@@ -311,3 +311,15 @@ If this event is something the user would act on now, send a PushNotification. R
 ## Claude
 
 Фм-1 негізгі арматура парағына белгілер қойылды: 5 MRA, оларға сәйкес 5 тізбек, 8 позиция белгісі. Қазір төрт доп. парақтың белгілері қойылып жатыр.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bo4c4g8lu</task-id>
+<summary>Monitor event: "Альбом сериясы: әр марка/бөлім шыққаны"</summary>
+<event>[Monitor expired after 30m with 2 events delivered. Re-arm it if you still need the watch.]</event>
+</task-notification>
+
+## Claude
+
+Бақылау қайта қосылды. MRA тізбектерін жылдамдату келесі видтен бастап іске қосылады: Фм-1-дің қалған доп. видтері, сосын барлық плиталар.
