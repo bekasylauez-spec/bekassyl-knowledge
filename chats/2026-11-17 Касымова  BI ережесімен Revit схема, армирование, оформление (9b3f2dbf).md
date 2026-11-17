@@ -578,3 +578,28 @@ If this event is something the user would act on now, send a PushNotification. R
 | PDF | 9 бөлім | ~20 мин |
 
 Барлығы шамамен 5 сағат, яғни альбом **түнгі 02:30–03:00**-те дайын болады. Әр марка, әр бөлім біткен сайын осында қысқа хабар жазып отырамын: не дайын болды, қанша қалды.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bmcs8oj8u</task-id>
+<summary>Monitor event: "v10 соңғы арматура және альбом сериясы"</summary>
+<event>[Monitor expired after 30m with 1 event delivered. Re-arm it if you still need the watch.]</event>
+</task-notification>
+
+## Claude
+
+Плита арматурасы әлі қойылып жатыр (~21:30-ға дейін). Бақылау қайта қосылды, келесі кезең біткенде жазамын.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bdobnmffu</task-id>
+<summary>Monitor event: "v10 соңғы арматура және альбом сериясы"</summary>
+<event>20:51:24 -&gt; 21:32:05 ^slab [.]: records: 18982 / 71518 cleared 19070 saved 2439 s  bad=0 fail=0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Плита дайын: 18 982 жиын, қатесіз (21:32). Арматурадан қалғаны: выпуск, Фм-1, баспалдақ және СЖм-4/7/13, шамамен 13 мин. Сосын альбом сериясы басталады.
