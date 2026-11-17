@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 4f5ceea1-c4c7-4b1b-9cf3-f4f8b4eff153
-  modified: 2026-10-30T06:12:48.048Z
+  modified: 2026-11-17T10:00:58.575Z
 ---
 
 On 2026-10-17 the user rejected an album I had plotted from model-space frame windows: «ПДФ жасағанда қате жасағансың. Осыларға кіріп ПДФ жасауың керек» (they showed the layout tabs). Every PDF sheet must come from the drawing's Layout tabs.
@@ -31,3 +31,10 @@ Related: [[baitursynova-album-stamps]], [[cad-console-net-workflow]]
 - Script: scratchpad `dw\crop.py`. Check every corner at 150 dpi: the frame line must be intact.
 
 **12.11.2026 (АБК, the user):** rejected the frame-cropped album: «ПДФТІ дұрыстап жаса. Өзінің стандарттары болуы керек. Реттеп жаса». He confirmed the result the same day («Иә, дұрыс»): every PDF page must be an exact GOST 2.301 format (A4 210x297, A3 420x297, A2 594x420, A3x3 891x420 …) with the frame at 20 mm left / 5 mm other sides — not a page cut to the frame line; pages in sheet-number order, bookmarks «номер + название» from the 1.2 register. This supersedes the 06.11 «crop to frame» note. Script: `D:\_claude_work\abk_agsk\merge2.py` (frame = largest drawing rect → snap (w+25, h+10) to a standard format, flag anything outside). Also: spec rows drawn as attribute blocks (vcBlockST…, e.g. сетка ГОСТ 23279-2012 → 214-403-0101) are not table cells — scan INSERT attributes for ГОСТ too ([[agsk-code-in-spec]]).
+
+**17.11.2026 (Ақтау қыз КЖ фундамент, session 4c59eaa0) — layouts can be STALE.** All 7 layouts of «…лист для клауда Без СРДС.dwg» looked at an empty model area, so plotting them as-is gave 7 blank pages (≈1.4 KB each) while the real sheets (11 A3 frames at 1:100) sat in model space. The user did not comment on the method; the points below are my own working notes.
+- Before plotting, project each layout viewport into the model (WCS = ViewTarget + ViewCenter + (paper − CenterPoint)·scale) and count the entities inside the page rectangle; 0 = stale layout. A PDF of ~1–2 KB means nothing was drawn — check sizes before viewing.
+- Fix without touching the user's DWG: in a work copy, re-aim the model viewport of the user's own layout of that format at each model frame (`ViewTarget = 0`, `ViewCenter = (x0, y0) + CenterPoint·sc`, `ViewHeight = Height·sc`) and plot with that layout's page setup. Result: exact format page, frame 20/5/5/5, pixel-identical to a model-window plot.
+- Tools: `D:\_claude_work\aktau_pdf\` — `plotl.cs` (PLOTL = layouts as they are, MPLOT = model window per job, LPLOT = re-aimed layout; `PlotType` is ambiguous between DatabaseServices and PlottingServices, qualify it), `info3.py` (what layouts see), `info4.py` (frames + stamp texts → frames.json), `check.py`, `merge.py` (order, bookmarks, verify), `cmp_pix.py` (pixel-diff against a sibling DWG).
+- When the given DWG has a newer sibling (here «…для клауда.dwg» with SPDS, saved the same day), plot the sibling's frames too and pixel-diff: SPDS proxies plot fine in accoreconsole from proxy graphics. Here the sibling had an extra «−0.800» level mark; report such differences instead of silently choosing a file.
+- Reading the user's open document through COM (`Documents`, `Saved`, `GetVariable("DBMOD")`, `ModelSpace.Count`, last handles) is safe and tells whether the disk copy is current; `Saved=False`/DBMOD bit 1 alone is not proof of edits (SPDS dirties drawings on open) — compare counts and handles.
