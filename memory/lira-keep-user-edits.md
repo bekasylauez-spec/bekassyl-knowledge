@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 9252f8e4-753b-43e2-aae3-c6e03c79625e
-  modified: 2026-11-17T11:29:33.293Z
+  modified: 2026-11-18T06:00:46.825Z
 ---
 
 The user said on 16.11.2026 (Касымова, LIRA): «Қазір бірнеше өзгеріс жасадым. Оларға тиіспе. Енді осы моделге лестницаны қос». They had deleted 492 slab overhang elements and 38 perimeter beams at −0.100/+4.100 in the open model and saved it.
@@ -24,5 +24,7 @@ The user said on 16.11.2026 (Касымова, LIRA): «Қазір бірнеш�
 - If they differ, diff them semantically before anything else: the header counts first ([[lira-lir-binary-diff]]), then a text export of both and a doc-by-doc diff (`D:\_claude_work\Kasymova\v10\diff_v10.py`).
 - Calculate the user's newest file under a new local name (v10), never the older copy.
 - Never overwrite the R: file with an older local version.
+
+**An odd-looking user element stays too (confirmed 18.11.2026).** The user's v10 had a 0.5 m beam stub with a free end at x=32, y 34→34.5, +4.100. I asked whether to keep it; the user answered «Қалсын». So keep an element the user added by hand even if it looks unfinished. If I ask, keeping it is the default I offer, and I pass the answer on to the Revit session as well.
 
 Related: [[lira-model-by-analog]], [[project-kasymova-hotel]], [[lira-stiffness-order-named]]
