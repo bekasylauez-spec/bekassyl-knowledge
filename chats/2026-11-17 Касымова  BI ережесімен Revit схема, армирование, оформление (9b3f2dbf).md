@@ -980,3 +980,42 @@ If this event is something the user would act on now, send a PushNotification. R
 ## Claude
 
 Фм-1 ДопВерх_X дайын. Соңғы доп. виді ДопВерх_Y қалды.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bae7hruro</task-id>
+<summary>Monitor event: "Альбом сериясы (18.11): әр марка/бөлім"</summary>
+<event>10:21:25   Фм-1 ДопВерх_Y tags: Фм-1. Схема расположения дополнительной арматуры в вер�</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+Фм-1 бөлімі толық дайын: 7 парақ, барлық белгілер қойылды (10:13–10:21). Модель сақталады, сосын 18 стена маркасына көшеді (~1,2 сағ).
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bae7hruro</task-id>
+<summary>Monitor event: "Альбом сериясы (18.11): әр марка/бөлім"</summary>
+<event>10:21:34 -&gt; 10:29:40 СЖм-1 (5.1): 8 sheets; bars 1200, groups, MRA 122, tags 0, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+СЖм-1 (5.1) дайын: 8 парақ, 122 MRA, қатесіз, модель сақталды (8 мин). 17 стена маркасы қалды.
+
+## Пайдаланушы
+
+<task-notification>
+<task-id>bae7hruro</task-id>
+<summary>Monitor event: "Альбом сериясы (18.11): әр марка/бөлім"</summary>
+<event>10:29:40 -&gt; 10:30:57 СЖм-2 (5.2): 8 sheets; bars 156, groups, MRA 22, tags 0, errors 0</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+## Claude
+
+СЖм-2 (5.2) дайын: 8 парақ, 22 MRA, қатесіз. 16 марка қалды.
